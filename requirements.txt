@@ -1,0 +1,9 @@
+kiteconnect
+pandas
+numpy
+streamlit
+plotly
+matplotlib
+python-dotenv
+pyotp
+NorenRestApiPy

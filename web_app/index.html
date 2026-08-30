@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nifty 50 Event Intelligence — Autonomous Trading Agent</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="styles.css">
+  
+  <!-- Supabase JS Client for Real-time Cloud Queries -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <div class="app-wrapper">
+    
+    <!-- Top Navigation & Brand Header -->
+    <header class="navbar">
+      <div class="brand-box">
+        <div class="brand-icon">⚡</div>
+        <div>
+          <div class="brand-title">Nifty 50 Event Intelligence</div>
+          <div class="brand-subtitle">Fundamental Predictions & Causal Factor Attribution</div>
+        </div>
+      </div>
+
+      <!-- Main View Switcher -->
+      <div class="nav-switcher">
+        <button class="nav-btn active" id="btn-view-analytics" onclick="switchMainView('analytics')">📊 Market Analytics</button>
+        <button class="nav-btn" id="btn-view-jobs" onclick="switchMainView('jobs')">⚙️ Automated Job Logs & DB</button>
+      </div>
+
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <div class="status-pill" style="background: #eef2ff; color: #4338ca; border-color: #c7d2fe;">
+          <span style="width: 7px; height: 7px; background-color: #4f46e5; border-radius: 50%;"></span>
+          <span>Supabase Cloud DB</span>
+        </div>
+        <div class="status-pill">
+          <span class="status-dot"></span>
+          <span>Auto-Scheduler Active</span>
+        </div>
+      </div>
+    </header>
+
+
+    <!-- ===================================================================== -->
+    <!-- VIEW 1: MARKET ANALYTICS & PREDICTIONS                                -->
+    <!-- ===================================================================== -->
+    <main id="view-analytics" class="view-section active">
+      
+      <!-- Central Pre-Market / Post-Market Segmented Toggle -->
+      <div class="toggle-wrapper">
+        <div class="segmented-toggle">
+          <button class="toggle-option pre active" id="toggle-pre" onclick="setAnalyticsMode('pre')">
+            <span>☀️</span> Pre-Market (Predictions)
+          </button>
+          <button class="toggle-option post" id="toggle-post" onclick="setAnalyticsMode('post')">
+            <span>🌙</span> Post-Market (Expected vs Actual)
+          </button>
+        </div>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- PRE-MARKET MODE CONTENT                                           -->
+      <!-- ================================================================= -->
+      <div id="mode-pre-content">
+        
+        <!-- Pre-Market Date Selector Filter Bar -->
+        <div class="filter-bar">
+          <div class="filter-group">
+            <span class="filter-label">📅 Target Session Date:</span>
+            <select id="pre-date-select" class="date-input" onchange="onPreDateChanged()">
+              <!-- Injected via JavaScript -->
+            </select>
+          </div>
+          <div class="filter-group">
+            <span style="font-size: 12px; color: var(--text-muted);">
+              Select any past trading date to view historical locked predictions.
+            </span>
+          </div>
+        </div>
+
+        <div class="info-banner">
+          <div class="info-banner-text">
+            <h2>☀️ Predictions for Session (<span id="pre-target-date">--</span>)</h2>
+            <p>10 core Nifty 50 stocks analyzed using corporate news, filings, and upcoming calendar catalysts.</p>
+          </div>
+          <div class="banner-stats">
+            <div class="stat-item">
+              <div class="stat-label">Stocks Analyzed</div>
+              <div class="stat-value" id="pre-stock-count">10</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Bullish / Bearish Ratio</div>
+              <div class="stat-value" id="pre-ratio" style="color: var(--primary);">--</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cards-grid" id="pre-market-cards-grid">
+          <!-- Injected via JavaScript -->
+        </div>
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- POST-MARKET MODE CONTENT                                          -->
+      <!-- ================================================================= -->
+      <div id="mode-post-content" style="display: none;">
+        
+        <!-- Post-Market Date Range Filter Bar -->
+        <div class="filter-bar">
+          <div class="filter-group">
+            <span class="filter-label">📅 Date Range:</span>
+            <input type="date" id="post-date-from" class="date-input" onchange="onPostDateRangeChanged()">
+            <span style="color: var(--text-muted); font-size: 12px;">to</span>
+            <input type="date" id="post-date-to" class="date-input" onchange="onPostDateRangeChanged()">
+          </div>
+          <div class="filter-group">
+            <button class="preset-btn active" id="preset-all" onclick="applyDatePreset('all')">All Time</button>
+            <button class="preset-btn" id="preset-30d" onclick="applyDatePreset('30d')">Last 30 Days</button>
+            <button class="preset-btn" id="preset-7d" onclick="applyDatePreset('7d')">Last 7 Days</button>
+          </div>
+        </div>
+
+        <div class="info-banner">
+          <div class="info-banner-text">
+            <h2>🌙 Post-Market Audit & Causal Factor Attribution</h2>
+            <p>Comparing what the algorithm predicted based on news vs what actually happened after market close.</p>
+          </div>
+          <div class="banner-stats">
+            <div class="stat-item">
+              <div class="stat-label">Directional Accuracy</div>
+              <div class="stat-value" id="post-accuracy" style="color: var(--success);">--%</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Simulated P&L</div>
+              <div class="stat-value" id="post-pnl">₹--</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Total Audited Closes</div>
+              <div class="stat-value" id="post-audit-count">--</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="table-card">
+          <table class="clean-table">
+            <thead>
+              <tr>
+                <th>Stock</th>
+                <th>Trade Date</th>
+                <th>Base Price</th>
+                <th>What We Expected</th>
+                <th>What Actually Happened</th>
+                <th>Outcome</th>
+                <th>Attribution Category</th>
+                <th>Simulated P&L</th>
+              </tr>
+            </thead>
+            <tbody id="post-audit-table-body">
+              <!-- Injected via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Detailed Diagnostics: Why Did It Move? -->
+        <div style="margin-top: 24px;">
+          <h3 style="font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 12px;">
+            🔬 Causal Factor Diagnostics ("Why Did the Price Move?")
+          </h3>
+          <div id="post-diagnostics-cards">
+            <!-- Injected via JavaScript -->
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+
+    <!-- ===================================================================== -->
+    <!-- VIEW 2: AUTOMATED JOB EXECUTION LOGS & DB LEDGER                      -->
+    <!-- ===================================================================== -->
+    <main id="view-jobs" class="view-section">
+      
+      <div class="info-banner">
+        <div class="info-banner-text">
+          <h2>⚙️ Automated Background Jobs & Database Ledger</h2>
+          <p>The scheduler runs automatically on weekdays (Pre-Market at 20:30 IST & Post-Market at 15:45 IST), stores data in Supabase & SQLite, and syncs to Netlify.</p>
+        </div>
+        <div class="banner-stats">
+          <div class="stat-item">
+            <div class="stat-label">Total Jobs Logged</div>
+            <div class="stat-value" id="jobs-total-count">--</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Cloud Database</div>
+            <div class="stat-value" style="font-size: 14px; color: var(--primary);">Supabase PostgreSQL</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Job History Table -->
+      <div class="table-card">
+        <table class="clean-table">
+          <thead>
+            <tr>
+              <th>Job Type</th>
+              <th>Execution Timestamp (IST)</th>
+              <th>Target Trading Date</th>
+              <th>Records Stored</th>
+              <th>Status</th>
+              <th>Execution Summary</th>
+            </tr>
+          </thead>
+          <tbody id="jobs-table-body">
+            <!-- Injected via JavaScript -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Database & Automation Guide -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px;">
+        <div class="clean-card">
+          <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 10px;">⏰ 24/7 Cloud Automation Details</h3>
+          <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+            • <strong>Pre-Market Night Forecast</strong>: Runs at <strong>20:30 IST (Mon–Fri)</strong> via GitHub Actions & local daemon. Ingests news and locks tomorrow's predictions in Supabase.<br>
+            • <strong>Post-Market Audit</strong>: Runs at <strong>15:45 IST (Mon–Fri)</strong>. Reconciles market closes, attributes factors, and evaluates accuracy in Supabase.<br>
+            • <strong>Netlify Cloud Sync</strong>: Automatically updates after every job completion.
+          </div>
+        </div>
+
+        <div class="clean-card">
+          <h3 style="font-size: 15px; font-weight: 700; margin-bottom: 10px;">🗄️ Supabase Cloud Storage Details</h3>
+          <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+            • <strong>Project Endpoint</strong>: <code>https://htcgeupzkxxxplqtvxue.supabase.co</code><br>
+            • <strong>Cloud Tables</strong>: <code>night_predictions</code>, <code>daily_audits</code>, <code>job_execution_logs</code>, <code>news_archive</code>.<br>
+            • <strong>Date Range Queries</strong>: Powered by Postgres indexing for sub-10ms response times on any historical window.
+          </div>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer>
+      Nifty 50 Event & News-Driven Autonomous Trading Agent • Supabase Cloud DB • Netlify
+    </footer>
+
+  </div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

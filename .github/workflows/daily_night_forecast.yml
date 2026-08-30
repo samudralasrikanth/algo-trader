@@ -1,0 +1,40 @@
+name: 🌙 Daily Pre-Market Night Forecast (20:30 IST)
+
+on:
+  schedule:
+    # 15:00 UTC = 20:30 IST (Monday to Friday)
+    - cron: '0 15 * * 1-5'
+  workflow_dispatch:
+
+jobs:
+  run-premarket-forecast:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install yfinance pandas requests beautifulsoup4 lxml
+
+      - name: Run Night Forecast Cycle (Syncs to Supabase)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://htcgeupzkxxxplqtvxue.supabase.co' }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0Y2dldXB6a3h4eHBscXR2eHVlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4ODA0MTc2OSwiZXhwIjoyMTAzNjE3NzY5fQ.qxw3vZfo5nNMTEB60JGFtEuvjw7O7cyyouc5hbzVgd0' }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0Y2dldXB6a3h4eHBscXR2eHVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgwNDE3NjksImV4cCI6MjEwMzYxNzc2OX0.QQ7xiTfI1A26UpOx2QrmfubplsbeIzqSNxzggSZtPx4' }}
+        run: |
+          python3 run_night_forecast.py
+          python3 generate_web_data.py
+
+      - name: Deploy to Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: |
+          npx -y netlify-cli deploy --dir=web_app --site-name nifty50-event-agent --prod --no-build || true
