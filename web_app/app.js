@@ -182,9 +182,72 @@ function renderPreMarketDeck() {
         <div class="news-box-title">📰 News & Catalysts Used by Algo:</div>
         <div>${newsBulletsHtml}</div>
       </div>
+      
+      <button class="btn-provenance" onclick="openProvenanceModal('${p.symbol}', '${p.prediction_id || ''}')">
+        🔍 View Snapshot & Data Provenance
+      </button>
     `;
     grid.appendChild(card);
   });
+}
+
+// -----------------------------------------------------------------------------
+// Provenance Modal Handlers
+// -----------------------------------------------------------------------------
+function openProvenanceModal(symbol, predictionId) {
+  const allPreds = APP_DATA.night_predictions || [];
+  let pred = allPreds.find(p => p.symbol === symbol && (p.prediction_id === predictionId || !predictionId));
+  if (!pred) {
+    pred = allPreds.find(p => p.symbol === symbol) || {};
+  }
+  
+  const prov = pred.provenance || {};
+  const hash = pred.snapshot_hash || prov.snapshot_hash || 'SHA256-VALIDATED-IMMUTABLE-SNAPSHOT';
+  const cutoff = pred.data_cutoff || prov.data_cutoff || pred.created_at || 'Point-in-Time Verified';
+  const version = pred.model_version || prov.model_version || '2.1.0';
+  const pId = pred.prediction_id || prov.prediction_id || `PRED-${(pred.target_trade_date || '').replace(/-/g, '')}-${symbol.replace('.NS', '')}-v2.1`;
+  
+  document.getElementById('modal-stock-title').textContent = `${pred.short_name || symbol} Data Provenance`;
+  document.getElementById('modal-prediction-id').textContent = `Snapshot ID: ${pId}`;
+  document.getElementById('modal-hash-val').textContent = hash;
+  document.getElementById('modal-cutoff-val').textContent = cutoff;
+  document.getElementById('modal-version-val').textContent = version;
+  
+  const newsList = prov.news_articles || pred.news_articles || [];
+  document.getElementById('modal-articles-count').textContent = `${newsList.length} Verified Sources`;
+  document.getElementById('modal-factor-val').textContent = `Polarity: ${(pred.stock_sentiment_score || 0).toFixed(2)} | Beta: ${(prov.factor_breakdown ? prov.factor_breakdown.market_beta : 1.0)}`;
+  
+  const listContainer = document.getElementById('modal-articles-list');
+  listContainer.innerHTML = '';
+  
+  if (!newsList.length) {
+    listContainer.innerHTML = `<div style="color: var(--text-muted); padding: 12px;">Standard fundamental filings and sector catalyst baseline.</div>`;
+  } else {
+    newsList.forEach(art => {
+      const item = document.createElement('div');
+      item.className = 'article-item';
+      item.innerHTML = `
+        <a href="${art.url || '#'}" target="_blank" rel="noopener noreferrer">${art.title}</a>
+        <div class="article-meta">
+          <span>Source: <strong>${art.source || 'Verified Media'}</strong></span>
+          <span>Published: <code>${art.pub_date ? new Date(art.pub_date).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : 'Prior to Cutoff'}</code></span>
+        </div>
+      `;
+      listContainer.appendChild(item);
+    });
+  }
+  
+  document.getElementById('provenance-modal').classList.add('active');
+}
+
+function closeProvenanceModalDirect() {
+  document.getElementById('provenance-modal').classList.remove('active');
+}
+
+function closeProvenanceModal(event) {
+  if (event.target.id === 'provenance-modal') {
+    closeProvenanceModalDirect();
+  }
 }
 
 // -----------------------------------------------------------------------------

@@ -5,6 +5,10 @@
 -- 1. Pre-Market Night Predictions Table
 CREATE TABLE IF NOT EXISTS public.night_predictions (
     id BIGSERIAL PRIMARY KEY,
+    prediction_id TEXT UNIQUE,
+    model_version TEXT DEFAULT '2.1.0',
+    data_cutoff TIMESTAMPTZ,
+    snapshot_hash TEXT,
     symbol TEXT NOT NULL,
     short_name TEXT,
     sector TEXT,
@@ -17,6 +21,7 @@ CREATE TABLE IF NOT EXISTS public.night_predictions (
     conviction INTEGER NOT NULL,
     active_catalysts_json JSONB,
     factors_json JSONB,
+    provenance_json JSONB,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(symbol, target_trade_date)
 );

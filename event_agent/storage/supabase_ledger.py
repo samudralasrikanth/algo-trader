@@ -51,6 +51,10 @@ def save_night_prediction_supabase(pred: Dict[str, Any], target_trade_date: str)
     try:
         url = f"{SUPABASE_URL}/rest/v1/night_predictions"
         payload = {
+            "prediction_id": pred.get("prediction_id"),
+            "model_version": pred.get("model_version", "2.1.0"),
+            "data_cutoff": pred.get("data_cutoff"),
+            "snapshot_hash": pred.get("snapshot_hash"),
             "symbol": pred["symbol"],
             "short_name": pred.get("short_name"),
             "sector": pred.get("sector"),
@@ -62,7 +66,8 @@ def save_night_prediction_supabase(pred: Dict[str, Any], target_trade_date: str)
             "action": pred.get("action", "HOLD"),
             "conviction": int(pred.get("conviction", 50)),
             "active_catalysts_json": pred.get("active_catalysts", []),
-            "factors_json": pred.get("factors_evaluated", {})
+            "factors_json": pred.get("factors_evaluated", {}),
+            "provenance_json": pred.get("provenance", {})
         }
         res = requests.post(url, headers=get_headers(True), json=payload, timeout=10)
         return res.status_code in [200, 201]

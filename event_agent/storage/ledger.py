@@ -169,12 +169,26 @@ def init_db() -> None:
         )
         """)
         
+        # Add missing provenance columns dynamically if upgrading existing DB
+        for col, col_type in [
+            ("prediction_id", "TEXT"),
+            ("model_version", "TEXT"),
+            ("data_cutoff", "TEXT"),
+            ("snapshot_hash", "TEXT"),
+            ("provenance_json", "TEXT")
+        ]:
+            try:
+                cursor.execute(f"ALTER TABLE night_predictions ADD COLUMN {col} {col_type}")
+            except Exception:
+                pass
+                
         # Create indexes for fast lookup
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_pred_date ON predictions(date)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_pred_sym ON predictions(symbol)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_eval_date ON evaluations(eval_date)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_eval_sym ON evaluations(symbol)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_night_target_date ON night_predictions(target_trade_date)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_night_pred_id ON night_predictions(prediction_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_audit_date ON daily_audits(trade_date)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_audit_sym ON daily_audits(symbol)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_job_date ON job_execution_logs(started_at)")
@@ -593,6 +607,8 @@ def save_night_prediction(pred: Dict[str, Any], target_trade_date: str) -> int:
         risks_json = json.dumps(reasoning.get("risks", []))
         reasoning_json = json.dumps(reasoning)
         range_1d = pred.get("range_1d", {})
+        provenance = pred.get("provenance", {})
+        provenance_json = json.dumps(provenance)
         
         cursor.execute("""
         INSERT INTO night_predictions (
@@ -600,8 +616,9 @@ def save_night_prediction(pred: Dict[str, Any], target_trade_date: str) -> int:
             base_price, predicted_1d_target, predicted_1d_pct,
             predicted_low, predicted_high, direction, action, conviction,
             stock_sentiment, macro_sentiment, active_catalysts_json,
-            risk_factors_json, reasoning_json, status
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            risk_factors_json, reasoning_json, status,
+            prediction_id, model_version, data_cutoff, snapshot_hash, provenance_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             datetime.now().isoformat(),
             pred.get("date", datetime.now().strftime("%Y-%m-%d")),
@@ -610,8 +627,8 @@ def save_night_prediction(pred: Dict[str, Any], target_trade_date: str) -> int:
             pred.get("short_name"),
             pred.get("sector"),
             pred.get("base_price"),
-            pred.get("target_1d"),
-            pred.get("expected_1d_pct"),
+            pred.get("target_1d", pred.get("predicted_1d_target")),
+            pred.get("expected_1d_pct", pred.get("predicted_1d_pct")),
             range_1d.get("low", 0),
             range_1d.get("high", 0),
             pred.get("direction"),
@@ -622,7 +639,12 @@ def save_night_prediction(pred: Dict[str, Any], target_trade_date: str) -> int:
             catalysts_json,
             risks_json,
             reasoning_json,
-            "ACTIVE_FOR_TOMORROW"
+            "ACTIVE_FOR_TOMORROW",
+            pred.get("prediction_id"),
+            pred.get("model_version", "2.1.0"),
+            pred.get("data_cutoff"),
+            pred.get("snapshot_hash"),
+            provenance_json
         ))
         
         conn.commit()
@@ -670,10 +692,12 @@ def get_active_night_predictions(target_trade_date: Optional[str] = None) -> Lis
                 d["active_catalysts"] = json.loads(d.get("active_catalysts_json") or "[]")
                 d["risk_factors"] = json.loads(d.get("risk_factors_json") or "[]")
                 d["reasoning"] = json.loads(d.get("reasoning_json") or "{}")
+                d["provenance"] = json.loads(d.get("provenance_json") or "{}")
             except Exception:
                 d["active_catalysts"] = []
                 d["risk_factors"] = []
                 d["reasoning"] = {}
+                d["provenance"] = {}
             results.append(d)
         return results
 

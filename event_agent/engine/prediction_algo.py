@@ -106,15 +106,28 @@ def compute_event_impact_vector(occurred_events: List[Dict[str, Any]], upcoming_
     return net_impact, catalyst_notes
 
 
+import hashlib
+import json
+from datetime import timezone
+
+MODEL_VERSION = "2.1.0"
+
+
 def generate_stock_prediction(
     symbol: str,
     news_articles: Optional[List[Dict[str, Any]]] = None,
     macro_articles: Optional[List[Dict[str, Any]]] = None,
-    reference_date: Optional[date] = None
+    reference_date: Optional[date] = None,
+    data_cutoff_dt: Optional[datetime] = None,
+    target_trade_date: Optional[str] = None
 ) -> Dict[str, Any]:
     """
-    Generate multi-horizon price and directional predictions for a single Nifty 50 stock.
+    Generate multi-horizon price and directional predictions for a single Nifty 50 stock with cryptographic provenance.
     """
+    now_utc = datetime.now(timezone.utc)
+    if data_cutoff_dt is None:
+        data_cutoff_dt = now_utc
+        
     stock_meta = NIFTY50_UNIVERSE.get(symbol, {
         "name": symbol,
         "short_name": symbol,
@@ -123,19 +136,22 @@ def generate_stock_prediction(
     })
     
     if reference_date is None:
-        reference_date = datetime.now().date()
+        reference_date = now_utc.date()
         
-    # 1. Collect News if not passed
+    ref_date_str = reference_date.strftime("%Y-%m-%d")
+    target_date_str = target_trade_date or ref_date_str
+        
+    # 1. Collect News with strict point-in-time cutoff
     if news_articles is None:
-        news_articles = fetch_stock_news(symbol, max_items=12)
+        news_articles = fetch_stock_news(symbol, max_items=12, cutoff_dt=data_cutoff_dt)
     if macro_articles is None:
-        macro_articles = fetch_macro_news(max_items=8)
+        macro_articles = fetch_macro_news(max_items=8, cutoff_dt=data_cutoff_dt)
         
     # 2. Analyze Sentiments
     stock_sentiment = analyze_news_sentiment(news_articles)
     macro_sentiment = analyze_news_sentiment(macro_articles)
     
-    # 3. Events
+    # 3. Events with strict point-in-time calendar
     stock_events = get_stock_events(symbol, reference_date=reference_date, window_days=14)
     macro_events = get_macro_events(reference_date=reference_date, window_days=14)
     
@@ -151,34 +167,25 @@ def generate_stock_prediction(
     beta = stock_meta.get("beta", 1.0)
     
     # 5. Core Multi-Factor Algo Formulation
-    # Polarity is [-1.0, 1.0]
     stock_pol = stock_sentiment["avg_polarity"]
     macro_pol = macro_sentiment["avg_polarity"]
     
-    # News surge factor (more articles = higher signal weight)
     volume_factor = min(1.3, 0.8 + (stock_sentiment["total_articles"] * 0.05))
     
-    # Combined Expected Return Component (1-Day baseline)
-    # Weight: 60% Stock News Sentiment, 20% Macro Sentiment, 20% Discrete Event Impact
     weighted_sentiment_move = (
         (stock_pol * 0.018 * beta * volume_factor) +
         (macro_pol * 0.008 * beta) +
         (event_impact * 0.6)
     )
     
-    # Bound expected 1D move to realistic equity bounds (e.g. max +- 3.5%)
     expected_1d_pct = max(-0.035, min(0.035, weighted_sentiment_move))
-    
-    # 3D and 7D projections with time scaling (sqrt(T) for volatility, linear drift with dampening)
     expected_3d_pct = max(-0.065, min(0.065, expected_1d_pct * 1.85))
     expected_7d_pct = max(-0.095, min(0.095, expected_1d_pct * 2.80))
     
-    # Target Prices
     target_1d = round(base_price * (1.0 + expected_1d_pct), 2)
     target_3d = round(base_price * (1.0 + expected_3d_pct), 2)
     target_7d = round(base_price * (1.0 + expected_7d_pct), 2)
     
-    # Target Price Ranges (Low - High Bands based on ATR & horizon)
     band_1d = base_price * daily_vol * 1.2
     band_3d = base_price * daily_vol * math.sqrt(3) * 1.3
     band_7d = base_price * daily_vol * math.sqrt(7) * 1.4
@@ -210,15 +217,13 @@ def generate_stock_prediction(
         direction = "NEUTRAL"
         action = "HOLD"
         
-    # Conviction Score (0-100%)
     sentiment_agreement = 1.0 if (stock_pol * macro_pol >= 0) else 0.8
     conviction = round(min(96.0, max(45.0, (stock_sentiment["confidence"] * 0.7 + (abs(stock_pol) * 35.0)) * sentiment_agreement)), 1)
     
-    # 7. Synthesis Reasoning Engine (Natural Language Narrative)
+    # 7. Synthesis Reasoning Engine
     catalysts = stock_sentiment.get("key_catalysts", [])
     risks = stock_sentiment.get("risk_factors", [])
     
-    # If empty, add standard drivers
     if not catalysts:
         catalysts = [f"Sector tailwinds in {stock_meta['sector']}", f"Stable fundamental driver: {stock_meta['key_drivers'][0]}"]
     if not risks:
@@ -244,9 +249,67 @@ def generate_stock_prediction(
         "event_notes": event_notes[:2]
     }
     
+    # 8. Cryptographic Snapshot & Immutable Data Provenance
+    clean_sym_code = symbol.replace(".NS", "")
+    target_clean = target_date_str.replace("-", "")
+    prediction_id = f"PRED-{target_clean}-{clean_sym_code}-v{MODEL_VERSION}"
+    
+    news_provenance = [
+        {
+            "title": art.get("title"),
+            "source": art.get("source"),
+            "pub_date": art.get("pub_date"),
+            "url": art.get("url"),
+            "sentiment_score": art.get("sentiment_score", 0.0)
+        }
+        for art in stock_sentiment.get("annotated_articles", [])[:10]
+    ]
+    
+    hash_payload = {
+        "prediction_id": prediction_id,
+        "symbol": symbol,
+        "base_price": base_price,
+        "model_version": MODEL_VERSION,
+        "data_cutoff": data_cutoff_dt.isoformat(),
+        "sentiment_score": round(stock_pol, 4),
+        "macro_sentiment_score": round(macro_pol, 4),
+        "event_impact": round(event_impact, 4),
+        "beta": beta,
+        "daily_volatility": round(daily_vol, 5),
+        "expected_1d_pct": round(expected_1d_pct * 100, 2),
+        "target_1d": target_1d,
+        "news_titles": [n["title"] for n in news_provenance]
+    }
+    
+    snapshot_hash = hashlib.sha256(json.dumps(hash_payload, sort_keys=True).encode("utf-8")).hexdigest()
+    
+    provenance = {
+        "prediction_id": prediction_id,
+        "model_version": MODEL_VERSION,
+        "snapshot_hash": snapshot_hash,
+        "generated_at": now_utc.isoformat(),
+        "data_cutoff": data_cutoff_dt.isoformat(),
+        "news_count": stock_sentiment["total_articles"],
+        "news_sources_used": list(set([n.get("source", "Google News") for n in news_provenance])),
+        "news_articles": news_provenance,
+        "events_used": event_notes,
+        "factor_breakdown": {
+            "stock_sentiment_polarity": round(stock_pol, 4),
+            "macro_sentiment_polarity": round(macro_pol, 4),
+            "event_impact_vector": round(event_impact, 4),
+            "market_beta": beta,
+            "daily_volatility": round(daily_vol, 5)
+        }
+    }
+    
     return {
-        "timestamp": datetime.now().isoformat(),
-        "date": reference_date.strftime("%Y-%m-%d"),
+        "prediction_id": prediction_id,
+        "model_version": MODEL_VERSION,
+        "snapshot_hash": snapshot_hash,
+        "data_cutoff": data_cutoff_dt.isoformat(),
+        "timestamp": now_utc.isoformat(),
+        "date": ref_date_str,
+        "target_trade_date": target_date_str,
         "symbol": symbol,
         "company_name": stock_meta["name"],
         "short_name": stock_meta["short_name"],
@@ -270,7 +333,8 @@ def generate_stock_prediction(
         "range_3d": range_3d,
         "range_7d": range_7d,
         "reasoning": reasoning,
-        "news_articles": stock_sentiment.get("annotated_articles", [])[:5],
+        "provenance": provenance,
+        "news_articles": news_provenance,
         "occurred_events": stock_events["occurred"],
         "upcoming_events": stock_events["upcoming"]
     }
@@ -278,21 +342,30 @@ def generate_stock_prediction(
 
 from concurrent.futures import ThreadPoolExecutor
 
-def generate_all_predictions(reference_date: Optional[date] = None) -> List[Dict[str, Any]]:
+def generate_all_predictions(
+    reference_date: Optional[date] = None,
+    data_cutoff_dt: Optional[datetime] = None,
+    target_trade_date: Optional[str] = None
+) -> List[Dict[str, Any]]:
     """
-    Run prediction engine across all 10 Nifty 50 universe stocks concurrently for high throughput.
+    Run prediction engine across all 10 Nifty 50 universe stocks concurrently with point-in-time cutoff.
     """
+    now_utc = datetime.now(timezone.utc)
     if reference_date is None:
-        reference_date = datetime.now().date()
+        reference_date = now_utc.date()
+    if data_cutoff_dt is None:
+        data_cutoff_dt = now_utc
         
-    macro_articles = fetch_macro_news(max_items=8)
+    macro_articles = fetch_macro_news(max_items=8, cutoff_dt=data_cutoff_dt)
     symbols = list(NIFTY50_UNIVERSE.keys())
     
     def _predict(sym: str) -> Dict[str, Any]:
         return generate_stock_prediction(
             symbol=sym,
             macro_articles=macro_articles,
-            reference_date=reference_date
+            reference_date=reference_date,
+            data_cutoff_dt=data_cutoff_dt,
+            target_trade_date=target_trade_date
         )
         
     with ThreadPoolExecutor(max_workers=5) as executor:

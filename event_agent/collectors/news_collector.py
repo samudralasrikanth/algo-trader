@@ -34,9 +34,9 @@ def parse_pub_date(pub_date_str: str) -> Optional[datetime]:
         return None
 
 
-def fetch_google_news_rss(query: str, max_items: int = 15) -> List[Dict[str, Any]]:
+def fetch_google_news_rss(query: str, max_items: int = 15, cutoff_dt: Optional[datetime] = None) -> List[Dict[str, Any]]:
     """
-    Fetch news from Google News RSS for India region (zero API key needed).
+    Fetch news from Google News RSS for India region with strict point-in-time cutoff filtering.
     """
     encoded_query = urllib.parse.quote(query)
     url = f"https://news.google.com/rss/search?q={encoded_query}&hl=en-IN&gl=IN&ceid=IN:en"
@@ -45,6 +45,9 @@ def fetch_google_news_rss(query: str, max_items: int = 15) -> List[Dict[str, Any
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "application/rss+xml, application/xml, text/xml, */*"
     }
+    
+    if cutoff_dt and cutoff_dt.tzinfo is None:
+        cutoff_dt = cutoff_dt.replace(tzinfo=timezone.utc)
     
     articles = []
     try:
@@ -76,6 +79,10 @@ def fetch_google_news_rss(query: str, max_items: int = 15) -> List[Dict[str, Any
                 pub_dt = parse_pub_date(pub_date_str)
                 description = clean_html(desc_elem.text) if desc_elem is not None and desc_elem.text else ""
                 
+                # Strict point-in-time data cutoff check: reject future leaks
+                if cutoff_dt and pub_dt and pub_dt > cutoff_dt:
+                    continue
+                
                 if clean_title:
                     articles.append({
                         "title": clean_title,
@@ -89,24 +96,21 @@ def fetch_google_news_rss(query: str, max_items: int = 15) -> List[Dict[str, Any
                 
                 if len(articles) >= max_items:
                     break
-    except Exception as e:
-        # Fallback graceful fail
+    except Exception:
         pass
         
     return articles
 
 
-def fetch_stock_news(symbol: str, max_items: int = 15) -> List[Dict[str, Any]]:
+def fetch_stock_news(symbol: str, max_items: int = 15, cutoff_dt: Optional[datetime] = None) -> List[Dict[str, Any]]:
     """
-    Fetch aggregated news for a specific Nifty 50 stock across its key search terms.
+    Fetch aggregated news for a specific Nifty 50 stock across its key search terms with strict cutoff.
     """
     stock_info = NIFTY50_UNIVERSE.get(symbol)
     if not stock_info:
-        # Generic query
         clean_sym = symbol.replace(".NS", "")
         queries = [f"{clean_sym} NSE stock news"]
     else:
-        # Use company name and specific search terms
         queries = [
             f"{stock_info['short_name']} share price NSE",
             f"{stock_info['name']} quarterly results revenue profit",
@@ -116,7 +120,7 @@ def fetch_stock_news(symbol: str, max_items: int = 15) -> List[Dict[str, Any]]:
     seen_titles = set()
     
     for q in queries:
-        items = fetch_google_news_rss(q, max_items=max_items)
+        items = fetch_google_news_rss(q, max_items=max_items, cutoff_dt=cutoff_dt)
         for item in items:
             norm_title = re.sub(r'[^a-zA-Z0-9]', '', item['title'].lower())
             if norm_title and norm_title not in seen_titles:
@@ -129,15 +133,15 @@ def fetch_stock_news(symbol: str, max_items: int = 15) -> List[Dict[str, Any]]:
     return all_articles[:max_items]
 
 
-def fetch_macro_news(max_items: int = 10) -> List[Dict[str, Any]]:
+def fetch_macro_news(max_items: int = 10, cutoff_dt: Optional[datetime] = None) -> List[Dict[str, Any]]:
     """
-    Fetch broad Indian macroeconomic and market-wide headlines (RBI, Nifty, CPI).
+    Fetch broad Indian macroeconomic and market-wide headlines with strict cutoff.
     """
     all_macro = []
     seen = set()
     
     for q in MACRO_SEARCH_TERMS[:3]:
-        items = fetch_google_news_rss(q, max_items=5)
+        items = fetch_google_news_rss(q, max_items=5, cutoff_dt=cutoff_dt)
         for item in items:
             norm_title = re.sub(r'[^a-zA-Z0-9]', '', item['title'].lower())
             if norm_title and norm_title not in seen:

@@ -24,7 +24,7 @@
         <div class="brand-icon">⚡</div>
         <div>
           <div class="brand-title">Nifty 50 Event Intelligence</div>
-          <div class="brand-subtitle">Fundamental Predictions & Causal Factor Attribution</div>
+          <div class="brand-subtitle">Zero-Paid-API Fundamental Predictions & Causal Factor Attribution</div>
         </div>
       </div>
 
@@ -246,9 +246,53 @@
 
     </main>
 
+    <!-- Data Provenance & Cryptographic Snapshot Modal -->
+    <div id="provenance-modal" class="modal-overlay" onclick="closeProvenanceModal(event)">
+      <div class="modal-card" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <div class="modal-title" id="modal-stock-title">Stock Provenance</div>
+            <div style="font-size: 12px; color: var(--text-muted);" id="modal-prediction-id">PRED-ID</div>
+          </div>
+          <button class="modal-close-btn" onclick="closeProvenanceModalDirect()">&times;</button>
+        </div>
+
+        <div class="hash-badge">
+          <span style="font-weight: 700; color: var(--primary);">SHA-256 Digest:</span>
+          <span id="modal-hash-val">--</span>
+        </div>
+
+        <div class="provenance-grid">
+          <div class="provenance-item">
+            <div class="label">Data Cutoff Timestamp</div>
+            <div class="val" id="modal-cutoff-val">--</div>
+          </div>
+          <div class="provenance-item">
+            <div class="label">Model Version</div>
+            <div class="val" id="modal-version-val">2.1.0</div>
+          </div>
+          <div class="provenance-item">
+            <div class="label">Articles Ingested</div>
+            <div class="val" id="modal-articles-count">--</div>
+          </div>
+          <div class="provenance-item">
+            <div class="label">Sentiment Polarity / Beta</div>
+            <div class="val" id="modal-factor-val">--</div>
+          </div>
+        </div>
+
+        <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px; color: var(--text-main);">
+          📰 Verifiable News Articles Ingested at Cutoff Time:
+        </div>
+        <div class="articles-list" id="modal-articles-list">
+          <!-- Injected via JavaScript -->
+        </div>
+      </div>
+    </div>
+
     <!-- Footer -->
     <footer>
-      Nifty 50 Event & News-Driven Autonomous Trading Agent • Supabase Cloud DB • Netlify
+      Nifty 50 Event & News-Driven Autonomous Trading Agent • Zero-Paid-API • Supabase Cloud DB • Netlify
     </footer>
 
   </div>
