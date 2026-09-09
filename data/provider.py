@@ -107,3 +107,5 @@ def _build_shoonya():
         api_secret=required["SHOONYA_API_SECRET"],
         imei=os.getenv("SHOONYA_IMEI", "algo-trader-1.0"),
     )
+
+get_broker_adapter = get_broker

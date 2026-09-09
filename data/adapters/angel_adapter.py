@@ -85,7 +85,7 @@ class AngelAdapter(BrokerAdapter):
         # Connect on initialization if credentials present
         if all([self.api_key, self.client_code, self.pin, self.totp_secret]):
             self._login()
-            self._load_scrip_master()
+            threading.Thread(target=self._load_scrip_master, daemon=True).start()
 
     def _login(self) -> None:
         """Generate JWT auth token using Client Code, MPIN, and TOTP."""
