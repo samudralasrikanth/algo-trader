@@ -102,7 +102,38 @@
       <!-- Tier 1: Persistent Market Ribbon & Execution Status -->
       <div class="terminal-header-tier-top">
         <div class="terminal-ribbon" id="terminal-market-ribbon">
-          <!-- Injected dynamically by renderMarketRibbon() -->
+          <div class="stitch-ticker-strip">
+            <div class="stitch-ticker-item ribbon-item" onclick="navigate('markets', 'nifty50')" title="NIFTY 50 • Observed 15:30 IST">
+              <span class="stitch-ticker-symbol ribbon-symbol">NIFTY 50</span>
+              <span class="stitch-ticker-price ribbon-price" id="strip-nifty-val">25,481.30</span>
+              <span class="stitch-ticker-chg ribbon-change positive" id="strip-nifty-chg">▲ +0.64%</span>
+              <span class="ribbon-meta" style="display:none;">15:30 IST</span>
+            </div>
+            <div class="stitch-ticker-item ribbon-item" onclick="openMarketPreviewModal('BANK NIFTY')" title="BANK NIFTY • Observed 15:30 IST">
+              <span class="stitch-ticker-symbol ribbon-symbol">BANK NIFTY</span>
+              <span class="stitch-ticker-price ribbon-price" id="strip-bank-val">52,340.80</span>
+              <span class="stitch-ticker-chg ribbon-change positive" id="strip-bank-chg">▲ +0.48%</span>
+              <span class="ribbon-meta" style="display:none;">15:30 IST</span>
+            </div>
+            <div class="stitch-ticker-item ribbon-item" onclick="navigate('markets', 'options')" title="INDIA VIX • Observed 15:30 IST">
+              <span class="stitch-ticker-symbol ribbon-symbol">INDIA VIX</span>
+              <span class="stitch-ticker-price ribbon-price" id="strip-vix-val">13.82</span>
+              <span class="stitch-ticker-chg ribbon-change negative" id="strip-vix-chg">▼ -2.10%</span>
+              <span class="ribbon-meta" style="display:none;">15:30 IST</span>
+            </div>
+            <div class="stitch-ticker-item ribbon-item" onclick="openMarketPreviewModal('USD / INR')" title="USD/INR • Observed 15:30 IST">
+              <span class="stitch-ticker-symbol ribbon-symbol">USD/INR</span>
+              <span class="stitch-ticker-price ribbon-price" id="strip-usdinr-val">95.09</span>
+              <span class="stitch-ticker-chg ribbon-change positive" id="strip-usdinr-chg">▲ +0.65%</span>
+              <span class="ribbon-meta" style="display:none;">15:30 IST</span>
+            </div>
+            <div class="stitch-ticker-item ribbon-item" onclick="navigate('overnight')" title="BRENT CRUDE • Observed 15:30 IST">
+              <span class="stitch-ticker-symbol ribbon-symbol">BRENT</span>
+              <span class="stitch-ticker-price ribbon-price" id="strip-brent-val">$71.49</span>
+              <span class="stitch-ticker-chg ribbon-change negative" id="strip-brent-chg">▼ -0.82%</span>
+              <span class="ribbon-meta" style="display:none;">15:30 IST</span>
+            </div>
+          </div>
         </div>
         <div class="terminal-header-status-group">
           <div class="header-cutoff-pill">

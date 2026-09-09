@@ -109,6 +109,7 @@ body {
   top: 0;
   z-index: 100;
   background-color: var(--bg-surface);
+  border-top: 2px solid #5a5be7; /* Stitch vivid top purple accent line */
   border-bottom: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
   display: flex;
@@ -117,7 +118,7 @@ body {
 
 .terminal-header-tier-top {
   height: 36px;
-  background-color: var(--bg-surface-secondary);
+  background-color: #eff4ff; /* Stitch surface-container-low */
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
@@ -133,8 +134,73 @@ body {
   height: 100%;
   padding: 0;
   flex: 1;
+  display: flex;
+  align-items: center;
   overflow-x: auto;
   white-space: nowrap;
+  scrollbar-width: none;
+}
+.terminal-header-tier-top .terminal-ribbon::-webkit-scrollbar {
+  display: none;
+}
+
+.stitch-ticker-strip {
+  display: flex;
+  align-items: center;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+
+.stitch-ticker-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  border-right: 1px solid var(--border, #c6c6cd);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.stitch-ticker-item:first-child {
+  padding-left: 0;
+}
+
+.stitch-ticker-item:last-child {
+  border-right: none;
+}
+
+.stitch-ticker-item:hover {
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+.stitch-ticker-symbol {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: #45464d;
+  text-transform: uppercase;
+}
+
+.stitch-ticker-price {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0b1c30;
+}
+
+.stitch-ticker-chg {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.stitch-ticker-chg.positive {
+  color: #069669;
+}
+
+.stitch-ticker-chg.negative {
+  color: #ba1a1a;
 }
 
 .terminal-header-status-group {
