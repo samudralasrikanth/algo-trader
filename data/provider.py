@@ -47,10 +47,25 @@ def get_broker() -> "BrokerAdapter":
 
     if broker == "shoonya":
         return _build_shoonya()
+    elif broker in ("angel", "angelone"):
+        return _build_angel()
     elif broker == "yfinance":
         return _build_yfinance()
     else:
         return _build_kite()
+
+def _build_angel():
+    from data.adapters.angel_adapter import AngelAdapter
+    api_key = os.getenv("ANGEL_API_KEY", "")
+    client_code = os.getenv("ANGEL_CLIENT_CODE", "")
+    pin = os.getenv("ANGEL_PIN", "")
+    totp_secret = os.getenv("ANGEL_TOTP_SECRET", "")
+    return AngelAdapter(
+        api_key=api_key,
+        client_code=client_code,
+        pin=pin,
+        totp_secret=totp_secret,
+    )
 
 def _build_yfinance():
     from data.adapters.yfinance_adapter import YFinanceAdapter
