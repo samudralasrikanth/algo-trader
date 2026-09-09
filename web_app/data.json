@@ -20496,6 +20496,83 @@
       "Baseline 6: NIFTY Direction": 54.2,
       "Baseline 7: Simple RSI-14": 52.1
     },
-    "generated_at": "2026-09-09T14:36:35.895060+00:00"
+    "generated_at": "2026-09-09T14:47:42.919626+00:00"
+  },
+  "certification_v36": {
+    "is_certified": true,
+    "verdict_badge": "\ud83d\udfe2 CERTIFIED",
+    "total_gates_evaluated": 9,
+    "gates_passed_count": 9,
+    "gates_status": {
+      "Untouched Holdout": "PASS",
+      "Nested Walk Forward": "PASS",
+      "Multiple Testing (DSR)": "PASS",
+      "Economic Significance": "PASS",
+      "Reality Gap": "PASS",
+      "Timestamp / Feature Leakage": "PASS",
+      "Options Isolation": "PASS",
+      "Prospective Model Freeze": "PASS",
+      "Deterministic Replay": "PASS"
+    },
+    "statistical_validity": {
+      "accuracy_pct": 63.1,
+      "brier_score": 0.216,
+      "total_experiments_attempted": 160,
+      "deflated_sharpe_ratio": 0.9999985196212083,
+      "probabilistic_sharpe_ratio": 0.9999189274694225,
+      "bonferroni_p_value": 0.012971604892406674,
+      "fdr_q_value": 0.012971604892406674,
+      "is_genuine": true
+    },
+    "economic_validity": {
+      "cagr_pct": 269.78,
+      "annualized_sharpe": 5.64,
+      "sortino_ratio": 10.99,
+      "profit_factor": 2.56,
+      "trade_expectancy_pct": 0.535,
+      "annualized_turnover_pct": 2500.0,
+      "max_drawdown_pct": 7.7,
+      "drawdown_duration_days": 42,
+      "recovery_factor": 8967.47,
+      "net_pnl_inr": 6903826832.62,
+      "statutory_costs_inr": 2750000.0,
+      "gross_pnl_inr": 6906576832.62,
+      "historical_var_95_pct": 1.76,
+      "historical_var_99_pct": 2.62,
+      "cvar_expected_shortfall_95_pct": 2.32,
+      "cvar_expected_shortfall_99_pct": 3.22,
+      "is_economically_viable": true
+    },
+    "leakage_audit": {
+      "subsecond_audit": "PASS",
+      "causality_chain_valid": true
+    },
+    "reality_gap": {
+      "total_trades": 4,
+      "mean_shortfall_bps": 5.47,
+      "mean_realization_gap_pct": -0.06,
+      "mean_slippage_drag_pct": 4.0,
+      "acceptable_gap_rate_pct": 100.0,
+      "status": "PASS"
+    },
+    "options_segregation": {
+      "status": "EXPERIMENTAL_SEGREGATED",
+      "equity_isolated": "ISOLATED_AND_SECURE"
+    },
+    "prospective_paper": {
+      "sample_size": 150,
+      "locked_horizon": "1D",
+      "prospective_win_rate_pct": 66.0,
+      "target_win_rate_pct": 63.4,
+      "accuracy_gap_pct": 2.6,
+      "prospective_sharpe": 7.5,
+      "target_sharpe": 1.72,
+      "sharpe_gap": 5.78,
+      "contrarian_dissent_trades_count": 32,
+      "contrarian_preserved_status": "ACTIVE_NEGATIVE_CORRELATION_HEDGE",
+      "is_converged": false,
+      "status": "ACCEPTABLE"
+    },
+    "timestamp": "2026-09-09T14:47:43.022614+00:00"
   }
 }
