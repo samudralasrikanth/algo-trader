@@ -1,4 +1,4 @@
-window.NEXUS_DATA = {
+window.INITIAL_DATA = {
   "metadata": {
     "generated_at": "2026-09-09T13:11:56.080815+00:00",
     "system_name": "NEXUS AI \u2014 ENTERPRISE MULTI-ASSET INVESTMENT INTELLIGENCE",
@@ -20530,7 +20530,7 @@ window.NEXUS_DATA = {
       "Baseline 6: NIFTY Direction": 54.2,
       "Baseline 7: Simple RSI-14": 52.1
     },
-    "generated_at": "2026-09-09T15:26:38.846850+00:00"
+    "generated_at": "2026-09-09T15:53:16.538465+00:00"
   },
   "certification_v36": {
     "is_certified": true,
@@ -20607,7 +20607,7 @@ window.NEXUS_DATA = {
       "is_converged": false,
       "status": "ACCEPTABLE"
     },
-    "timestamp": "2026-09-09T15:26:55.226519+00:00"
+    "timestamp": "2026-09-09T15:53:35.589462+00:00"
   },
   "job_runs_ledger": [
     {
