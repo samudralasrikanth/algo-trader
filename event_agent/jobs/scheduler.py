@@ -41,6 +41,7 @@ from .international_collection import InternationalDataCollector
 from .commodity_collection import CommodityDataCollector
 from .news_collection import NewsIntelligenceCollector
 from .intelligence_collection import OvernightIntelligenceEngine
+from risk.risk_invariants import evaluate_risk_invariants
 
 logger = logging.getLogger(__name__)
 
@@ -218,6 +219,7 @@ class OvernightScheduler:
         )
         try:
             mkt_data = MarketCloseCollector.collect_all_benchmarks()
+            mkt_tel = MarketCloseCollector.get_last_telemetry()
             self.ledger.complete_run(
                 run_id=sub_mkt.run_id,
                 status="SUCCESS",
@@ -229,6 +231,7 @@ class OvernightScheduler:
                 sources_failed=1 if mkt_data["succeeded"] == 0 else 0,
                 data_quality="HEALTHY" if mkt_data["failed"] == 0 else "DEGRADED",
                 snapshot_data=mkt_data,
+                api_telemetry=mkt_tel,
             )
             sources_succeeded += 1
             total_records_fetched += mkt_data["total"]
@@ -310,6 +313,7 @@ class OvernightScheduler:
         )
         try:
             comm_data = CommodityDataCollector.collect_precious_metals()
+            comex_tel = CommodityDataCollector.get_last_telemetry()
             self.ledger.complete_run(
                 run_id=sub_comm.run_id,
                 status="SUCCESS",
@@ -321,6 +325,7 @@ class OvernightScheduler:
                 sources_failed=0,
                 data_quality="HEALTHY",
                 snapshot_data=comm_data,
+                api_telemetry=comex_tel,
             )
             sources_succeeded += 1
             total_records_fetched += 8
@@ -490,69 +495,36 @@ class OvernightScheduler:
             overall_status = "FAILED"
             overall_quality = "UNAVAILABLE"
 
-        # Truthful API connectivity audit records
-        api_telemetry_table = [
-            {
-                "feed": "NSE India Equity & Indices",
-                "http_status": 200 if mkt_data.get("succeeded", 0) > 0 else 503,
-                "schema_validation": "PASS" if mkt_data.get("succeeded", 0) > 0 else "FAIL",
-                "records_ingested": mkt_data.get("total", 51),
-                "records_persisted": mkt_data.get("succeeded", 51),
-                "freshness": "LIVE",
-                "fallback": "None",
-                "error": None,
-            },
-            {
-                "feed": "News RSS (Google Financial)",
-                "http_status": 200 if len(news_dicts) > 0 else 503,
-                "schema_validation": "PASS" if len(news_dicts) > 0 else "FAIL",
-                "records_ingested": len(news_dicts),
-                "records_persisted": len(news_dicts),
-                "freshness": "Current",
-                "fallback": "None",
-                "error": None,
-            },
-            {
-                "feed": "OpenRouter AI Intelligence",
-                "http_status": 200 if ai_status == "SUCCESS" else (401 if ai_status == "FAILED" and "401" in str(ai_telemetry.get("error_reason", "")) else ("—" if ai_status == "NOT_CONFIGURED" else 500)),
-                "schema_validation": "PASS" if ai_status == "SUCCESS" else ("NOT CONFIGURED" if ai_status == "NOT_CONFIGURED" else "FAIL"),
-                "records_ingested": len(news_dicts) if ai_status == "SUCCESS" else 0,
-                "records_persisted": len(news_dicts) if ai_status == "SUCCESS" else 0,
-                "freshness": "Current" if ai_status == "SUCCESS" else "—",
-                "fallback": "None" if ai_status == "SUCCESS" else "HEURISTIC BASELINE",
-                "error": ai_telemetry.get("error_reason") if ai_status == "FAILED" else (None if ai_status == "SUCCESS" else "OPENROUTER_API_KEY not configured"),
-            },
-            {
-                "feed": "COMEX Gold Continuous Futures",
-                "http_status": 200,
-                "schema_validation": "PASS",
-                "records_ingested": 1,
-                "records_persisted": 1,
-                "freshness": "DELAYED",
-                "fallback": "None",
-                "error": None,
-            },
-            {
-                "feed": "dP Gold Physical Bullion",
-                "http_status": "—",
-                "schema_validation": "NOT CONFIGURED",
-                "records_ingested": "—",
-                "records_persisted": "—",
-                "freshness": "UNAVAILABLE",
-                "fallback": "None",
-                "error": "Awaiting authorized feed",
-            },
-        ]
+        # Truthful API connectivity audit records strictly gathered from collector executions
+        mkt_tel = MarketCloseCollector.get_last_telemetry()
+        rss_tel = NewsIntelligenceCollector.get_last_rss_telemetry()
+        openrouter_tel = NewsIntelligenceCollector.get_last_openrouter_telemetry()
+        comex_tel = CommodityDataCollector.get_last_telemetry()
+        dp_gold_tel = {
+            "feed": "dP Gold Physical Bullion",
+            "http_status": "—",
+            "schema_validation": "NOT CONFIGURED",
+            "requests_attempted": 0,
+            "requests_succeeded": 0,
+            "requests_failed": 0,
+            "records_ingested": None,
+            "records_persisted": None,
+            "freshness": "UNAVAILABLE",
+            "fallback": "None",
+            "error": "Awaiting authorized feed",
+        }
+
+        api_telemetry_table = [mkt_tel, rss_tel, openrouter_tel, comex_tel, dp_gold_tel]
 
         snapshot_payload = {
-            "version": "V3.6.3_PRODUCTION",
+            "version": "V3.6.4_PRODUCTION",
             "run_id": parent_run.run_id,
             "captured_at": now.isoformat(),
             "classification": classification,
             "trigger_type": trigger_type,
             "sub_jobs": sub_jobs_summary,
             "api_telemetry": api_telemetry_table,
-            "openrouter_telemetry": ai_telemetry,
+            "openrouter_telemetry": openrouter_tel,
             "market_data": mkt_data,
             "international_data": intl_data,
             "commodity_data": comm_data,
@@ -572,6 +544,7 @@ class OvernightScheduler:
             data_quality=overall_quality,
             error_message="; ".join(errors) if errors else None,
             snapshot_data=snapshot_payload,
+            api_telemetry={"feeds": api_telemetry_table, "openrouter": openrouter_tel},
         )
 
         # ---------------------------------------------------------------------
@@ -646,6 +619,21 @@ class OvernightScheduler:
                 data["api_telemetry"] = api_telemetry
             if openrouter_telemetry:
                 data["openrouter_telemetry"] = openrouter_telemetry
+
+            # Dynamic Mathematical Risk Invariants
+            trades_series = list(data.get("successful_trades", [])) + list(data.get("failed_trades_prominent", []))
+            for o in data.get("orders", []):
+                trades_series.append({
+                    "entry_price": o.get("requested_price"),
+                    "exit_price": o.get("fill_price"),
+                    "pnl": 0.0,
+                })
+            data["risk_gates"] = evaluate_risk_invariants(
+                portfolio=data.get("portfolio"),
+                open_positions=data.get("open_positions", []),
+                trades=trades_series,
+                system_status=data.get("system_status", {"anti_leakage_verified": True}),
+            )
 
             # Global Data Freshness Summary across all individual feeds
             all_quotes = list(intl_data.get("quotes", {}).values()) + list(mkt_data.get("quotes", {}).values())

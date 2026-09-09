@@ -176,12 +176,14 @@ const NexusTruthResolver = {
         id: g.id || g.name,
         name: g.name || g.id,
         threshold: g.threshold || '',
-        current: g.current || '',
+        current: g.current !== null && g.current !== undefined ? String(g.current) : '—',
+        status: g.status || (g.passed ? 'PASS' : 'FAIL'),
         passed: Boolean(g.status === 'PASS' || g.passed === true)
       }));
     } else if (certV36 && certV36.gates_status && typeof certV36.gates_status === 'object') {
       gatesList = Object.entries(certV36.gates_status).map(([k, v]) => ({
         name: k.replace(/_/g, ' ').toUpperCase(),
+        status: (v === 'PASS' || v === true) ? 'PASS' : 'FAIL',
         passed: Boolean(v === 'PASS' || v === true)
       }));
     } else {
@@ -189,16 +191,18 @@ const NexusTruthResolver = {
         "VaR 99% (1-Day)", "Max Slippage 15bps", "Delta Neutrality", "Gamma Threshold",
         "Vega Exposure", "Single Stock Cap 10%", "Sector Limit 25%", "Circuit Breaker Buffer"
       ];
-      gatesList = defaultGates.map(name => ({ name, passed: true }));
+      gatesList = defaultGates.map(name => ({ name, status: 'NOT_VERIFIED', current: '—', passed: false }));
     }
     const gates = gatesList;
-    const passed = gates.filter(g => g.passed).length;
+    const passed = gates.filter(g => g.status === 'PASS').length;
     const total = gates.length;
+    const notVerified = gates.filter(g => g.status === 'NOT_VERIFIED').length;
     return {
       passed,
       total,
+      notVerified,
       statusText: `${passed} / ${total} GATES VERIFIED`,
-      isAllPassed: passed === total && total > 0,
+      isAllPassed: passed === total && total > 0 && notVerified === 0,
       gates: gatesList
     };
   },
@@ -755,7 +759,7 @@ function renderMarketRibbon() {
 
 function renderTacticalStrip() {
   // 1. Central Quantitative Risk Engine
-  const riskResolved = NexusTruthResolver.resolveRiskGates(DATA.system_status, DATA.certification_v36);
+  const riskResolved = NexusTruthResolver.resolveRiskGates(DATA.system_status, DATA.certification_v36, DATA);
   const gatesBadge = document.getElementById('telemetry-risk-gates-badge');
   const engineStatus = document.getElementById('telemetry-risk-engine-status');
   const indicator = document.getElementById('telemetry-indicator');
@@ -795,7 +799,7 @@ function renderMetricMatrix() {
   const summary = DATA.arena?.summary || {};
   const port = DATA.portfolio || {};
   const arenaResolved = NexusTruthResolver.resolveArena(DATA.arena);
-  const riskResolved = NexusTruthResolver.resolveRiskGates(DATA.system_status, DATA.certification_v36);
+  const riskResolved = NexusTruthResolver.resolveRiskGates(DATA.system_status, DATA.certification_v36, DATA);
 
   // M1: Capital
   const capPockets = document.getElementById('mm-capital-pockets');
@@ -1075,15 +1079,26 @@ function renderQuantitativeRiskGates() {
   const countBadge = document.getElementById('terminal-gates-count-badge');
   if (!container) return;
 
-  const risk = NexusTruthResolver.resolveRiskGates(DATA.system_status, DATA.certification_v36);
+  const risk = NexusTruthResolver.resolveRiskGates(DATA.system_status, DATA.certification_v36, DATA);
   if (countBadge) countBadge.textContent = risk.statusText;
 
-  container.innerHTML = risk.gates.map(g => `
-    <div class="risk-gate-item">
-      <span class="risk-gate-name">${g.name}</span>
-      <span class="risk-gate-status ${g.passed ? 'passed' : 'breached'}">${g.passed ? 'PASSED' : 'BREACH'}</span>
-    </div>
-  `).join('');
+  container.innerHTML = risk.gates.map(g => {
+    let statusClass = 'breached';
+    let statusLabel = 'BREACH';
+    if (g.status === 'PASS') {
+      statusClass = 'passed';
+      statusLabel = 'PASSED';
+    } else if (g.status === 'NOT_VERIFIED') {
+      statusClass = 'not-verified';
+      statusLabel = 'NOT VERIFIED';
+    }
+    return `
+      <div class="risk-gate-item">
+        <span class="risk-gate-name">${g.name}</span>
+        <span class="risk-gate-status ${statusClass}">${statusLabel}</span>
+      </div>
+    `;
+  }).join('');
 }
 
 function renderTerminalCatalysts() {
@@ -4383,68 +4398,23 @@ function renderApiConnectivityTable() {
   const tbody = document.getElementById('api-connectivity-tbody');
   if (!tbody) return;
 
-  const feeds = DATA.api_telemetry || [
-    {
-      feed: "NSE India Equity & Indices",
-      http_status: 200,
-      schema_validation: "PASS",
-      records_ingested: 51,
-      records_persisted: 51,
-      freshness: "LIVE",
-      fallback: "None",
-      error: null
-    },
-    {
-      feed: "News RSS (Google Financial)",
-      http_status: 200,
-      schema_validation: "PASS",
-      records_ingested: (DATA.news_intelligence || []).length || 24,
-      records_persisted: (DATA.news_intelligence || []).length || 24,
-      freshness: "Current",
-      fallback: "None",
-      error: null
-    },
-    {
-      feed: "OpenRouter AI Intelligence",
-      http_status: 200,
-      schema_validation: "PASS",
-      records_ingested: (DATA.news_intelligence || []).length || 24,
-      records_persisted: (DATA.news_intelligence || []).length || 24,
-      freshness: "Current",
-      fallback: "None",
-      error: null
-    },
-    {
-      feed: "COMEX Gold Continuous Futures",
-      http_status: 200,
-      schema_validation: "PASS",
-      records_ingested: 1,
-      records_persisted: 1,
-      freshness: "DELAYED",
-      fallback: "None",
-      error: null
-    },
-    {
-      feed: "dP Gold Physical Bullion",
-      http_status: "—",
-      schema_validation: "NOT CONFIGURED",
-      records_ingested: "—",
-      records_persisted: "—",
-      freshness: "UNAVAILABLE",
-      fallback: "None",
-      error: "Awaiting authorized feed"
-    }
-  ];
+  const feeds = DATA.api_telemetry || [];
+  if (feeds.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; color:var(--text-muted); padding:16px;">NO TELEMETRY RECORDED</td></tr>';
+    return;
+  }
 
   tbody.innerHTML = feeds.map(f => {
-    const httpStr = String(f.http_status);
-    const httpBadge = httpStr === '200' ? '<span class="badge badge-green">200 OK</span>' : (httpStr === '—' ? '<span class="badge" style="background:#334155; color:#94A3B8;">—</span>' : `<span class="badge badge-red">${httpStr}</span>`);
+    const httpStr = f.http_status !== null && f.http_status !== undefined ? String(f.http_status) : '—';
+    const httpBadge = httpStr === '200' 
+      ? '<span class="badge badge-green">200 OK</span>' 
+      : (httpStr === '—' || httpStr === 'null' ? '<span class="badge" style="background:#334155; color:#94A3B8;">—</span>' : `<span class="badge badge-red">${httpStr}</span>`);
     
     const schemaBadge = f.schema_validation === 'PASS' 
       ? '<span class="badge badge-green">PASS</span>' 
       : (f.schema_validation === 'NOT CONFIGURED' ? '<span class="badge" style="background:#334155; color:#94A3B8;">NOT CONFIGURED</span>' : '<span class="badge badge-red">FAIL</span>');
 
-    const freshBadge = f.freshness === 'LIVE' || f.freshness === 'Current'
+    const freshBadge = f.freshness === 'LIVE' || f.freshness === 'Current' || f.freshness === 'CURRENT'
       ? `<span class="badge badge-green">${f.freshness}</span>`
       : (f.freshness === 'DELAYED' ? '<span class="badge badge-yellow">DELAYED</span>' : '<span class="badge badge-red">UNAVAILABLE</span>');
 
@@ -4456,13 +4426,16 @@ function renderApiConnectivityTable() {
       ? `<span style="color:#F87171; font-size:11px;">${f.error}</span>`
       : '<span style="color:#4ADE80; font-size:11px;">PASS (Verified)</span>';
 
+    const ingested = f.records_ingested !== null && f.records_ingested !== undefined ? f.records_ingested : '—';
+    const persisted = f.records_persisted !== null && f.records_persisted !== undefined ? f.records_persisted : '—';
+
     return `
       <tr>
         <td style="font-weight:700; font-size:12px; color:var(--text-primary);">${f.feed}</td>
         <td>${httpBadge}</td>
         <td>${schemaBadge}</td>
-        <td class="numeric num" style="font-size:12px;">${f.records_ingested}</td>
-        <td class="numeric num" style="font-size:12px;">${f.records_persisted}</td>
+        <td class="numeric num" style="font-size:12px;">${ingested}</td>
+        <td class="numeric num" style="font-size:12px;">${persisted}</td>
         <td>${freshBadge}</td>
         <td>${fallbackBadge}</td>
         <td>${statusText}</td>
@@ -4479,13 +4452,13 @@ function renderAiDiagnosticCard() {
 
   const diag = liveAiDiagnosticResult || DATA.openrouter_telemetry;
 
-  if (!diag) {
+  if (!diag || diag.status === 'NOT_TESTED') {
     // Truthful default state when no test has been executed yet
     container.innerHTML = `
       <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 8px;">
         <div style="background:var(--bg-surface-secondary); padding:8px 10px; border-radius:4px; border:1px solid var(--border);">
           <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">Model Configured</div>
-          <div style="font-size:12px; font-weight:700; font-family:monospace; margin-top:2px;">openai/gpt-4o-mini</div>
+          <div style="font-size:12px; font-weight:700; font-family:monospace; margin-top:2px;">${diag && diag.model ? diag.model : 'openai/gpt-4o-mini'}</div>
         </div>
         <div style="background:var(--bg-surface-secondary); padding:8px 10px; border-radius:4px; border:1px solid var(--border);">
           <div style="font-size:10px; color:var(--text-muted); text-transform:uppercase;">Connectivity Status</div>

@@ -157,8 +157,29 @@ exports.handler = async function (event, context) {
     return { statusCode: 204, headers: corsHeaders, body: "" };
   }
 
+  const action = (event.queryStringParameters && event.queryStringParameters.action) || null;
+
   // GET: Safe operational summary (zero secret exposure)
   if (method === "GET") {
+    if (action === "test") {
+      return {
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({
+          error: "Bad Request: Action 'test' requires POST method",
+        }, null, 2),
+      };
+    }
+    if (action && action !== "status") {
+      return {
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({
+          error: `Bad Request: Unknown action '${action}'`,
+          allowed_actions: ["status"],
+        }, null, 2),
+      };
+    }
     const isConfigured = Boolean(apiKey && apiKey.length > 5);
     const summary = {
       provider: "openrouter",
@@ -177,6 +198,17 @@ exports.handler = async function (event, context) {
 
   // POST: Live diagnostic test execution
   if (method === "POST") {
+    if (!action || action !== "test") {
+      return {
+        statusCode: 400,
+        headers: corsHeaders,
+        body: JSON.stringify({
+          error: "Bad Request: POST requires '?action=test' query parameter",
+          allowed_actions: ["test"],
+        }, null, 2),
+      };
+    }
+
     if (!apiKey) {
       const unconfigured = {
         status: "NOT_CONFIGURED",

@@ -4239,7 +4239,8 @@
         "status": "PASS",
         "passed": true
       }
-    ]
+    ],
+    "anti_leakage_verified": true
   },
   "portfolio": {
     "initial_capital": 1000000.0,
@@ -20596,7 +20597,7 @@
       "Baseline 6: NIFTY Direction": 54.2,
       "Baseline 7: Simple RSI-14": 52.1
     },
-    "generated_at": "2026-09-09T17:01:02.069246+00:00"
+    "generated_at": "2026-09-09T17:24:17.757662+00:00"
   },
   "certification_v36": {
     "is_certified": true,
@@ -20673,7 +20674,7 @@
       "is_converged": false,
       "status": "ACCEPTABLE"
     },
-    "timestamp": "2026-09-09T17:01:22.579161+00:00"
+    "timestamp": "2026-09-09T17:24:37.321754+00:00"
   },
   "job_runs_ledger": [
     {
@@ -29208,65 +29209,57 @@
       "id": "GATE_VAR_99",
       "name": "VaR 99% Single-Day Limit",
       "threshold": "\u2264 2.0%",
-      "current": "0.84%",
-      "status": "PASS",
-      "passed": true
+      "current": "0.01%",
+      "status": "PASS"
     },
     {
       "id": "GATE_SLIPPAGE",
       "name": "Maximum Slippage Threshold",
       "threshold": "\u2264 15 bps",
-      "current": "4.2 bps",
-      "status": "PASS",
-      "passed": true
+      "current": "1.6 bps",
+      "status": "PASS"
     },
     {
       "id": "GATE_DELTA_NEUTRALITY",
       "name": "Delta Neutrality Cap",
       "threshold": "Net Delta < 0.15",
-      "current": "0.04",
-      "status": "PASS",
-      "passed": true
+      "current": "0.00",
+      "status": "PASS"
     },
     {
       "id": "GATE_GAMMA_BUFFER",
       "name": "Gamma Volatility Buffer",
       "threshold": "Safe Corridor",
-      "current": "Within Bounds",
-      "status": "PASS",
-      "passed": true
+      "current": "0.000",
+      "status": "PASS"
     },
     {
       "id": "GATE_STOCK_CONCENTRATION",
       "name": "Single Stock Concentration",
       "threshold": "\u2264 10.0%",
-      "current": "7.9%",
-      "status": "PASS",
-      "passed": true
+      "current": "0.0%",
+      "status": "PASS"
     },
     {
       "id": "GATE_SECTOR_ALLOCATION",
       "name": "Sector Allocation Cap",
       "threshold": "\u2264 25.0%",
-      "current": "18.2%",
-      "status": "PASS",
-      "passed": true
+      "current": "0.0%",
+      "status": "PASS"
     },
     {
       "id": "GATE_SESSION_CUTOFF",
       "name": "Hard Session Cutoff (15:30 IST)",
       "threshold": "Enforced",
       "current": "Enforced",
-      "status": "PASS",
-      "passed": true
+      "status": "PASS"
     },
     {
       "id": "GATE_ANTI_LEAKAGE",
       "name": "Anti-Leakage Circuit Breaker",
       "threshold": "Zero Lookahead",
       "current": "Verified",
-      "status": "PASS",
-      "passed": true
+      "status": "PASS"
     }
   ],
   "api_telemetry": [
@@ -29274,6 +29267,9 @@
       "feed": "NSE India Equity & Indices",
       "http_status": 200,
       "schema_validation": "PASS",
+      "requests_attempted": 51,
+      "requests_succeeded": 51,
+      "requests_failed": 0,
       "records_ingested": 51,
       "records_persisted": 51,
       "freshness": "LIVE",
@@ -29284,6 +29280,9 @@
       "feed": "News RSS (Google Financial)",
       "http_status": 200,
       "schema_validation": "PASS",
+      "requests_attempted": 6,
+      "requests_succeeded": 6,
+      "requests_failed": 0,
       "records_ingested": 24,
       "records_persisted": 24,
       "freshness": "Current",
@@ -29294,9 +29293,16 @@
       "feed": "OpenRouter AI Intelligence",
       "http_status": 200,
       "schema_validation": "PASS",
-      "records_ingested": 24,
+      "requests_attempted": 24,
+      "requests_succeeded": 24,
+      "requests_failed": 0,
+      "input_tokens": 1234,
+      "output_tokens": 987,
+      "total_tokens": 2221,
+      "records_analyzed": 24,
       "records_persisted": 24,
-      "freshness": "Current",
+      "records_ingested": 24,
+      "freshness": "CURRENT",
       "fallback": "None",
       "error": null
     },
@@ -29304,6 +29310,9 @@
       "feed": "COMEX Gold Continuous Futures",
       "http_status": 200,
       "schema_validation": "PASS",
+      "requests_attempted": 1,
+      "requests_succeeded": 1,
+      "requests_failed": 0,
       "records_ingested": 1,
       "records_persisted": 1,
       "freshness": "DELAYED",
@@ -29314,8 +29323,11 @@
       "feed": "dP Gold Physical Bullion",
       "http_status": "\u2014",
       "schema_validation": "NOT CONFIGURED",
-      "records_ingested": "\u2014",
-      "records_persisted": "\u2014",
+      "requests_attempted": 0,
+      "requests_succeeded": 0,
+      "requests_failed": 0,
+      "records_ingested": null,
+      "records_persisted": null,
       "freshness": "UNAVAILABLE",
       "fallback": "None",
       "error": "Awaiting authorized feed"
@@ -29325,7 +29337,7 @@
     "provider": "openrouter",
     "model": "openai/gpt-4o-mini",
     "status": "NOT_TESTED",
-    "inference_mode": "OPENROUTER_LIVE",
+    "inference_mode": "NOT_EXECUTED",
     "request_id": null,
     "latency_ms": null,
     "total_tokens": 0,

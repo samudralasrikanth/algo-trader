@@ -75,6 +75,7 @@ class JobRunRecord:
     trigger_type: str = "SCHEDULED"    # "SCHEDULED" | "MANUAL" | "RETRY" | "RECOVERY"
     run_classification: str = "OVERNIGHT"  # "POST_MARKET" | "OVERNIGHT" | "PRE_MARKET" | "AD_HOC"
     snapshot_data: Optional[str] = None  # Serialized JSON snapshot for replay
+    api_telemetry: Optional[Dict[str, Any]] = None  # Request-level & record-level audit evidence
     created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
     def to_dict(self) -> Dict[str, Any]:
@@ -84,6 +85,11 @@ class JobRunRecord:
                 d["snapshot_parsed"] = json.loads(self.snapshot_data)
             except Exception:
                 d["snapshot_parsed"] = None
+        if isinstance(self.api_telemetry, str):
+            try:
+                d["api_telemetry"] = json.loads(self.api_telemetry)
+            except Exception:
+                pass
         return d
 
 
@@ -140,6 +146,8 @@ class JobLedger:
                 conn.execute("ALTER TABLE job_runs ADD COLUMN run_classification TEXT DEFAULT 'OVERNIGHT'")
             if "snapshot_data" not in cols:
                 conn.execute("ALTER TABLE job_runs ADD COLUMN snapshot_data TEXT")
+            if "api_telemetry" not in cols:
+                conn.execute("ALTER TABLE job_runs ADD COLUMN api_telemetry TEXT")
             conn.commit()
 
     def create_run(
@@ -222,11 +230,13 @@ class JobLedger:
         data_quality: str,
         error_message: Optional[str] = None,
         snapshot_data: Optional[Dict[str, Any]] = None,
+        api_telemetry: Optional[Dict[str, Any]] = None,
     ) -> JobRunRecord:
-        """Completes an existing run with duration, metrics, and deterministic replay snapshot."""
+        """Completes an existing run with duration, metrics, deterministic replay snapshot, and API telemetry."""
         now = datetime.now(timezone.utc)
         completed_at_iso = now.isoformat()
         snapshot_json = json.dumps(snapshot_data) if snapshot_data else None
+        telemetry_json = json.dumps(api_telemetry) if api_telemetry else None
 
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.execute("SELECT started_at FROM job_runs WHERE run_id = ?", (run_id,))
@@ -251,14 +261,15 @@ class JobLedger:
                     sources_failed = ?,
                     data_quality = ?,
                     error_message = ?,
-                    snapshot_data = ?
+                    snapshot_data = ?,
+                    api_telemetry = ?
                 WHERE run_id = ?
                 """,
                 (
                     completed_at_iso, duration_ms, status, records_fetched,
                     records_processed, records_rejected, sources_attempted,
                     sources_succeeded, sources_failed, data_quality,
-                    error_message, snapshot_json, run_id,
+                    error_message, snapshot_json, telemetry_json, run_id,
                 ),
             )
             conn.commit()
@@ -280,7 +291,7 @@ class JobLedger:
         "records_fetched, records_processed, records_rejected, "
         "sources_attempted, sources_succeeded, sources_failed, "
         "data_quality, error_message, config_hash, code_commit, "
-        "snapshot_data, created_at"
+        "snapshot_data, api_telemetry, created_at"
     )
 
     def get_run_by_id(self, run_id: str) -> Optional[JobRunRecord]:
@@ -486,8 +497,14 @@ class JobLedger:
             logger.debug("Local cache upsert warning: %s", e)
 
     def _row_to_record(self, row: tuple) -> JobRunRecord:
-        # Handles both 18-col legacy schema and 22-col upgraded schema
-        if len(row) == 22:
+        # Handles 23-col schema (with api_telemetry), 22-col schema, and 18-col legacy schema
+        if len(row) == 23:
+            tel = row[21]
+            if isinstance(tel, str):
+                try:
+                    tel = json.loads(tel)
+                except Exception:
+                    pass
             return JobRunRecord(
                 id=row[0],
                 run_id=row[1],
@@ -510,6 +527,33 @@ class JobLedger:
                 config_hash=row[18],
                 code_commit=row[19],
                 snapshot_data=row[20],
+                api_telemetry=tel,
+                created_at=row[22],
+            )
+        elif len(row) == 22:
+            return JobRunRecord(
+                id=row[0],
+                run_id=row[1],
+                parent_run_id=row[2],
+                trigger_type=row[3] or "SCHEDULED",
+                run_classification=row[4] or "OVERNIGHT",
+                job_name=row[5],
+                started_at=row[6],
+                completed_at=row[7],
+                duration_ms=row[8],
+                status=row[9],
+                records_fetched=row[10],
+                records_processed=row[11],
+                records_rejected=row[12],
+                sources_attempted=row[13],
+                sources_succeeded=row[14],
+                sources_failed=row[15],
+                data_quality=row[16],
+                error_message=row[17],
+                config_hash=row[18],
+                code_commit=row[19],
+                snapshot_data=row[20],
+                api_telemetry=None,
                 created_at=row[21],
             )
         else:

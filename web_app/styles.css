@@ -2798,6 +2798,10 @@ input:focus-visible {
   background: rgba(244, 63, 94, 0.15);
   color: var(--danger);
 }
+.risk-gate-status.not-verified {
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--text-muted);
+}
 
 /* 9. AI Agent Arena List (Right Rail) */
 .arena-card {

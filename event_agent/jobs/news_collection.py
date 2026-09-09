@@ -24,7 +24,7 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from typing import Any, Dict, List, Optional, Set
 
-from event_agent.engine.llm_provider import get_default_llm_provider, LLMProvider
+from event_agent.engine.llm_provider import get_default_llm_provider, LLMProvider, OpenRouterProvider
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +66,26 @@ class NewsArticleRecord:
     transmission_horizon: str          # "1–3 DAYS" | "INTRADAY" | "1 WEEK"
     inference_mode: str = "HEURISTIC_FALLBACK"  # "OPENROUTER_LIVE" | "HEURISTIC_FALLBACK"
     ai: Optional[Dict[str, Any]] = None         # Full OpenRouter execution audit telemetry
+    # Institutional Provenance Chain
+    record_id: Optional[str] = None             # Distinct record ID
+    source_article_id: Optional[str] = None     # Lineage pointer to raw feed item
+    inference_id: Optional[str] = None          # Unique inference execution ID
+    provider: Optional[str] = None              # "openrouter" | "heuristic"
+    model: Optional[str] = None                 # Model identifier
+    request_id: Optional[str] = None            # Upstream provider request identifier
+    snapshot_hash: Optional[str] = None         # Merkle snapshot hash
+
+    def __post_init__(self):
+        if not self.record_id:
+            self.record_id = self.article_id
+        if not self.source_article_id:
+            self.source_article_id = f"SRC-{self.content_hash[:8]}"
+        if not self.provider and self.ai:
+            self.provider = self.ai.get("provider")
+        if not self.model and self.ai:
+            self.model = self.ai.get("model")
+        if not self.request_id and self.ai:
+            self.request_id = self.ai.get("request_id")
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -79,6 +99,8 @@ class NewsIntelligenceCollector:
     """
 
     _last_telemetry: Dict[str, Any] = {}
+    _last_openrouter_telemetry: Dict[str, Any] = {}
+    _last_rss_telemetry: Dict[str, Any] = {}
 
     HEADERS = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -299,7 +321,7 @@ class NewsIntelligenceCollector:
     ) -> List[NewsArticleRecord]:
         """
         Gathers news from RSS feeds, deduplicates, and analyzes each into a NewsArticleRecord.
-        Supports real OpenRouter LLM interpretation with fallback and audit telemetry.
+        Tracks separate HTTP/API request counters vs record persistence counters.
         """
         if llm_provider is None and enable_llm:
             llm_provider = get_default_llm_provider()
@@ -310,6 +332,20 @@ class NewsIntelligenceCollector:
 
         ingest_time = datetime.now(timezone.utc)
 
+        rss_attempted = 0
+        rss_succeeded = 0
+        rss_failed = 0
+        total_raw_items = 0
+
+        llm_requests_attempted = 0
+        llm_requests_succeeded = 0
+        llm_requests_failed = 0
+        total_input_tokens = 0
+        total_output_tokens = 0
+        total_tokens_accum = 0
+        last_http_status = None
+        last_error_reason = None
+
         for feed_cfg in NEWS_FEEDS:
             query = feed_cfg["query"]
             category = feed_cfg["category"]
@@ -318,65 +354,97 @@ class NewsIntelligenceCollector:
             encoded_query = urllib.parse.quote(query)
             rss_url = f"https://news.google.com/rss/search?q={encoded_query}&hl=en-IN&gl=IN&ceid=IN:en"
 
+            rss_attempted += 1
             try:
                 req = urllib.request.Request(rss_url, headers=cls.HEADERS)
                 with urllib.request.urlopen(req, timeout=6) as response:
                     content = response.read()
                     tree = ET.fromstring(content)
+                rss_succeeded += 1
+            except Exception as e:
+                rss_failed += 1
+                logger.debug("Failed querying news feed for '%s': %s", query, e)
+                continue
 
-                items_in_category = 0
-                for item in tree.findall(".//item"):
-                    title_elem = item.find("title")
-                    link_elem = item.find("link")
-                    pub_elem = item.find("pubDate")
-                    source_elem = item.find("source")
+            items_in_category = 0
+            for item in tree.findall(".//item"):
+                title_elem = item.find("title")
+                link_elem = item.find("link")
+                pub_elem = item.find("pubDate")
+                source_elem = item.find("source")
 
-                    if title_elem is None or not title_elem.text:
-                        continue
+                if title_elem is None or not title_elem.text:
+                    continue
 
-                    raw_title = title_elem.text
-                    clean_title = cls.clean_text(raw_title)
-                    source_name = source_elem.text.strip() if (source_elem is not None and source_elem.text) else "Financial Press"
+                total_raw_items += 1
+                raw_title = title_elem.text
+                clean_title = cls.clean_text(raw_title)
+                source_name = source_elem.text.strip() if (source_elem is not None and source_elem.text) else "Financial Press"
 
-                    # Deduplication 1: SHA-256 hash of normalized headline
-                    norm_title = cls.normalize_title(clean_title)
-                    content_hash = hashlib.sha256(norm_title.encode("utf-8")).hexdigest()[:16]
+                # Deduplication 1: SHA-256 hash of normalized headline
+                norm_title = cls.normalize_title(clean_title)
+                content_hash = hashlib.sha256(norm_title.encode("utf-8")).hexdigest()[:16]
 
-                    if content_hash in seen_hashes:
-                        continue
+                if content_hash in seen_hashes:
+                    continue
 
-                    # Deduplication 2: Jaccard similarity against already accepted headlines
-                    is_duplicate = False
-                    for prev_norm in seen_norm_titles:
-                        if cls.jaccard_similarity(norm_title, prev_norm) > 0.65:
-                            is_duplicate = True
-                            break
+                # Deduplication 2: Jaccard similarity against already accepted headlines
+                is_duplicate = False
+                for prev_norm in seen_norm_titles:
+                    if cls.jaccard_similarity(norm_title, prev_norm) > 0.65:
+                        is_duplicate = True
+                        break
 
-                    if is_duplicate:
-                        continue
+                if is_duplicate:
+                    continue
 
-                    seen_hashes.add(content_hash)
-                    seen_norm_titles.append(norm_title)
+                seen_hashes.add(content_hash)
+                seen_norm_titles.append(norm_title)
 
-                    # Parse publication timestamp
-                    pub_str = pub_elem.text if pub_elem is not None else ""
-                    try:
-                        pub_dt = parsedate_to_datetime(pub_str).astimezone(timezone.utc)
-                    except Exception:
-                        pub_dt = ingest_time
+                # Parse publication timestamp
+                pub_str = pub_elem.text if pub_elem is not None else ""
+                try:
+                    pub_dt = parsedate_to_datetime(pub_str).astimezone(timezone.utc)
+                except Exception:
+                    pub_dt = ingest_time
 
-                    link = link_elem.text if link_elem is not None and link_elem.text else ""
+                link = link_elem.text if link_elem is not None and link_elem.text else ""
 
-                    # Run causal event attribution
-                    analysis = cls.analyze_article_causality(clean_title, category)
-                    now_utc = datetime.now(timezone.utc)
+                # Run causal event attribution
+                analysis = cls.analyze_article_causality(clean_title, category)
+                now_utc = datetime.now(timezone.utc)
 
-                    # Execute LLM reasoning (OpenRouter live when configured, with audit telemetry)
-                    llm_parsed = {}
-                    if enable_llm and llm_provider is not None:
+                # Execute LLM reasoning (OpenRouter live when configured, with audit telemetry)
+                llm_parsed = {}
+                if enable_llm and llm_provider is not None:
+                    # Check if OpenRouter is unconfigured (offline baseline)
+                    is_openrouter = isinstance(llm_provider, OpenRouterProvider)
+                    has_key = bool(getattr(llm_provider, "api_key", None))
+
+                    if is_openrouter and not has_key:
+                        # Baseline offline heuristic without attempting HTTP
+                        llm_parsed = llm_provider.interpret_event(clean_title, category)
+                        last_http_status = "—"
+                        last_error_reason = "OPENROUTER_API_KEY environment variable not configured"
+                    else:
+                        llm_requests_attempted += 1
                         try:
                             llm_parsed = llm_provider.interpret_event(clean_title, category)
+                            ai_meta = llm_parsed.get("ai", {})
+                            if ai_meta.get("status") == "SUCCESS":
+                                llm_requests_succeeded += 1
+                                last_http_status = 200
+                                total_input_tokens += int(ai_meta.get("input_tokens", 0))
+                                total_output_tokens += int(ai_meta.get("output_tokens", 0))
+                                total_tokens_accum += int(ai_meta.get("total_tokens", 0))
+                            else:
+                                llm_requests_failed += 1
+                                last_http_status = 401 if "401" in str(ai_meta.get("error_reason", "")) else 500
+                                last_error_reason = ai_meta.get("error_reason")
                         except Exception as exc:
+                            llm_requests_failed += 1
+                            last_http_status = 500
+                            last_error_reason = str(exc)
                             logger.warning("LLM interpret_event call failed: %s", exc)
                             llm_parsed = {
                                 "inference_mode": "HEURISTIC_FALLBACK",
@@ -395,81 +463,177 @@ class NewsIntelligenceCollector:
                                 }
                             }
 
-                    ai_meta = llm_parsed.get("ai") if llm_parsed else None
-                    inf_mode = llm_parsed.get("inference_mode", "HEURISTIC_FALLBACK")
-                    if ai_meta:
-                        ai_meta["ingested_at"] = ingest_time.isoformat()
-                        ai_meta["analyzed_at"] = now_utc.isoformat()
-                        ai_meta["article_id"] = f"ART-{content_hash}"
-                        cls._last_telemetry = dict(ai_meta)
+                ai_meta = llm_parsed.get("ai") if llm_parsed else None
+                inf_mode = llm_parsed.get("inference_mode", "HEURISTIC_FALLBACK")
+                if ai_meta:
+                    ai_meta["ingested_at"] = ingest_time.isoformat()
+                    ai_meta["analyzed_at"] = now_utc.isoformat()
+                    ai_meta["article_id"] = f"ART-{content_hash}"
+                    cls._last_telemetry = dict(ai_meta)
 
-                    ai_reason = analysis["ai_reasoning"]
-                    ai_conf = analysis["confidence"]
-                    if inf_mode == "OPENROUTER_LIVE" and llm_parsed.get("investment_thesis"):
-                        ai_reason = f"[OpenRouter AI] {llm_parsed['investment_thesis']} Transmission: {analysis['why_it_matters_text']}"
-                        if llm_parsed.get("confidence"):
-                            try:
-                                ai_conf = float(llm_parsed["confidence"])
-                            except Exception:
-                                pass
-                    elif inf_mode == "HEURISTIC_FALLBACK":
-                        ai_reason = f"[Heuristic Baseline - OpenRouter Unavailable] {analysis['ai_reasoning']}"
+                ai_reason = analysis["ai_reasoning"]
+                ai_conf = analysis["confidence"]
+                if inf_mode == "OPENROUTER_LIVE" and llm_parsed.get("investment_thesis"):
+                    ai_reason = f"[OpenRouter AI] {llm_parsed['investment_thesis']} Transmission: {analysis['why_it_matters_text']}"
+                    if llm_parsed.get("confidence"):
+                        try:
+                            ai_conf = float(llm_parsed["confidence"])
+                        except Exception:
+                            pass
+                elif inf_mode == "HEURISTIC_FALLBACK":
+                    ai_reason = f"[Heuristic Baseline - OpenRouter Unavailable] {analysis['ai_reasoning']}"
 
-                    article_record = NewsArticleRecord(
-                        article_id=f"ART-{content_hash}",
-                        headline=clean_title,
-                        source=source_name,
-                        url=link,
-                        category=category,
-                        region=region,
-                        published_at=pub_dt.isoformat(),
-                        ingested_at=ingest_time.isoformat(),
-                        analyzed_at=now_utc.isoformat(),
-                        content_hash=content_hash,
-                        event_type=analysis["event_type"],
-                        sentiment=analysis["sentiment"],
-                        impact=analysis["impact"],
-                        surprise=analysis["surprise"],
-                        affected_assets=analysis["affected_assets"],
-                        affected_sectors=analysis["affected_sectors"],
-                        horizon=analysis["horizon"],
-                        ai_summary=analysis["ai_summary"],
-                        ai_reasoning=ai_reason,
-                        confidence=ai_conf,
-                        why_it_matters_chain=analysis["why_it_matters_chain"],
-                        why_it_matters_text=analysis["why_it_matters_text"],
-                        nexus_impact=analysis["nexus_impact"],
-                        transmission_horizon=analysis["transmission_horizon"],
-                        inference_mode=inf_mode,
-                        ai=ai_meta,
-                    )
+                article_record = NewsArticleRecord(
+                    article_id=f"ART-{content_hash}",
+                    headline=clean_title,
+                    source=source_name,
+                    url=link,
+                    category=category,
+                    region=region,
+                    published_at=pub_dt.isoformat(),
+                    ingested_at=ingest_time.isoformat(),
+                    analyzed_at=now_utc.isoformat(),
+                    content_hash=content_hash,
+                    event_type=analysis["event_type"],
+                    sentiment=analysis["sentiment"],
+                    impact=analysis["impact"],
+                    surprise=analysis["surprise"],
+                    affected_assets=analysis["affected_assets"],
+                    affected_sectors=analysis["affected_sectors"],
+                    horizon=analysis["horizon"],
+                    ai_summary=analysis["ai_summary"],
+                    ai_reasoning=ai_reason,
+                    confidence=ai_conf,
+                    why_it_matters_chain=analysis["why_it_matters_chain"],
+                    why_it_matters_text=analysis["why_it_matters_text"],
+                    nexus_impact=analysis["nexus_impact"],
+                    transmission_horizon=analysis["transmission_horizon"],
+                    inference_mode=inf_mode,
+                    ai=ai_meta,
+                    record_id=f"ART-{content_hash}",
+                    source_article_id=f"RSS-GOOG-{content_hash[:8]}",
+                    inference_id=f"INF-{now_utc.strftime('%Y%m%d%H%M%S')}-{content_hash[:6]}",
+                    provider=ai_meta.get("provider") if ai_meta else "heuristic",
+                    model=ai_meta.get("model") if ai_meta else "heuristic_offline",
+                    request_id=ai_meta.get("request_id") if ai_meta else None,
+                )
 
-                    articles.append(article_record)
-                    items_in_category += 1
+                articles.append(article_record)
+                items_in_category += 1
 
-                    if items_in_category >= max_articles_per_category:
-                        break
+                if items_in_category >= max_articles_per_category:
+                    break
 
-            except Exception as e:
-                logger.debug("Failed querying news feed for '%s': %s", query, e)
+        # Assemble explicit request-level vs record-level OpenRouter telemetry
+        if llm_provider is None or not enable_llm:
+            openrouter_status = "NOT_TESTED"
+            openrouter_mode = "NOT_EXECUTED"
+            http_status_val = "—"
+            error_val = None
+        elif isinstance(llm_provider, OpenRouterProvider) and not getattr(llm_provider, "api_key", None):
+            openrouter_status = "NOT_CONFIGURED"
+            openrouter_mode = "HEURISTIC_FALLBACK"
+            http_status_val = "—"
+            error_val = "OPENROUTER_API_KEY not configured"
+        elif llm_requests_failed > 0 and llm_requests_succeeded == 0:
+            openrouter_status = "FAILED"
+            openrouter_mode = "HEURISTIC_FALLBACK"
+            http_status_val = last_http_status or 500
+            error_val = last_error_reason or "OpenRouter request failed"
+        elif llm_requests_succeeded > 0:
+            openrouter_status = "SUCCESS"
+            openrouter_mode = "OPENROUTER_LIVE"
+            http_status_val = 200
+            error_val = None
+        else:
+            openrouter_status = "NOT_TESTED"
+            openrouter_mode = "NOT_EXECUTED"
+            http_status_val = "—"
+            error_val = None
 
-        # If no articles were processed, still record default telemetry
-        if not cls._last_telemetry and llm_provider is not None:
-            cls._last_telemetry = {
-                "provider": "openrouter" if isinstance(llm_provider, OpenRouterProvider) else "heuristic",
-                "model": getattr(llm_provider, "model", "none"),
-                "status": "NOT_CONFIGURED" if not getattr(llm_provider, "api_key", None) else "NOT_TESTED",
-                "inference_mode": "HEURISTIC_FALLBACK",
-                "request_id": None,
-                "latency_ms": None,
-                "tokens": 0,
-                "error_reason": None,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-            }
+        cls._last_openrouter_telemetry = {
+            "feed": "OpenRouter AI Intelligence",
+            "http_status": http_status_val,
+            "schema_validation": "PASS" if openrouter_status == "SUCCESS" else ("NOT CONFIGURED" if openrouter_status == "NOT_CONFIGURED" else "NOT VERIFIED"),
+            "requests_attempted": llm_requests_attempted,
+            "requests_succeeded": llm_requests_succeeded,
+            "requests_failed": llm_requests_failed,
+            "input_tokens": total_input_tokens,
+            "output_tokens": total_output_tokens,
+            "total_tokens": total_tokens_accum,
+            "records_analyzed": len(articles) if openrouter_status == "SUCCESS" else None,
+            "records_persisted": len(articles) if openrouter_status == "SUCCESS" else None,
+            "records_ingested": len(articles) if openrouter_status == "SUCCESS" else None,
+            "freshness": "Current" if openrouter_status == "SUCCESS" else "UNAVAILABLE",
+            "fallback": "None" if openrouter_status == "SUCCESS" else ("HEURISTIC BASELINE" if openrouter_status == "NOT_CONFIGURED" else "HEURISTIC FALLBACK"),
+            "error": error_val,
+            "status": openrouter_status,
+            "inference_mode": openrouter_mode,
+        }
+        cls._last_telemetry = dict(cls._last_openrouter_telemetry)
+
+        cls._last_rss_telemetry = {
+            "feed": "News RSS (Google Financial)",
+            "http_status": 200 if rss_succeeded > 0 else (503 if rss_attempted > 0 else "—"),
+            "schema_validation": "PASS" if rss_succeeded > 0 else ("NOT VERIFIED" if rss_attempted == 0 else "FAIL"),
+            "requests_attempted": rss_attempted,
+            "requests_succeeded": rss_succeeded,
+            "requests_failed": rss_failed,
+            "records_ingested": total_raw_items if rss_attempted > 0 else None,
+            "records_persisted": len(articles) if rss_attempted > 0 else None,
+            "freshness": "Current" if rss_succeeded > 0 else "UNAVAILABLE",
+            "fallback": "None",
+            "error": None if rss_failed == 0 else f"{rss_failed} feeds failed",
+        }
 
         return articles
+
+    @classmethod
+    def get_last_rss_telemetry(cls) -> Dict[str, Any]:
+        """Returns the most recent runtime API telemetry for Google RSS news feeds."""
+        if not cls._last_rss_telemetry:
+            return {
+                "feed": "News RSS (Google Financial)",
+                "http_status": "—",
+                "schema_validation": "NOT VERIFIED",
+                "requests_attempted": 0,
+                "requests_succeeded": 0,
+                "requests_failed": 0,
+                "records_ingested": None,
+                "records_persisted": None,
+                "freshness": "UNAVAILABLE",
+                "fallback": "None",
+                "error": None,
+            }
+        return dict(cls._last_rss_telemetry)
+
+    @classmethod
+    def get_last_openrouter_telemetry(cls) -> Dict[str, Any]:
+        """Returns the most recent runtime API telemetry for OpenRouter LLM analysis."""
+        if not cls._last_openrouter_telemetry:
+            return {
+                "feed": "OpenRouter AI Intelligence",
+                "http_status": "—",
+                "schema_validation": "NOT VERIFIED",
+                "requests_attempted": 0,
+                "requests_succeeded": 0,
+                "requests_failed": 0,
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "records_analyzed": None,
+                "records_persisted": None,
+                "records_ingested": None,
+                "freshness": "UNAVAILABLE",
+                "fallback": "None",
+                "error": None,
+                "status": "NOT_TESTED",
+                "inference_mode": "NOT_EXECUTED",
+            }
+        return dict(cls._last_openrouter_telemetry)
 
     @classmethod
     def get_last_telemetry(cls) -> Dict[str, Any]:
         """Returns the most recent runtime API telemetry for OpenRouter / LLM analysis."""
         return dict(cls._last_telemetry)
+

@@ -53,6 +53,8 @@ class MarketCloseCollector:
     Collects Indian indices closing prices via Yahoo Finance v8 chart query.
     """
 
+    _last_telemetry: Dict[str, Any] = {}
+
     HEADERS = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "application/json",
@@ -167,6 +169,20 @@ class MarketCloseCollector:
         elif "BANK NIFTY" in results and "NIFTY BANK" not in results:
             results["NIFTY BANK"] = results["BANK NIFTY"]
 
+        cls._last_telemetry = {
+            "feed": "NSE India Equity & Indices",
+            "http_status": 200 if succeeded > 0 else 503,
+            "schema_validation": "PASS" if succeeded > 0 else "FAIL",
+            "requests_attempted": len(INDIAN_BENCHMARKS),
+            "requests_succeeded": succeeded,
+            "requests_failed": failed,
+            "records_ingested": len(INDIAN_BENCHMARKS),
+            "records_persisted": succeeded,
+            "freshness": "LIVE" if succeeded > 0 else "UNAVAILABLE",
+            "fallback": "None",
+            "error": None if failed == 0 else f"{failed} benchmark queries failed",
+        }
+
         return {
             "succeeded": succeeded,
             "failed": failed,
@@ -174,3 +190,22 @@ class MarketCloseCollector:
             "quotes": results,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
+
+    @classmethod
+    def get_last_telemetry(cls) -> Dict[str, Any]:
+        """Returns the most recent runtime API telemetry for Indian benchmarks."""
+        if not cls._last_telemetry:
+            return {
+                "feed": "NSE India Equity & Indices",
+                "http_status": "—",
+                "schema_validation": "NOT VERIFIED",
+                "requests_attempted": 0,
+                "requests_succeeded": 0,
+                "requests_failed": 0,
+                "records_ingested": None,
+                "records_persisted": None,
+                "freshness": "UNAVAILABLE",
+                "fallback": "None",
+                "error": None,
+            }
+        return dict(cls._last_telemetry)

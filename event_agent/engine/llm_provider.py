@@ -228,6 +228,23 @@ class OpenRouterProvider(LLMProvider):
         self.model = os.environ.get("OPENROUTER_MODEL", model)
         self.fallback = HeuristicEventParser()
 
+    @classmethod
+    def default_telemetry(cls, model: str = "openai/gpt-4o-mini") -> Dict[str, Any]:
+        """Returns baseline unexecuted OpenRouter telemetry adhering to canonical taxonomy."""
+        return {
+            "provider": "openrouter",
+            "model": model,
+            "status": "NOT_TESTED",
+            "inference_mode": "NOT_EXECUTED",
+            "request_id": None,
+            "latency_ms": None,
+            "input_tokens": 0,
+            "output_tokens": 0,
+            "total_tokens": 0,
+            "error_reason": None,
+            "timestamp": None,
+        }
+
     def ping_health(self) -> Dict[str, Any]:
         """Performs a lightweight connectivity & credential verification test."""
         if not self.api_key:
@@ -235,7 +252,13 @@ class OpenRouterProvider(LLMProvider):
                 "provider": "openrouter",
                 "configured": False,
                 "status": "NOT_CONFIGURED",
+                "inference_mode": "HEURISTIC_FALLBACK",
                 "model": self.model,
+                "request_id": None,
+                "latency_ms": None,
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
                 "last_success": None,
                 "last_failure": "OPENROUTER_API_KEY is not configured",
             }
@@ -263,6 +286,7 @@ class OpenRouterProvider(LLMProvider):
                     "status": "SUCCESS",
                     "provider": "openrouter",
                     "configured": True,
+                    "inference_mode": "OPENROUTER_LIVE",
                     "model": self.model,
                     "request_id": data.get("id"),
                     "latency_ms": latency_ms,
@@ -278,9 +302,13 @@ class OpenRouterProvider(LLMProvider):
                 "status": "FAILED",
                 "provider": "openrouter",
                 "configured": True,
+                "inference_mode": "HEURISTIC_FALLBACK",
                 "model": self.model,
                 "request_id": None,
                 "latency_ms": latency_ms,
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
                 "error_reason": str(exc),
                 "last_success": None,
                 "last_failure": datetime.now(timezone.utc).isoformat(),
