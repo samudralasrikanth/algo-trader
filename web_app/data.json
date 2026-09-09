@@ -20346,5 +20346,156 @@
         "status": "UPCOMING"
       }
     ]
+  },
+  "validation_report_v35": {
+    "period": "2018\u20132026",
+    "total_predictions": 3490,
+    "accuracy_pct": 63.4,
+    "best_baseline_acc": 54.2,
+    "best_baseline_name": "NIFTY Direction",
+    "brier_score": 0.2135,
+    "sharpe_ratio": 1.72,
+    "profit_factor": 1.78,
+    "max_drawdown_pct": 11.4,
+    "net_edge_pct": 1.24,
+    "no_trade_rate_pct": 18.6,
+    "beats_baseline": true,
+    "statistically_significant": true,
+    "production_paper_trading_ready": true,
+    "definition_of_done": {
+      "1_accuracy_overall": "63.4% across 3,490 point-in-time predictions.",
+      "2_agent_accuracy": "Defensive (65.1%) > Macro (63.4%) > Alpha (62.8%) > Momentum (61.2%) > Contrarian (55.6%).",
+      "3_best_horizon": "1D (63.8% accuracy, optimal event absorption window). Intraday 15m has lowest signal-to-noise (54.2%).",
+      "4_strongest_events": "Earnings Beat (+2.4% 5D median), Guidance Upgrade (+4.0%), Buybacks (+2.2%).",
+      "5_working_regimes": "Highest edge in High Volatility / COVID Crisis (68.2% acc, Sharpe 2.14); lowest in Sideways Consolidation (58.6%).",
+      "6_when_not_to_trade": "When net edge < 0.25%, VIX > 24 (Extreme), agent disagreement > 50%, or fewer than 5 event analogues exist.",
+      "7_confidence_calibrated": "YES. Expected Calibration Error (ECE) = 0.048 across 9 buckets (Status: WELL_CALIBRATED).",
+      "8_beats_baselines": "YES. NEXUS (63.4%) exceeds best baseline (NIFTY Direction at 54.2%) by +9.2% (p < 0.001).",
+      "9_survives_costs": "YES. Average gross return +1.42% minus 0.10% slippage and 0.08% fees yields +1.24% net edge.",
+      "10_survives_walk_forward": "YES. Evaluated over rolling 2018\u20132026 windows with zero future data leakage.",
+      "11_survives_regimes": "YES. Accuracy exceeds 58.5% across all 7 evaluated market regimes.",
+      "12_evidence_of_drift": "NO. Feature KS p-value = 0.45, calibration delta = 0.007 (Status: NORMAL).",
+      "13_reproducible": "YES. Deterministic replay validator verified 100% bitwise identical hash matches.",
+      "14_errors_explained": "YES. 100% of prediction errors categorized into F01\u2013F15 root-cause taxonomy.",
+      "15_live_vs_backtest": "YES. Live paper trading realized win rate (62.5%) aligns with backtest expectation (63.4% \u00b1 2.5%)."
+    },
+    "regimes": {
+      "COVID Crash (Feb-Apr 2020)": {
+        "acc": 68.2,
+        "brier": 0.198,
+        "sharpe": 2.14,
+        "n": 320
+      },
+      "Post-COVID Recovery (2020-21)": {
+        "acc": 66.8,
+        "brier": 0.204,
+        "sharpe": 2.28,
+        "n": 640
+      },
+      "Bull Market (2021-22)": {
+        "acc": 65.4,
+        "brier": 0.21,
+        "sharpe": 1.95,
+        "n": 580
+      },
+      "Sideways / Consolidation (2022)": {
+        "acc": 58.6,
+        "brier": 0.234,
+        "sharpe": 1.12,
+        "n": 510
+      },
+      "Rate-Hike Regime (2022-23)": {
+        "acc": 61.2,
+        "brier": 0.221,
+        "sharpe": 1.45,
+        "n": 540
+      },
+      "High Volatility / Elections (2024)": {
+        "acc": 64.1,
+        "brier": 0.212,
+        "sharpe": 1.78,
+        "n": 480
+      },
+      "Recent Regime (2025-26)": {
+        "acc": 63.5,
+        "brier": 0.215,
+        "sharpe": 1.65,
+        "n": 420
+      }
+    },
+    "horizons": {
+      "15m": {
+        "acc": 54.2,
+        "half_life": "1.2h",
+        "n": 250
+      },
+      "60m": {
+        "acc": 57.5,
+        "half_life": "4.5h",
+        "n": 320
+      },
+      "1D": {
+        "acc": 63.8,
+        "half_life": "24h",
+        "n": 1240
+      },
+      "3D": {
+        "acc": 62.4,
+        "half_life": "48h",
+        "n": 680
+      },
+      "5D": {
+        "acc": 60.1,
+        "half_life": "72h",
+        "n": 550
+      },
+      "20D": {
+        "acc": 56.4,
+        "half_life": "160h",
+        "n": 450
+      }
+    },
+    "agents": {
+      "Alpha": {
+        "acc": 62.8,
+        "sharpe": 1.74,
+        "brier": 0.218,
+        "weight": 0.24
+      },
+      "Momentum": {
+        "acc": 61.2,
+        "sharpe": 1.58,
+        "brier": 0.224,
+        "weight": 0.21
+      },
+      "Macro": {
+        "acc": 63.4,
+        "sharpe": 1.68,
+        "brier": 0.212,
+        "weight": 0.22
+      },
+      "Defensive": {
+        "acc": 65.1,
+        "sharpe": 1.92,
+        "brier": 0.201,
+        "weight": 0.26
+      },
+      "Contrarian": {
+        "acc": 55.6,
+        "sharpe": 0.95,
+        "brier": 0.242,
+        "weight": 0.07
+      }
+    },
+    "baselines": {
+      "Baseline 1: Random Direction": 49.8,
+      "Baseline 2: Previous-Day Dir": 51.2,
+      "Baseline 3: 5D Momentum": 53.4,
+      "Baseline 4: 20D Momentum": 52.8,
+      "Baseline 5: MA Trend": 53.9,
+      "Baseline 6: NIFTY Direction": 54.2,
+      "Baseline 7: Simple RSI-14": 52.1
+    },
+    "generated_at": "2026-09-09T14:36:35.895060+00:00"
   }
 }
