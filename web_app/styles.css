@@ -1119,3 +1119,238 @@ body {
   .kpi-grid { grid-template-columns: 1fr 1fr; }
   .stock-drawer { width: 100%; }
 }
+
+/* =============================================================================
+   NEXUS V3.4 — Interactive Component Enhancements & Micro-Interactions
+   ============================================================================= */
+
+/* Interactive KPI Cards & Hero Blocks */
+.kpi-card[role="button"],
+.kpi-card.interactive {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+}
+.kpi-card[role="button"]:hover,
+.kpi-card.interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.08);
+  border-color: var(--primary);
+}
+.kpi-card[role="button"]:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.hero-index-block[role="button"],
+.hero-regime-block[role="button"] {
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+  user-select: none;
+}
+.hero-index-block[role="button"]:hover {
+  transform: scale(1.01);
+  opacity: 0.95;
+}
+.hero-regime-block[role="button"]:hover {
+  transform: scale(1.01);
+}
+
+.market-item[role="button"] {
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.15s ease;
+  user-select: none;
+}
+.market-item[role="button"]:hover {
+  background-color: #F8FAFC;
+  transform: translateY(-1px);
+}
+
+.trophy-badge[role="button"] {
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+.trophy-badge[role="button"]:hover {
+  transform: translateY(-1px);
+  filter: brightness(0.96);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+}
+.trophy-badge.active {
+  box-shadow: 0 0 0 2px var(--primary);
+  font-weight: 800;
+}
+
+/* Option Chain Interactive Rows */
+.chain-table tbody tr {
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+.chain-table tbody tr:hover {
+  background-color: #F8FAFC !important;
+}
+.chain-table tbody tr td.strike-col:hover {
+  background-color: #EEF2F6;
+  color: var(--primary);
+  font-weight: 800;
+}
+
+/* Search Box Clear Button & Container */
+.search-input-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.search-clear-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+  display: none;
+}
+.search-clear-btn:hover {
+  color: var(--text-primary);
+  background-color: #F2F4F7;
+}
+
+/* Sector Filter Dropdown */
+.sector-dropdown-wrapper {
+  position: relative;
+  display: inline-block;
+}
+.sector-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 24px rgba(16, 24, 40, 0.12);
+  min-width: 200px;
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 100;
+  display: none;
+  padding: 6px 0;
+}
+.sector-dropdown-menu.active {
+  display: block;
+}
+.sector-item {
+  padding: 8px 14px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.12s;
+}
+.sector-item:hover {
+  background-color: #F8FAFC;
+  color: var(--text-primary);
+}
+.sector-item.active {
+  font-weight: 700;
+  color: var(--primary);
+  background-color: #EFF8FF;
+}
+
+/* Pipeline Provenance Timeline */
+.pipeline-flow {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 12px 4px;
+  margin: 12px 0;
+  background-color: var(--bg-surface-secondary);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+.pipeline-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 68px;
+  padding: 6px 8px;
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  text-align: center;
+  font-size: 10px;
+}
+.pipeline-step.passed {
+  border-color: #A6F4C5;
+  background: #F6FEF9;
+}
+.pipeline-step-label {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 10px;
+}
+.pipeline-step-status {
+  font-size: 9px;
+  color: var(--success);
+  margin-top: 2px;
+}
+.pipeline-arrow {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* Service Diagnostics Card */
+.service-health-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  background: #FFFFFF;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+}
+.service-health-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.08);
+  border-color: var(--primary);
+}
+
+/* Command Palette Keyboard Selection */
+.cmd-item.selected {
+  background-color: #EFF8FF;
+  border-color: var(--primary);
+}
+
+/* Risk Progress Cards Clickable */
+.risk-progress-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  background-color: var(--bg-surface);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  user-select: none;
+}
+.risk-progress-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.08);
+  border-color: var(--primary);
+}
+
+/* Universal Accessibility Focus Outline */
+button:focus-visible,
+a:focus-visible,
+select:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}

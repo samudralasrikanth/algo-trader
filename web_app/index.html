@@ -89,12 +89,12 @@
         <!-- Hero Summary Banner -->
         <section class="hero-overview">
           <div class="hero-top-row">
-            <div class="hero-index-block">
+            <div class="hero-index-block" role="button" tabindex="0" onclick="navigate('markets', 'nifty50')" title="Inspect NIFTY 50 Constituents & Expected Moves">
               <span class="hero-index-name">NIFTY 50</span>
               <span class="hero-index-val" id="ov-nifty-price">25,481.30</span>
               <span class="hero-index-chg" id="ov-nifty-chg" style="color: var(--success);">+162.80 (+0.64%)</span>
             </div>
-            <div class="hero-regime-block">
+            <div class="hero-regime-block" role="button" tabindex="0" onclick="navigate('intelligence')" title="Inspect AI Market View & Macro Factor Regimes">
               <span class="regime-label">AI Market View:</span>
               <span class="regime-value" id="ov-regime-value" style="background-color: var(--success-bg); color: var(--success); border: 1px solid var(--success-border);">BULLISH • 81% Confidence</span>
               <span style="font-size: 11px; color: var(--text-muted); border-left: 1px solid var(--border); padding-left: 10px;">Market Clock: <strong>15:30 IST Hard Cutoff</strong></span>
@@ -103,35 +103,35 @@
 
           <!-- 6 Institutional KPI Cards (Sourced from actual system state) -->
           <div class="kpi-grid">
-            <div class="kpi-card">
+            <div class="kpi-card interactive" role="button" tabindex="0" onclick="navigate('arena')" title="View AI Arena Portfolios & Agents">
               <span class="kpi-title">AI Arena Capital</span>
               <span class="kpi-value num">₹1,00,00,000</span>
-              <span class="kpi-subtext">5 Isolated Sub-Portfolios</span>
+              <span class="kpi-subtext">5 Isolated Sub-Portfolios →</span>
             </div>
-            <div class="kpi-card">
+            <div class="kpi-card interactive" role="button" tabindex="0" onclick="navigate('arena'); scrollToSection('arena-orders-table')" title="View Executed Orders & Today's P&L">
               <span class="kpi-title">Today's P&L</span>
               <span class="kpi-value num" id="ov-today-pnl" style="color: var(--success);">+₹42,800.00</span>
-              <span class="kpi-subtext" id="ov-today-pnl-pct">+0.43% Daily Return</span>
+              <span class="kpi-subtext" id="ov-today-pnl-pct">+0.43% Daily Return →</span>
             </div>
-            <div class="kpi-card">
+            <div class="kpi-card interactive" role="button" tabindex="0" onclick="navigate('arena')" title="View Arena Total Performance">
               <span class="kpi-title">Total Arena P&L</span>
               <span class="kpi-value num" id="ov-total-pnl" style="color: var(--success);">+₹3,84,210.50</span>
-              <span class="kpi-subtext" id="ov-total-return-pct">+3.84% Since Inception</span>
+              <span class="kpi-subtext" id="ov-total-return-pct">+3.84% Since Inception →</span>
             </div>
-            <div class="kpi-card">
+            <div class="kpi-card interactive" role="button" tabindex="0" onclick="navigate('risk'); openRiskDetail('portfolio')" title="Inspect Portfolio Exposure Limit (50% Cap)">
               <span class="kpi-title">Portfolio Exposure</span>
               <span class="kpi-value num" id="ov-exposure-pct">43.2%</span>
-              <span class="kpi-subtext">Limit: 50% Capital Cap</span>
+              <span class="kpi-subtext">Limit: 50% Capital Cap →</span>
             </div>
-            <div class="kpi-card">
+            <div class="kpi-card interactive" role="button" tabindex="0" onclick="navigate('risk'); openRiskDetail('drawdown')" title="Inspect Drawdown Suspension Limit (30% Circuit Breaker)">
               <span class="kpi-title">Current Drawdown</span>
               <span class="kpi-value num" id="ov-drawdown-pct">1.72%</span>
-              <span class="kpi-subtext">Threshold: 30% Circuit Breaker</span>
+              <span class="kpi-subtext">Threshold: 30% Circuit Breaker →</span>
             </div>
-            <div class="kpi-card">
+            <div class="kpi-card interactive" role="button" tabindex="0" onclick="navigate('risk'); openRiskDetail('invariants')" title="Inspect 16 Quantitative Risk Gates">
               <span class="kpi-title">Risk Engine Status</span>
               <span class="kpi-value" style="color: var(--success); font-size: 15px;">HEALTHY</span>
-              <span class="kpi-subtext">8 Quantitative Gates Active</span>
+              <span class="kpi-subtext">16 Quantitative Gates Active →</span>
             </div>
           </div>
         </section>
@@ -139,35 +139,35 @@
         <!-- Market Overview Bar (Nifty, Bank Nifty, VIX, USD/INR, Gold, Crude) -->
         <section class="section-panel">
           <div class="market-strip">
-            <div class="market-item">
+            <div class="market-item" role="button" tabindex="0" onclick="navigate('markets', 'nifty50')" title="Inspect NIFTY 50 Constituents">
               <span class="market-item-title">NIFTY 50</span>
               <span class="market-item-price num" id="strip-nifty-val">25,481.30</span>
               <span class="market-item-change num" style="color: var(--success);">+0.64%</span>
             </div>
-            <div class="market-item">
+            <div class="market-item" role="button" tabindex="0" onclick="openMarketPreviewModal('BANK NIFTY')" title="Preview BANK NIFTY Status">
               <span class="market-item-title">BANK NIFTY</span>
               <span class="market-item-price num">52,340.80</span>
               <span class="market-item-change num" style="color: var(--success);">+0.48%</span>
             </div>
-            <div class="market-item">
+            <div class="market-item" role="button" tabindex="0" onclick="navigate('markets', 'options')" title="Inspect Volatility & Option Chain">
               <span class="market-item-title">INDIA VIX</span>
               <span class="market-item-price num">13.82</span>
               <span class="market-item-change num" style="color: var(--danger);">-2.10% (Low Vol)</span>
             </div>
-            <div class="market-item">
+            <div class="market-item" role="button" tabindex="0" onclick="openMarketPreviewModal('USD / INR')" title="USD / INR Exchange Rate">
               <span class="market-item-title">USD / INR</span>
               <span class="market-item-price num">83.92</span>
               <span class="market-item-change num" style="color: var(--text-secondary);">+0.04%</span>
             </div>
-            <div class="market-item">
+            <div class="market-item" role="button" tabindex="0" onclick="showComingSoon('Gold Commodity Intelligence — Coming Soon')" title="MCX Gold Commodity Model">
               <span class="market-item-title">GOLD (MCX)</span>
               <span class="market-item-price num" style="font-size: 12px; color: var(--text-muted);">Data unavailable</span>
-              <span class="market-item-change" style="font-size: 11px; color: var(--text-muted);">Architecture Ready</span>
+              <span class="market-item-change" style="font-size: 11px; color: var(--text-muted);">Architecture Ready →</span>
             </div>
-            <div class="market-item">
+            <div class="market-item" role="button" tabindex="0" onclick="showComingSoon('Crude Oil Commodity Intelligence — Coming Soon')" title="MCX Crude Commodity Model">
               <span class="market-item-title">CRUDE (MCX)</span>
               <span class="market-item-price num" style="font-size: 12px; color: var(--text-muted);">Data unavailable</span>
-              <span class="market-item-change" style="font-size: 11px; color: var(--text-muted);">Architecture Ready</span>
+              <span class="market-item-change" style="font-size: 11px; color: var(--text-muted);">Architecture Ready →</span>
             </div>
           </div>
 
@@ -212,7 +212,7 @@
               <h3>⚡ Strongest AI Conviction Signals</h3>
               <p>Top stock catalysts audited by factor sensitivity and multi-agent agreement. Click to inspect details.</p>
             </div>
-            <button class="subnav-btn" onclick="navigate('markets', 'equities')">View All 50 Nifty Constituents →</button>
+            <button class="subnav-btn" onclick="navigate('markets', 'nifty50')">View All 50 Nifty Constituents →</button>
           </div>
           <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; padding: 16px 20px;" id="ov-signals-grid">
             <!-- Injected via app.js -->
@@ -227,10 +227,10 @@
               <p>5 Autonomous Strategy Agents competing under identical market snapshots with ₹20,00,000 isolated capital each.</p>
             </div>
             <div style="display: flex; gap: 8px;">
-              <span class="trophy-badge trophy-return">🥇 Best Return</span>
-              <span class="trophy-badge trophy-risk">🛡️ Best Risk-Adjusted</span>
-              <span class="trophy-badge trophy-capital">💰 Capital Preservation</span>
-              <span class="trophy-badge trophy-options">⚡ Best Options Trader</span>
+              <span class="trophy-badge trophy-return" id="tb-return" role="button" tabindex="0" onclick="sortLeaderboard('return')" title="Sort by Total Return Descending">🥇 Best Return</span>
+              <span class="trophy-badge trophy-risk" id="tb-sharpe" role="button" tabindex="0" onclick="sortLeaderboard('sharpe')" title="Sort by Sharpe Ratio Descending">🛡️ Best Risk-Adjusted</span>
+              <span class="trophy-badge trophy-capital" id="tb-capital" role="button" tabindex="0" onclick="sortLeaderboard('drawdown')" title="Sort by Lowest Drawdown">💰 Capital Preservation</span>
+              <span class="trophy-badge trophy-options" id="tb-options" role="button" tabindex="0" onclick="sortLeaderboard('options')" title="Filter by Options Performance">⚡ Best Options Trader</span>
             </div>
           </div>
 
@@ -272,11 +272,18 @@
               <p>Institutional multi-factor analytics, price consensus, expected moves, and agent voting across all 50 constituent stocks.</p>
             </div>
             <div style="display: flex; gap: 10px; align-items: center;">
-              <div style="position: relative;">
-                <input type="text" id="stocks-search-box" placeholder="Search symbol or sector..." style="padding: 6px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; width: 220px;" oninput="filterEquityTable()">
+              <div class="search-input-wrapper">
+                <input type="text" id="stocks-search-box" placeholder="Search symbol or sector..." style="padding: 6px 28px 6px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; width: 230px;" oninput="filterEquityTable()">
+                <button id="stocks-search-clear" class="search-clear-btn" onclick="clearEquitySearch()" title="Clear search">✕</button>
               </div>
-              <div class="selector-pill" id="sector-filter-dropdown">
-                <span>All Sectors</span>
+              <div class="sector-dropdown-wrapper">
+                <div class="selector-pill" id="sector-filter-dropdown" onclick="toggleSectorDropdown()" title="Filter by Sector">
+                  <span id="sector-filter-label">All Sectors</span>
+                  <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+                <div class="sector-dropdown-menu" id="sector-dropdown-menu">
+                  <!-- Injected via app.js -->
+                </div>
               </div>
             </div>
           </div>
@@ -289,6 +296,7 @@
                   <th>SECTOR</th>
                   <th class="numeric">BETA</th>
                   <th class="numeric">PRICE (₹)</th>
+                  <th class="numeric">CHANGE (1D)</th>
                   <th class="numeric">EXPECTED MOVE</th>
                   <th class="numeric">TARGET & STOP</th>
                   <th>AI VIEW</th>
@@ -388,9 +396,10 @@
                   <span style="font-size: 11px; color: var(--text-muted);">P&L (₹) vs Nifty 50 Underlying Spot Price</span>
                 </div>
                 <div style="display: flex; gap: 6px;">
-                  <button class="subnav-btn active" style="padding: 2px 8px; font-size: 10px;">Payoff</button>
-                  <button class="subnav-btn" style="padding: 2px 8px; font-size: 10px;" onclick="switchPayoffStrategy('BPS')">Bear Put</button>
-                  <button class="subnav-btn" style="padding: 2px 8px; font-size: 10px;" onclick="switchPayoffStrategy('STRD')">Straddle</button>
+                  <button class="subnav-btn active" id="btn-strat-bcs" style="padding: 2px 8px; font-size: 10px;" onclick="switchPayoffStrategy('BCS')">Bull Call</button>
+                  <button class="subnav-btn" id="btn-strat-bps" style="padding: 2px 8px; font-size: 10px;" onclick="switchPayoffStrategy('BPS')">Bear Put</button>
+                  <button class="subnav-btn" id="btn-strat-strd" style="padding: 2px 8px; font-size: 10px;" onclick="switchPayoffStrategy('STRD')">Straddle</button>
+                  <button class="subnav-btn" id="btn-strat-prot" style="padding: 2px 8px; font-size: 10px;" onclick="switchPayoffStrategy('PROT')">Protective Put</button>
                 </div>
               </div>
               <div class="chart-canvas-container">
@@ -458,6 +467,11 @@
           <button class="subnav-btn" onclick="selectArenaAgent('MACRO')">Agent Macro (The Economist)</button>
           <button class="subnav-btn" onclick="selectArenaAgent('DEFENSIVE')">Agent Defensive (Capital Protector)</button>
           <button class="subnav-btn" onclick="selectArenaAgent('CONTRARIAN')">Agent Contrarian (Mean Reversion)</button>
+        </div>
+
+        <!-- Dedicated Agent Performance & Risk Card (Active on selection) -->
+        <div id="arena-agent-card-container" style="margin-bottom: 16px;">
+          <!-- Dynamically populated via app.js -->
         </div>
 
         <!-- Arena Holdings Panel (Separated by Asset Class) -->
@@ -600,40 +614,58 @@
           </div>
 
           <div style="padding: 20px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
-            <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; background-color: var(--bg-surface);">
-              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Single Position Limit (20% Max)</span>
+            <div class="risk-progress-card" role="button" tabindex="0" onclick="openRiskDetail('position')" title="Inspect Single Position Limit & Top Weights">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Single Position Limit (20% Max)</span>
+                <span class="badge badge-green" style="font-size: 9px;">PASSED</span>
+              </div>
               <div class="progress-bar-container"><div class="progress-bar-fill" style="width: 32%; background-color: var(--primary);"></div></div>
-              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">Current Peak Allocation: 6.4%</span>
+              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">Current Peak Allocation: 6.4% →</span>
             </div>
 
-            <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; background-color: var(--bg-surface);">
-              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Sector Exposure Limit (25% Max)</span>
+            <div class="risk-progress-card" role="button" tabindex="0" onclick="openRiskDetail('sector')" title="Inspect Sector Exposure Breakdown">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Sector Exposure Limit (25% Max)</span>
+                <span class="badge badge-green" style="font-size: 9px;">PASSED</span>
+              </div>
               <div class="progress-bar-container"><div class="progress-bar-fill" style="width: 48%; background-color: var(--primary);"></div></div>
-              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">Financial Services: 12.1%</span>
+              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">Financial Services: 12.1% →</span>
             </div>
 
-            <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; background-color: var(--bg-surface);">
-              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Portfolio Exposure Limit (50% Max)</span>
+            <div class="risk-progress-card" role="button" tabindex="0" onclick="openRiskDetail('portfolio')" title="Inspect Capital Deployed vs Cash Reserves">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Portfolio Exposure Limit (50% Max)</span>
+                <span class="badge badge-blue" style="font-size: 9px;">ACTIVE</span>
+              </div>
               <div class="progress-bar-container"><div class="progress-bar-fill" style="width: 86%; background-color: var(--warning);"></div></div>
-              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">Total Deployed Capital: 43.2%</span>
+              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">Total Deployed Capital: 43.2% →</span>
             </div>
 
-            <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; background-color: var(--bg-surface);">
-              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Daily Loss Limit (1.5% Circuit Breaker)</span>
+            <div class="risk-progress-card" role="button" tabindex="0" onclick="openRiskDetail('daily_loss')" title="Inspect Daily Loss Trajectory & Limits">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Daily Loss Limit (1.5% Circuit Breaker)</span>
+                <span class="badge badge-green" style="font-size: 9px;">PASSED</span>
+              </div>
               <div class="progress-bar-container"><div class="progress-bar-fill" style="width: 14%; background-color: var(--success);"></div></div>
-              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">Today's Maximum Draw: 0.21%</span>
+              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">Today's Maximum Draw: 0.21% →</span>
             </div>
 
-            <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; background-color: var(--bg-surface);">
-              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Drawdown Trading Suspension (30% Max)</span>
+            <div class="risk-progress-card" role="button" tabindex="0" onclick="openRiskDetail('drawdown')" title="Inspect Peak-to-Trough Drawdown History">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Drawdown Trading Suspension (30% Max)</span>
+                <span class="badge badge-green" style="font-size: 9px;">PASSED</span>
+              </div>
               <div class="progress-bar-container"><div class="progress-bar-fill" style="width: 6%; background-color: var(--success);"></div></div>
-              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">Current Peak-to-Trough: 1.72%</span>
+              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">Current Peak-to-Trough: 1.72% →</span>
             </div>
 
-            <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; background-color: var(--bg-surface);">
-              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Hedge Coverage & Downside Insurance</span>
+            <div class="risk-progress-card" role="button" tabindex="0" onclick="openRiskDetail('hedge')" title="Inspect Downside Puts & Delta Hedge Coverage">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Hedge Coverage & Downside Insurance</span>
+                <span class="badge badge-green" style="font-size: 9px;">COVERED</span>
+              </div>
               <div class="progress-bar-container"><div class="progress-bar-fill" style="width: 60%; background-color: var(--primary);"></div></div>
-              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">3 / 5 Positions Insured with Puts</span>
+              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">3 / 5 Positions Insured with Puts →</span>
             </div>
           </div>
         </section>
@@ -879,7 +911,116 @@
       </div>
     </div>
 
-    <!-- Backward Compatibility Hidden Hooks -->
+    
+    <!-- ================================================================= -->
+    <!-- RISK LIMIT DETAIL MODAL                                           -->
+    <!-- ================================================================= -->
+    <div class="cmd-palette-backdrop" id="risk-modal-backdrop" onclick="closeRiskModal()">
+      <div class="cmd-palette-box" style="padding: 24px; max-width: 650px;" onclick="event.stopPropagation()">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="badge badge-blue" id="rm-badge">RISK AUDIT</span>
+            <span style="font-size: 15px; font-weight: 700;" id="rm-title">Quantitative Risk Limit Audit</span>
+          </div>
+          <button class="subnav-btn" onclick="closeRiskModal()">✕</button>
+        </div>
+        <div id="rm-content" style="font-size: 12px; max-height: 480px; overflow-y: auto;">
+          <!-- Injected via app.js -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- MICROSERVICE DIAGNOSTICS MODAL                                   -->
+    <!-- ================================================================= -->
+    <div class="cmd-palette-backdrop" id="service-diagnostics-backdrop" onclick="closeServiceDiagnostics()">
+      <div class="cmd-palette-box" style="padding: 24px; max-width: 600px;" onclick="event.stopPropagation()">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="badge badge-green" id="sd-status">HEALTHY</span>
+            <span style="font-size: 15px; font-weight: 700;" id="sd-title">Microservice Diagnostics</span>
+          </div>
+          <button class="subnav-btn" onclick="closeServiceDiagnostics()">✕</button>
+        </div>
+        <div id="sd-content" style="font-size: 12px;">
+          <!-- Injected via app.js -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- OPTION STRIKE DETAIL MODAL                                        -->
+    <!-- ================================================================= -->
+    <div class="cmd-palette-backdrop" id="option-strike-backdrop" onclick="closeOptionStrikeModal()">
+      <div class="cmd-palette-box" style="padding: 24px; max-width: 580px;" onclick="event.stopPropagation()">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="badge badge-modelled">MODELLED (BLACK-SCHOLES)</span>
+            <span style="font-size: 15px; font-weight: 700;" id="os-title">Option Strike Analysis</span>
+          </div>
+          <button class="subnav-btn" onclick="closeOptionStrikeModal()">✕</button>
+        </div>
+        <div id="os-content" style="font-size: 12px;">
+          <!-- Injected via app.js -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- POSITION DETAIL & CLOSE MODAL                                     -->
+    <!-- ================================================================= -->
+    <div class="cmd-palette-backdrop" id="position-detail-backdrop" onclick="closePositionDetailModal()">
+      <div class="cmd-palette-box" style="padding: 24px; max-width: 620px;" onclick="event.stopPropagation()">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="badge badge-blue" id="pd-badge">PAPER POSITION</span>
+            <span style="font-size: 15px; font-weight: 700;" id="pd-title">Position Details</span>
+          </div>
+          <button class="subnav-btn" onclick="closePositionDetailModal()">✕</button>
+        </div>
+        <div id="pd-content" style="font-size: 12px;">
+          <!-- Injected via app.js -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- MARKET PREVIEW MODAL (BANK NIFTY / USD INR)                      -->
+    <!-- ================================================================= -->
+    <div class="cmd-palette-backdrop" id="market-preview-backdrop" onclick="closeMarketPreviewModal()">
+      <div class="cmd-palette-box" style="padding: 24px; max-width: 580px;" onclick="event.stopPropagation()">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="badge badge-subtle" id="mp-badge">INDEX PREVIEW</span>
+            <span style="font-size: 15px; font-weight: 700;" id="mp-title">Market Benchmark</span>
+          </div>
+          <button class="subnav-btn" onclick="closeMarketPreviewModal()">✕</button>
+        </div>
+        <div id="mp-content" style="font-size: 12px;">
+          <!-- Injected via app.js -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- INSTITUTIONAL ORDER CONFIRMATION / REJECTION MODAL                -->
+    <!-- ================================================================= -->
+    <div class="cmd-palette-backdrop" id="order-confirm-backdrop" onclick="closeOrderConfirmModal()">
+      <div class="cmd-palette-box" style="padding: 24px; max-width: 580px;" onclick="event.stopPropagation()">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="badge badge-green" id="oc-status-badge">FILLED</span>
+            <span style="font-size: 15px; font-weight: 700;" id="oc-title">Paper Broker Execution Notice</span>
+          </div>
+          <button class="subnav-btn" onclick="closeOrderConfirmModal()">✕</button>
+        </div>
+        <div id="oc-content" style="font-size: 12px;">
+          <!-- Injected via app.js -->
+        </div>
+      </div>
+    </div>
+
+  <!-- Backward Compatibility Hidden Hooks -->
   <div style="display: none;">
     <span id="quant-current-nav"></span>
     <div id="baselines-list-container"></div>
