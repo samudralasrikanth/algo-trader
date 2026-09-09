@@ -7,16 +7,97 @@
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
   
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
+  <!-- Left Navigation Bar (Stitch Screen 5bbea71045434e189ed0f2426779d132: Light Paper Edition) -->
+  <aside class="terminal-sidebar" id="terminal-sidebar" aria-label="NEXUS Global Navigation">
+    <div class="sidebar-top">
+      <!-- Nexus Brand Logo with Telemetry Pulse -->
+      <a class="sidebar-brand" onclick="navigate('overview')" href="#/overview" title="NEXUS AI — Executive Command">
+        <div class="sidebar-brand-icon">
+          <span>NX</span>
+        </div>
+        <span class="sidebar-brand-dot"></span>
+      </a>
+
+      <div class="sidebar-divider"></div>
+
+      <!-- Vertical Icon Navigation -->
+      <nav class="sidebar-nav" aria-label="Command Terminal Navigation">
+        <a class="sidebar-nav-btn active" data-tab="overview" onclick="navigate('overview')" href="#/overview" aria-label="Overview Terminal [01]">
+          <span class="material-symbols-outlined">terminal</span>
+          <span class="sidebar-tooltip">[01] Command</span>
+        </a>
+        <a class="sidebar-nav-btn" data-tab="markets" onclick="navigate('markets')" href="#/markets" aria-label="Markets Terminal [02]">
+          <span class="material-symbols-outlined">monitoring</span>
+          <span class="sidebar-tooltip">[02] Markets</span>
+        </a>
+        <a class="sidebar-nav-btn" data-tab="arena" onclick="navigate('arena')" href="#/arena" aria-label="AI Arena Strategies [04]">
+          <div style="position: relative; display: flex; align-items: center; justify-content: center;">
+            <span class="material-symbols-outlined">smart_toy</span>
+            <span class="sidebar-badge-dot"></span>
+          </div>
+          <span class="sidebar-tooltip">[04] Strategies</span>
+        </a>
+        <a class="sidebar-nav-btn" data-tab="intelligence" onclick="navigate('intelligence')" href="#/intelligence" aria-label="Multi-Factor Intelligence [03]">
+          <span class="material-symbols-outlined">neurology</span>
+          <span class="sidebar-tooltip">[03] Intelligence</span>
+        </a>
+        <a class="sidebar-nav-btn" data-tab="options" onclick="navigate('markets', 'options')" href="#/markets/options" aria-label="Option Depth Chain [05]">
+          <span class="material-symbols-outlined">candlestick_chart</span>
+          <span class="sidebar-tooltip">[05] Option Chain</span>
+        </a>
+        <a class="sidebar-nav-btn" data-tab="risk" onclick="navigate('risk')" href="#/risk" aria-label="Risk Engine [05]">
+          <span class="material-symbols-outlined">verified_user</span>
+          <span class="sidebar-tooltip">[05] Risk</span>
+        </a>
+        <a class="sidebar-nav-btn" data-tab="jobs" onclick="navigate('jobs')" href="#/jobs" aria-label="Operations & Jobs [06]">
+          <span class="material-symbols-outlined">settings_suggest</span>
+          <span class="sidebar-tooltip">[06] Operations</span>
+        </a>
+        <a class="sidebar-nav-btn" data-tab="news" onclick="navigate('news')" href="#/news" aria-label="Catalysts NLP">
+          <span class="material-symbols-outlined">feed</span>
+          <span class="sidebar-tooltip">Catalysts NLP</span>
+        </a>
+        <a class="sidebar-nav-btn" data-tab="overnight" onclick="navigate('overnight')" href="#/overnight" aria-label="Overnight Intelligence">
+          <span class="material-symbols-outlined">dark_mode</span>
+          <span class="sidebar-tooltip">Overnight Flow</span>
+        </a>
+        <a class="sidebar-nav-btn" data-tab="operations" onclick="navigate('operations')" href="#/operations" aria-label="System Diagnostics">
+          <span class="material-symbols-outlined">troubleshoot</span>
+          <span class="sidebar-tooltip">Diagnostics</span>
+        </a>
+      </nav>
+    </div>
+
+    <!-- Bottom Operator Telemetry & Profile -->
+    <div class="sidebar-bottom">
+      <div class="sidebar-telemetry-ping" onclick="navigate('jobs')" title="NSE/BSE L2 Feed: Live • 0.8ms Latency">
+        <div class="sidebar-ping-circle">
+          <span class="sidebar-pulse-dot"></span>
+        </div>
+        <span class="sidebar-ping-text">0.8ms</span>
+        <span class="sidebar-tooltip">NSE/BSE L2 Feed: Live</span>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <button class="sidebar-profile-btn" aria-label="Institutional Desk Access" title="INST-DESK #409 (T1)">
+        <span class="material-symbols-outlined">person</span>
+        <span class="sidebar-tooltip">INST-DESK #409 (T1)</span>
+      </button>
+    </div>
+  </aside>
+
   <div class="app-shell">
     
-    <!-- 1. Sticky Global Enterprise Header (Strictly NO Left Sidebar) -->
+    <!-- 1. Sticky Global Enterprise Header -->
     <header class="global-header">
       <div class="header-left">
         <a class="brand-group" onclick="navigate('overview')">

@@ -127,3 +127,31 @@ class TestV362CommandTerminal:
         """Ensures forbidden static placeholders remain absent."""
         assert "ALL SYSTEMS RECONCILED" not in self.html_content
         assert "Dual-feed reconciled" not in self.html_content
+
+    def test_left_sidebar_navigation_presence(self):
+        """Verifies that the Left Navigation Bar from Stitch screen 5bbea71045434e189ed0f2426779d132 is implemented."""
+        assert 'id="terminal-sidebar"' in self.html_content
+        assert 'class="terminal-sidebar"' in self.html_content
+        assert 'class="sidebar-brand"' in self.html_content
+        assert 'NX' in self.html_content
+        assert 'class="sidebar-nav"' in self.html_content
+        assert 'class="sidebar-tooltip"' in self.html_content
+        assert '0.8ms' in self.html_content
+        assert 'INST-DESK #409 (T1)' in self.html_content
+
+        # Sidebar navigation tabs
+        assert 'aria-label="Overview Terminal [01]"' in self.html_content
+        assert 'aria-label="Markets Terminal [02]"' in self.html_content
+        assert 'aria-label="AI Arena Strategies [04]"' in self.html_content
+
+    def test_light_paper_edition_theme_tokens(self):
+        """Verifies Light Paper Edition color palette tokens from Stitch screen 5bbea71045434e189ed0f2426779d132."""
+        assert '--bg-app: #F8F9FF;' in self.css_content or '--bg-app: #f8f9ff;' in self.css_content
+        assert '--bg-surface: #FFFFFF;' in self.css_content or '--bg-surface: #ffffff;' in self.css_content
+        assert '--text-primary: #0B1C30;' in self.css_content or '--text-primary: #0b1c30;' in self.css_content
+        assert '--sidebar-width: 56px;' in self.css_content
+        assert '.terminal-sidebar {' in self.css_content
+        assert 'Hanken+Grotesk' in self.html_content or 'Hanken Grotesk' in self.html_content
+        assert 'Material Symbols Outlined' in self.html_content or 'Material+Symbols+Outlined' in self.html_content
+
+

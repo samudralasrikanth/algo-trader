@@ -374,8 +374,8 @@ function updateViewPanels(primaryTab, subTab) {
   currentPrimaryTab = primaryTab;
   currentSubTab = subTab || '';
 
-  // Update Primary Nav Link Active State
-  document.querySelectorAll('.primary-nav .nav-link-btn').forEach(btn => {
+  // Update Primary Nav Link Active State (Header & Sidebar synchronized)
+  document.querySelectorAll('.primary-nav .nav-link-btn, .terminal-sidebar .sidebar-nav-btn').forEach(btn => {
     btn.classList.toggle('active', btn.getAttribute('data-tab') === primaryTab);
   });
 
@@ -896,31 +896,35 @@ function renderSvgPayoffGraph(payoffCurve, spot) {
   const height = 160;
   const zeroY = 80;
 
-  // Build SVG
+  // Build Light Paper SVG (Stitch Screen 5bbea71045434e189ed0f2426779d132)
   const svg = `
     <svg class="w-full h-full" style="width: 100%; height: 100%; display: block;" preserveAspectRatio="none" viewBox="0 0 ${width} ${height}">
       <defs>
         <linearGradient id="termBullGrad" x1="0%" x2="0%" y1="0%" y2="100%">
-          <stop offset="0%" stop-color="#10B981" stop-opacity="0.3"></stop>
-          <stop offset="100%" stop-color="#10B981" stop-opacity="0.0"></stop>
+          <stop offset="0%" stop-color="#069669" stop-opacity="0.22"></stop>
+          <stop offset="100%" stop-color="#069669" stop-opacity="0.02"></stop>
         </linearGradient>
         <linearGradient id="termBearGrad" x1="0%" x2="0%" y1="100%" y2="0%">
-          <stop offset="0%" stop-color="#F43F5E" stop-opacity="0.3"></stop>
-          <stop offset="100%" stop-color="#F43F5E" stop-opacity="0.0"></stop>
+          <stop offset="0%" stop-color="#BA1A1A" stop-opacity="0.22"></stop>
+          <stop offset="100%" stop-color="#BA1A1A" stop-opacity="0.02"></stop>
         </linearGradient>
       </defs>
       
+      <!-- Grid Lines -->
+      <line stroke="#E5EEFF" stroke-dasharray="2,2" stroke-width="1" x1="0" x2="${width}" y1="26" y2="26"></line>
+      <line stroke="#E5EEFF" stroke-dasharray="2,2" stroke-width="1" x1="0" x2="${width}" y1="134" y2="134"></line>
+      
       <!-- Zero P&L Line -->
-      <line stroke="#1E293B" stroke-dasharray="3,3" stroke-width="1.5" x1="0" x2="${width}" y1="${zeroY}" y2="${zeroY}"></line>
-      <text fill="#64748B" font-family="'JetBrains Mono', monospace" font-size="10" x="12" y="${zeroY - 6}">P&amp;L: ₹0.00</text>
+      <line stroke="#C6C6CD" stroke-dasharray="3,3" stroke-width="1.2" x1="0" x2="${width}" y1="${zeroY}" y2="${zeroY}"></line>
+      <text fill="#76777D" font-family="'JetBrains Mono', monospace" font-size="10" x="12" y="${zeroY - 6}">P&amp;L: ₹0.00</text>
       
       <!-- Breakeven Line -->
-      <line stroke="#2E3D5B" stroke-dasharray="2,2" stroke-width="1" x1="330" x2="330" y1="10" y2="150"></line>
-      <text fill="#94A3B8" font-family="'JetBrains Mono', monospace" font-size="9" x="335" y="24">BREAKEVEN: 25,546</text>
+      <line stroke="#DCE9FF" stroke-dasharray="2,2" stroke-width="1" x1="330" x2="330" y1="10" y2="150"></line>
+      <text fill="#45464D" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="600" x="335" y="24">BREAKEVEN: 25,546</text>
       
       <!-- Spot Line -->
-      <line stroke="#0B63E5" stroke-width="1.5" x1="440" x2="440" y1="10" y2="150"></line>
-      <text fill="#B1C5FF" font-family="'JetBrains Mono', monospace" font-size="9" x="445" y="40">SPOT: 25,481</text>
+      <line stroke="#006398" stroke-width="1.5" x1="440" x2="440" y1="10" y2="150"></line>
+      <text fill="#006398" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" x="445" y="40">SPOT: 25,481</text>
       
       <!-- Profit Shading Area -->
       <polygon fill="url(#termBullGrad)" points="330,${zeroY} 490,26 700,26 700,${zeroY}"></polygon>
@@ -928,17 +932,18 @@ function renderSvgPayoffGraph(payoffCurve, spot) {
       <!-- Loss Shading Area -->
       <polygon fill="url(#termBearGrad)" points="0,134 190,134 330,${zeroY} 0,${zeroY}"></polygon>
       
-      <!-- Expiry Payoff Solid Step Line -->
-      <polyline fill="none" points="0,134 190,134 490,26 700,26" stroke="#10B981" stroke-width="2.5"></polyline>
+      <!-- Expiry Payoff Solid Step Line (Bold Primary Black) -->
+      <polyline fill="none" points="0,134 190,134 490,26 700,26" stroke="#000000" stroke-width="2.5"></polyline>
       
-      <!-- Theoretical T+0 Curve (Dashed Cyan) -->
-      <path d="M 0 120 Q 250 115 330 80 T 700 35" fill="none" stroke="#06B6D4" stroke-width="1.5" stroke-dasharray="4,4"></path>
+      <!-- Theoretical T+0 Curve (Dashed Financial Blue) -->
+      <path d="M 0 120 Q 250 115 330 80 T 700 35" fill="none" stroke="#006398" stroke-width="1.5" stroke-dasharray="4,3"></path>
       
       <!-- Strike Anchor Dots -->
-      <circle cx="190" cy="134" fill="#F43F5E" r="3.5"></circle>
-      <circle cx="330" cy="${zeroY}" fill="#F8FAFC" r="4"></circle>
-      <circle cx="490" cy="26" fill="#10B981" r="3.5"></circle>
-      <circle cx="440" cy="45" fill="#0B63E5" r="4.5"></circle>
+      <circle cx="190" cy="134" fill="#BA1A1A" r="3.5"></circle>
+      <circle cx="330" cy="${zeroY}" fill="#000000" r="4"></circle>
+      <circle cx="490" cy="26" fill="#069669" r="3.5"></circle>
+      <circle cx="440" cy="45" fill="#006398" r="4.5"></circle>
+      <circle cx="440" cy="45" fill="none" stroke="#006398" stroke-width="1.5" opacity="0.4" r="8"></circle>
     </svg>
   `;
   wrapper.innerHTML = svg;
@@ -948,7 +953,7 @@ function renderSvgPayoffGraph(payoffCurve, spot) {
       <span>24,800 (-2.6%)</span>
       <span>25,000 (Long Call)</span>
       <span>25,546 (BE Point)</span>
-      <span style="color: #60A5FA; font-weight: 700;">25,481 (Spot)</span>
+      <span style="color: #006398; font-weight: 700;">25,481 (Spot Reference)</span>
       <span>25,600 (Short Call)</span>
       <span>26,000 (+2.0%)</span>
     `;
@@ -1045,7 +1050,7 @@ function renderOptionChainTable() {
         <td style="color: var(--text-muted);">${c.implied_volatility ? (c.implied_volatility * 100).toFixed(1) + '%' : '--'}</td>
         <td style="text-align: right; color: var(--text-secondary);">${c.lot_size ? (c.lot_size * 240).toLocaleString('en-IN') : '--'}</td>
         <td style="text-align: right; color: var(--text-primary); font-weight: 700; border-right: 1px solid var(--border);">${c.model_price ? c.model_price.toFixed(2) : '--'}</td>
-        <td class="strike-center-col" style="${isAtm ? 'background: var(--primary); color: #FFF;' : ''}">${s.strike.toLocaleString('en-IN')}</td>
+        <td class="strike-center-col" style="${isAtm ? 'background: #000000 !important; color: #FFFFFF !important; font-weight: 700;' : 'background: var(--bg-surface-secondary); color: var(--text-primary); font-weight: 600;'}">${s.strike.toLocaleString('en-IN')}${isAtm ? ' <span style="font-size: 8px; padding: 1px 3px; background: #EFF4FF; color: #000000; border-radius: 2px; margin-left: 2px;">ATM</span>' : ''}</td>
         <td style="text-align: left; color: var(--text-primary); font-weight: 700; border-left: 1px solid var(--border);">${p.model_price ? p.model_price.toFixed(2) : '--'}</td>
         <td style="text-align: right; color: var(--text-secondary);">${p.lot_size ? (p.lot_size * 210).toLocaleString('en-IN') : '--'}</td>
         <td style="text-align: right; color: var(--text-muted);">${p.implied_volatility ? (p.implied_volatility * 100).toFixed(1) + '%' : '--'}</td>
