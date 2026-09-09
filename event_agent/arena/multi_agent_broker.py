@@ -17,6 +17,17 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ..broker.cost_model import CostModel
 from ..broker.execution_simulator import Candle5M, ExecutionSimulator, Fill
+from .asset_models import (
+    AssetClass,
+    LegSide,
+    MultiLegStrategy,
+    OptionInstrument,
+    OptionType,
+    StrategyLeg,
+    StrategyStatus,
+    StrategyType,
+)
+from .options_engine import OptionsPricingEngine
 from ..config import AGENT_STARTING_CAPITAL, TOTAL_VIRTUAL_CAPITAL
 from .models import (
     HedgeDecision,
@@ -149,14 +160,20 @@ class SubPortfolio:
         self.peak_portfolio_value = starting_capital
         self.open_positions: Dict[str, ArenaPosition] = {}  # keyed by symbol
         self.closed_trades: List[ArenaClosedTrade] = []
+        self.open_strategies: Dict[str, MultiLegStrategy] = {}  # keyed by strategy_id
+        self.closed_strategies: List[MultiLegStrategy] = []
 
     @property
     def invested_capital(self) -> float:
-        return sum(pos.invested_capital for pos in self.open_positions.values())
+        pos_invested = sum(pos.invested_capital for pos in self.open_positions.values())
+        strat_invested = sum(s.net_debit for s in self.open_strategies.values() if s.status == StrategyStatus.OPEN)
+        return pos_invested + strat_invested
 
     @property
     def unrealized_pnl(self) -> float:
-        return sum(pos.unrealized_pnl for pos in self.open_positions.values())
+        pos_pnl = sum(pos.unrealized_pnl for pos in self.open_positions.values())
+        strat_pnl = sum(s.unrealized_pnl for s in self.open_strategies.values() if s.status == StrategyStatus.OPEN)
+        return pos_pnl + strat_pnl
 
     @property
     def portfolio_value(self) -> float:
@@ -230,6 +247,49 @@ class SubPortfolio:
                 futures_list.append(pos_dict)
             elif pos.instrument.instrument_type == InstrumentType.OPTION:
                 options_list.append(pos_dict)
+
+        # Include multi-leg options strategies as cohesive paper positions
+        for strat in self.open_strategies.values():
+            if strat.status == StrategyStatus.OPEN:
+                strat_dict = {
+                    "agent_id": self.agent_id,
+                    "strategy_version": strat.strategy_version,
+                    "symbol": f"{strat.underlying}-{strat.strategy_type.value}",
+                    "strategy_id": strat.strategy_id,
+                    "strategy_type": strat.strategy_type.value,
+                    "instrument": {
+                        "instrument_type": "OPTION",
+                        "contract_name": f"{strat.underlying} {strat.strategy_type.value} ({strat.expiry})",
+                        "is_simulated_price": True,
+                        "pricing_model": strat.pricing_model,
+                    },
+                    "direction": "BUY" if strat.net_delta >= 0 else "SELL",
+                    "quantity": strat.legs[0].quantity if strat.legs else 50,
+                    "entry_price": round(strat.net_debit, 2),
+                    "current_price": round(strat.current_strategy_value, 2),
+                    "stop_loss": round(strat.stop_loss_amount, 2),
+                    "target": round(strat.target_profit_amount, 2),
+                    "invested_capital": round(strat.net_debit, 2),
+                    "margin_or_premium": round(strat.net_debit, 2),
+                    "unrealized_pnl": round(strat.unrealized_pnl, 2),
+                    "pnl_pct": round((strat.unrealized_pnl / strat.net_debit * 100.0) if strat.net_debit > 0 else 0.0, 2),
+                    "hedge_decision": "NO",
+                    "hedge_instrument": None,
+                    "days_held": 0,
+                    "days_to_expiry": 7,
+                    "entry_time": strat.entry_time,
+                    "trade_id": strat.strategy_id,
+                    "status": "OPEN",
+                    "is_multi_leg": True,
+                    "legs": [leg.to_dict() for leg in strat.legs],
+                    "max_profit": round(strat.max_profit, 2),
+                    "max_loss": round(strat.max_loss, 2),
+                    "breakeven": [round(b, 2) for b in strat.breakeven],
+                    "net_delta": round(strat.net_delta, 4),
+                    "price_source": "MODELLED",
+                }
+                options_list.append(strat_dict)
+                all_list.append(strat_dict)
 
         return {
             "equity": equity_list,
@@ -461,3 +521,133 @@ class MultiAgentBroker:
             "total_trades": total_trades,
             "agents": {s["agent_id"]: s for s in agent_summaries},
         }
+
+    def execute_approved_strategy(
+        self,
+        strategy: MultiLegStrategy,
+        evaluation: RiskEvaluation,
+        market_date: str,
+    ) -> Tuple[bool, str, Optional[MultiLegStrategy]]:
+        """
+        Atomically executes an approved multi-leg options strategy:
+        - All legs executed or entire strategy rejected
+        - Cash deducted for net debit
+        - Recorded in open_strategies and executed_trade_ids
+        """
+        if not evaluation.is_approved:
+            return False, f"REJECTED_BY_RISK: {evaluation.rejection_reason}", None
+
+        sub_port = self.get_agent_portfolio(strategy.agent_id)
+
+        if strategy.strategy_id in self.executed_trade_ids:
+            logger.info(f"Idempotent skip: Strategy ID {strategy.strategy_id} already executed.")
+            existing_strat = sub_port.open_strategies.get(strategy.strategy_id)
+            return True, "ALREADY_EXECUTED", existing_strat
+
+        if strategy.net_debit > sub_port.cash:
+            return False, f"INSUFFICIENT_FUNDS: Strategy requires ₹{strategy.net_debit:,.2f}, has ₹{sub_port.cash:,.2f}", None
+
+        # Deduct cash strictly from this agent's sub-portfolio
+        sub_port.cash -= strategy.net_debit
+        strategy.status = StrategyStatus.OPEN
+        strategy.current_strategy_value = strategy.net_debit
+        strategy.unrealized_pnl = 0.0
+
+        sub_port.open_strategies[strategy.strategy_id] = strategy
+        self.executed_trade_ids.add(strategy.strategy_id)
+        logger.info(f"Atomically executed multi-leg strategy {strategy.strategy_id} for {strategy.agent_id}. Net debit: ₹{strategy.net_debit:,.2f}")
+        return True, "EXECUTED", strategy
+
+    def mark_to_market_strategies(
+        self,
+        underlying_prices: Dict[str, float],
+        expiry_days_remaining: int = 7,
+    ):
+        """
+        Revalues all open options strategies using current underlying prices
+        and analytical Black-Scholes pricing engine.
+        Also evaluates strategy-level Stop-Loss and Target-Profit triggers.
+        """
+        for sub_port in self.sub_portfolios.values():
+            to_close = []
+            for strat_id, strat in list(sub_port.open_strategies.items()):
+                if strat.status != StrategyStatus.OPEN:
+                    continue
+
+                und_sym = strat.underlying
+                spot = underlying_prices.get(und_sym, strat.entry_underlying_price)
+                strat.current_underlying_price = spot
+
+                # Revalue each leg
+                total_val = 0.0
+                T_years = max(0.0001, expiry_days_remaining / 365.0)
+
+                for leg in strat.legs:
+                    calc = OptionsPricingEngine.calculate_price_and_greeks(
+                        spot=spot,
+                        strike=leg.instrument.strike,
+                        time_to_expiry_years=T_years,
+                        volatility=leg.instrument.implied_volatility,
+                        is_call=(leg.instrument.option_type == OptionType.CE),
+                    )
+                    leg.current_price = calc["price"]
+                    mult = 1 if leg.side == LegSide.BUY else -1
+                    total_val += mult * leg.current_price * leg.quantity
+
+                strat.current_strategy_value = total_val
+                strat.unrealized_pnl = total_val - strat.net_debit
+
+                # Check Stop Loss (e.g. loss exceeds stop amount)
+                if strat.unrealized_pnl <= -strat.stop_loss_amount:
+                    to_close.append((strat_id, "STOP_LOSS_TRIGGERED"))
+                elif strat.unrealized_pnl >= strat.target_profit_amount:
+                    to_close.append((strat_id, "TARGET_PROFIT_REACHED"))
+
+            # Close triggered strategies
+            for strat_id, reason in to_close:
+                strat = sub_port.open_strategies.pop(strat_id, None)
+                if strat:
+                    returned_cash = max(0.0, strat.net_debit + strat.unrealized_pnl)
+                    sub_port.cash += returned_cash
+                    sub_port.realized_pnl += strat.unrealized_pnl
+                    strat.realized_pnl = strat.unrealized_pnl
+                    strat.status = StrategyStatus.STOPPED_OUT if "STOP" in reason else StrategyStatus.TARGET_REACHED
+                    strat.exit_reason = reason
+                    strat.closed_time = datetime.now(timezone.utc).isoformat()
+                    sub_port.closed_strategies.append(strat)
+                    logger.info(f"Strategy {strat_id} closed ({reason}). Realized P&L: ₹{strat.realized_pnl:,.2f}")
+
+    def settle_expiring_strategies(
+        self,
+        settlement_prices: Dict[str, float],
+        expiry_reason: str = "EXPIRY_SETTLEMENT",
+    ):
+        """
+        Settles all expiring options strategies at expiry:
+        - ITM legs settle for intrinsic cash difference
+        - OTM legs expire worthless (zero value)
+        - Final P&L credited to agent NAV
+        """
+        for sub_port in self.sub_portfolios.values():
+            for strat_id, strat in list(sub_port.open_strategies.items()):
+                if strat.status != StrategyStatus.OPEN:
+                    continue
+
+                und_sym = strat.underlying
+                settle_price = settlement_prices.get(und_sym, strat.current_underlying_price)
+                final_payoff = strat.calculate_payoff_at(settle_price)
+
+                returned_cash = max(0.0, strat.net_debit + final_payoff)
+                sub_port.cash += returned_cash
+                sub_port.realized_pnl += final_payoff
+
+                strat.status = StrategyStatus.EXPIRED
+                strat.realized_pnl = final_payoff
+                strat.unrealized_pnl = 0.0
+                strat.current_strategy_value = max(0.0, strat.net_debit + final_payoff)
+                strat.exit_reason = f"{expiry_reason} at ₹{settle_price:.2f}"
+                strat.closed_time = datetime.now(timezone.utc).isoformat()
+
+                del sub_port.open_strategies[strat_id]
+                sub_port.closed_strategies.append(strat)
+                logger.info(f"Strategy {strat_id} settled at expiry. Payoff: ₹{final_payoff:,.2f}")

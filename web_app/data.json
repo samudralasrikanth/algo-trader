@@ -1,8 +1,8 @@
 {
   "metadata": {
-    "generated_at": "2026-09-09T09:13:30.007301+00:00",
-    "system_name": "NIFTY 50 AI TRADING ARENA (V3.2)",
-    "subtitle": "5 Autonomous AI Agents \u2022 \u20b91 Crore Virtual Capital \u2022 50-Stock Nifty Analytics \u2022 15:30 IST Hard Cutoff",
+    "generated_at": "2026-09-09T10:26:06.452598+00:00",
+    "system_name": "NEXUS AI \u2014 ENTERPRISE MULTI-ASSET INVESTMENT INTELLIGENCE",
+    "subtitle": "Equities \u2022 Derivatives (Paper Options & Futures) \u2022 \u20b91 Crore AI Arena \u2022 Real-time Risk Gate",
     "version_record": {
       "model_version": "3.0.0",
       "feature_version": "F1",
@@ -16,8 +16,8 @@
       "approved_by": "SYSTEM_INITIAL_V3",
       "version_hash": "769155f12bab99ba"
     },
-    "transparency_note": "Zero Real Money. Pure Simulation. Derivatives use cost-of-carry and Black-Scholes mathematical models. Losers and model failures are prominently featured to eliminate survivorship bias.",
-    "methodology": "Numerical calculations, risk gates, and execution simulation use 100% deterministic math. LLMs are used solely for news semantic extraction."
+    "transparency_note": "Zero Real Money. Pure Paper Trading. Derivatives use deterministic Black-Scholes and Cost-of-Carry models labeled MODELLED.",
+    "methodology": "Deterministic quantitative pricing, analytical Greeks, multi-leg atomic paper execution, and centralized risk governance."
   },
   "arena": {
     "summary": {
@@ -30,9 +30,9 @@
       "total_active_positions": 2,
       "top_agent": "Agent Macro",
       "active_agents_count": 5,
-      "market_phase": "INTRADAY",
-      "market_phase_desc": "MARKET_ACTIVE: Order accepted for execution simulation.",
-      "is_trading_allowed": true,
+      "market_phase": "POST_MARKET_AUDIT",
+      "market_phase_desc": "AUDIT_IN_PROGRESS: Market session ended. Post-market reconciliation active.",
+      "is_trading_allowed": false,
       "cutoff_time": "15:30 IST"
     },
     "leaderboard": [
@@ -189,7 +189,7 @@
               "hedge_instrument": null,
               "days_held": 0,
               "days_to_expiry": 30,
-              "entry_time": "2026-09-09T09:13:29.967292+00:00",
+              "entry_time": "2026-09-09T10:26:06.417686+00:00",
               "trade_id": "TRD-2026-09-09-ALPHA-LT-EQUITY-1-e83c0d40",
               "status": "OPEN"
             }
@@ -226,7 +226,7 @@
               "hedge_instrument": null,
               "days_held": 0,
               "days_to_expiry": 30,
-              "entry_time": "2026-09-09T09:13:29.967292+00:00",
+              "entry_time": "2026-09-09T10:26:06.417686+00:00",
               "trade_id": "TRD-2026-09-09-ALPHA-LT-EQUITY-1-e83c0d40",
               "status": "OPEN"
             }
@@ -285,7 +285,7 @@
               "hedge_instrument": null,
               "days_held": 0,
               "days_to_expiry": 30,
-              "entry_time": "2026-09-09T09:13:29.967301+00:00",
+              "entry_time": "2026-09-09T10:26:06.417695+00:00",
               "trade_id": "TRD-2026-09-09-MOMENTUM-LT-EQUITY-1-e83c0d40",
               "status": "OPEN"
             }
@@ -322,7 +322,7 @@
               "hedge_instrument": null,
               "days_held": 0,
               "days_to_expiry": 30,
-              "entry_time": "2026-09-09T09:13:29.967301+00:00",
+              "entry_time": "2026-09-09T10:26:06.417695+00:00",
               "trade_id": "TRD-2026-09-09-MOMENTUM-LT-EQUITY-1-e83c0d40",
               "status": "OPEN"
             }
@@ -498,7 +498,8 @@
         "instrument": "EQUITY",
         "shares": 100,
         "price": 3967.3,
-        "status": "EXECUTED"
+        "status": "EXECUTED",
+        "is_multi_leg": false
       },
       {
         "agent_id": "MOMENTUM",
@@ -506,23 +507,24 @@
         "instrument": "EQUITY",
         "shares": 100,
         "price": 3967.3,
-        "status": "EXECUTED"
+        "status": "EXECUTED",
+        "is_multi_leg": false
       }
     ],
     "market_clock": {
-      "current_phase": "INTRADAY",
-      "is_market_open": true,
-      "can_accept_orders": true,
-      "status_reason": "MARKET_ACTIVE: Order accepted for execution simulation.",
-      "ist_timestamp": "2026-09-09 14:43:29 IST",
-      "ist_time": "14:43 IST",
+      "current_phase": "POST_MARKET_AUDIT",
+      "is_market_open": false,
+      "can_accept_orders": false,
+      "status_reason": "AUDIT_IN_PROGRESS: Market session ended. Post-market reconciliation active.",
+      "ist_timestamp": "2026-09-09 15:56:06 IST",
+      "ist_time": "15:56 IST",
       "market_date": "2026-09-09",
       "order_cutoff_time": "15:30 IST",
       "forecast_run_time": "20:30 IST",
       "audit_run_time": "15:45 IST",
-      "phase": "INTRADAY",
-      "phase_desc": "MARKET_ACTIVE: Order accepted for execution simulation.",
-      "is_trading_allowed": true
+      "phase": "POST_MARKET_AUDIT",
+      "phase_desc": "AUDIT_IN_PROGRESS: Market session ended. Post-market reconciliation active.",
+      "is_trading_allowed": false
     }
   },
   "market_analytics": {
@@ -1843,22 +1845,2166 @@
       "divergent_symbols": []
     }
   },
+  "option_chain": {
+    "underlying": "NIFTY 50",
+    "underlying_price": 25481.3,
+    "atm_strike": 25500.0,
+    "expiry": "7 Days",
+    "strikes": [
+      {
+        "strike": 25250.0,
+        "is_atm": false,
+        "call": {
+          "instrument_id": "OPT-NIFTY 50-25250-CE-7D",
+          "asset_class": "OPTION",
+          "symbol": "NIFTY 50-25250-CE",
+          "name": "NIFTY 50 25250 CE (7D)",
+          "exchange": "NSE",
+          "currency": "INR",
+          "is_simulated_price": true,
+          "price_source": "MODELLED_BLACK_SCHOLES",
+          "underlying": "NIFTY 50",
+          "expiry": "7D",
+          "strike": 25250.0,
+          "option_type": "CE",
+          "lot_size": 50,
+          "contract_multiplier": 1,
+          "bid": 346.51,
+          "ask": 349.99,
+          "model_price": 348.25,
+          "implied_volatility": 0.138,
+          "delta": 0.7052,
+          "gamma": 0.000708,
+          "theta": -14.5392,
+          "vega": 12.1658,
+          "liquidity_score": 1.0
+        },
+        "put": {
+          "instrument_id": "OPT-NIFTY 50-25250-PE-7D",
+          "asset_class": "OPTION",
+          "symbol": "NIFTY 50-25250-PE",
+          "name": "NIFTY 50 25250 PE (7D)",
+          "exchange": "NSE",
+          "currency": "INR",
+          "is_simulated_price": true,
+          "price_source": "MODELLED_BLACK_SCHOLES",
+          "underlying": "NIFTY 50",
+          "expiry": "7D",
+          "strike": 25250.0,
+          "option_type": "PE",
+          "lot_size": 50,
+          "contract_multiplier": 1,
+          "bid": 90.89,
+          "ask": 91.81,
+          "model_price": 91.35,
+          "implied_volatility": 0.138,
+          "delta": -0.2946,
+          "gamma": 0.000708,
+          "theta": -10.8858,
+          "vega": 12.1658,
+          "liquidity_score": 1.0
+        }
+      },
+      {
+        "strike": 25300.0,
+        "is_atm": false,
+        "call": {
+          "instrument_id": "OPT-NIFTY 50-25300-CE-7D",
+          "asset_class": "OPTION",
+          "symbol": "NIFTY 50-25300-CE",
+          "name": "NIFTY 50 25300 CE (7D)",
+          "exchange": "NSE",
+          "currency": "INR",
+          "is_simulated_price": true,
+          "price_source": "MODELLED_BLACK_SCHOLES",
+          "underlying": "NIFTY 50",
+          "expiry": "7D",
+          "strike": 25300.0,
+          "option_type": "CE",
+          "lot_size": 50,
+          "contract_multiplier": 1,
+          "bid": 312.7,
+          "ask": 315.84,
+          "model_price": 314.27,
+          "implied_volatility": 0.138,
+          "delta": 0.6686,
+          "gamma": 0.000745,
+          "theta": -15.0312,
+          "vega": 12.7963,
+          "liquidity_score": 1.0
+        },
+        "put": {
+          "instrument_id": "OPT-NIFTY 50-25300-PE-7D",
+          "asset_class": "OPTION",
+          "symbol": "NIFTY 50-25300-PE",
+          "name": "NIFTY 50 25300 PE (7D)",
+          "exchange": "NSE",
+          "currency": "INR",
+          "is_simulated_price": true,
+          "price_source": "MODELLED_BLACK_SCHOLES",
+          "underlying": "NIFTY 50",
+          "expiry": "7D",
+          "strike": 25300.0,
+          "option_type": "PE",
+          "lot_size": 50,
+          "contract_multiplier": 1,
+          "bid": 106.78,
+          "ask": 107.86,
+          "model_price": 107.32,
+          "implied_volatility": 0.138,
+          "delta": -0.3312,
+          "gamma": 0.000745,
+          "theta": -11.3689,
+          "vega": 12.7963,
+          "liquidity_score": 1.0
+        }
+      },
+      {
+        "strike": 25350.0,
+        "is_atm": false,
+        "call": {
+          "instrument_id": "OPT-NIFTY 50-25350-CE-7D",
+          "asset_class": "OPTION",
+          "symbol": "NIFTY 50-25350-CE",
+          "name": "NIFTY 50 25350 CE (7D)",
+          "exchange": "NSE",
+          "currency": "INR",
+          "is_simulated_price": true,
+          "price_source": "MODELLED_BLACK_SCHOLES",
+          "underlying": "NIFTY 50",
+          "expiry": "7D",
+          "strike": 25350.0,
+          "option_type": "CE",
+          "lot_size": 50,
+          "contract_multiplier": 1,
+          "bid": 280.77,
+          "ask": 283.59,
+          "model_price": 282.18,
+          "implied_volatility": 0.138,
+          "delta": 0.6303,
+          "gamma": 0.000775,
+          "theta": -15.4068,
+          "vega": 13.3151,
+          "liquidity_score": 1.0
+        },
+        "put": {
+          "instrument_id": "OPT-NIFTY 50-25350-PE-7D",
+          "asset_class": "OPTION",
+          "symbol": "NIFTY 50-25350-PE",
+          "name": "NIFTY 50 25350 PE (7D)",
+          "exchange": "NSE",
+          "currency": "INR",
+          "is_simulated_price": true,
+          "price_source": "MODELLED_BLACK_SCHOLES",
+          "underlying": "NIFTY 50",
+          "expiry": "7D",
+          "strike": 25350.0,
+          "option_type": "PE",
+          "lot_size": 50,
+          "contract_multiplier": 1,
+          "bid": 124.53,
+          "ask": 125.79,
+          "model_price": 125.16,
+          "implied_volatility": 0.138,
+          "delta": -0.3695,
+          "gamma": 0.000775,
+          "theta": -11.7356,
+          "vega": 13.3151,
+          "liquidity_score": 1.0
+        }
+      },
+      {
+        "strike": 25400.0,
+        "is_atm": false,
+        "call": {
+          "instrument_id": "OPT-NIFTY 50-25400-CE-7D",
+          "asset_class": "OPTION",
+          "symbol": "NIFTY 50-25400-CE",
+          "name": "NIFTY 50 25400 CE (7D)",
+          "exchange": "NSE",
+          "currency": "INR",
+          "is_simulated_price": true,
+          "price_source": "MODELLED_BLACK_SCHOLES",
+          "underlying": "NIFTY 50",
+          "expiry": "7D",
+          "strike": 25400.0,
+          "option_type": "CE",
+          "lot_size": 50,
+          "contract_multiplier": 1,
+          "bid": 250.79,
+          "ask": 253.31,
+          "model_price": 252.05,
+          "implied_volatility": 0.138,
+          "delta": 0.5908,
+          "gamma": 0.000798,
+          "theta": -15.6526,
+          "vega": 13.7073,
+          "liquidity_score": 1.0
+        },
+        "put": {
+          "instrument_id": "OPT-NIFTY 50-25400-PE-7D",
+          "asset_class": "OPTION",
+          "symbol": "NIFTY 50-25400-PE",
+          "name": "NIFTY 50 25400 PE (7D)",
+          "exchange": "NSE",
+          "currency": "INR",
+          "is_simulated_price": true,
+          "price_source": "MODELLED_BLACK_SCHOLES",
+          "underlying": "NIFTY 50",
+          "expiry": "7D",
+          "strike": 25400.0,
+          "option_type": "PE",
+          "lot_size": 50,
+          "contract_multiplier": 1,
+          "bid": 144.25,
+          "ask": 145.69,
+          "model_price": 144.97,
+          "implied_volatility": 0.138,
+          "delta": -0.409,
+          "gamma": 0.000798,
+          "theta": -11.9725,
+          "vega": 13.7073,
+          "liquidity_score": 1.0
+        }
+      },
+      {
+        "strike": 25450.0,
+        "is_atm": false,
+        "call": {
+          "instrument_id": "OPT-NIFTY 50-25450-CE-7D",
+          "asset_class": "OPTION",
+          "symbol": "NIFTY 50-25450-CE",
+          "name": "NIFTY 50 25450 CE (7D)",
+          "exchange": "NSE",
+          "currency": "INR",
+          "is_simulated_price": true,
+          "price_source": "MODELLED_BLACK_SCHOLES",
+          "underlying": "NIFTY 50",
+          "expiry": "7D",
+          "strike": 25450.0,
+          "option_type": "CE",
+          "lot_size": 50,
+          "contract_multiplier": 1,
+          "bid": 222.8,
+          "ask": 225.04,
+          "model_price": 223.92,
+          "implied_volatility": 0.138,
+          "delta": 0.5504,
+          "gamma": 0.000812,
+          "theta": -15.7587,
+          "vega": 13.9614,
+          "liquidity_score": 1.0
+        },
+        "put": {
+          "instrument_id": "OPT-NIFTY 50-25450-PE-7D",
+          "asset_class": "OPTION",
+          "symbol": "NIFTY 50-25450-PE",
+          "name": "NIFTY 50 25450 PE (7D)",
+          "exchange": "NSE",
+          "currency": "INR",
+          "is_simulated_price": true,
+          "price_source": "MODELLED_BLACK_SCHOLES",
+          "underlying": "NIFTY 50",
+          "expiry": "7D",
+          "strike": 25450.0,
+          "option_type": "PE",
+          "lot_size": 50,
+          "contract_multiplier": 1,
+          "bid": 165.94,
+          "ask": 167.6,
+          "model_price": 166.77,
+          "implied_volatility": 0.138,
+          "delta": -0.4493,
+          "gamma": 0.000812,
+          "theta": -12.0697,
+          "vega": 13.9614,
+          "liquidity_score": 1.0
+        }
+      },
+      {
+        "strike": 25500.0,
+        "is_atm": true,
+        "call": {
+          "instrument_id": "OPT-NIFTY 50-25500-CE-7D",
+          "asset_class": "OPTION",
+          "symbol": "NIFTY 50-25500-CE",
+          "name": "NIFTY 50 25500 CE (7D)",
+          "exchange": "NSE",
+          "currency": "INR",
+          "is_simulated_price": true,
+          "price_source": "MODELLED_BLACK_SCHOLES",
+          "underlying": "NIFTY 50",
+          "expiry": "7D",
+          "strike": 25500.0,
+          "option_type": "CE",
+          "lot_size": 50,
+          "contract_multiplier": 1,
+          "bid": 196.83,
+          "ask": 198.81,
+          "model_price": 197.82,
+          "implied_volatility": 0.138,
+          "delta": 0.5096,
+          "gamma": 0.000819,
+          "theta": -15.7197,
+          "vega": 14.0704,
+          "liquidity_score": 1.0
+        },
+        "put": {
+          "instrument_id": "OPT-NIFTY 50-25500-PE-7D",
+          "asset_class": "OPTION",
+          "symbol": "NIFTY 50-25500-PE",
+          "name": "NIFTY 50 25500 PE (7D)",
+          "exchange": "NSE",
+          "currency": "INR",
+          "is_simulated_price": true,
+          "price_source": "MODELLED_BLACK_SCHOLES",
+          "underlying": "NIFTY 50",
+          "expiry": "7D",
+          "strike": 25500.0,
+          "option_type": "PE",
+          "lot_size": 50,
+          "contract_multiplier": 1,
+          "bid": 189.67,
+          "ask": 191.57,
+          "model_price": 190.62,
+          "implied_volatility": 0.138,
+          "delta": -0.4902,
+          "gamma": 0.000819,
+          "theta": -12.0218,
+          "vega": 14.0704,
+          "liquidity_score": 1.0
+        }
+      },
+      {
+        "strike": 25550.0,
+        "is_atm": false,
+        "call": {
+          "instrument_id": "OPT-NIFTY 50-25550-CE-7D",
+          "asset_class": "OPTION",
+          "symbol": "NIFTY 50-25550-CE",
+          "name": "NIFTY 50 25550 CE (7D)",
+          "exchange": "NSE",
+          "currency": "INR",
+          "is_simulated_price": true,
+          "price_source": "MODELLED_BLACK_SCHOLES",
+          "underlying": "NIFTY 50",
+          "expiry": "7D",
+          "strike": 25550.0,
+          "option_type": "CE",
+          "lot_size": 50,
+          "contract_multiplier": 1,
+          "bid": 172.9,
+          "ask": 174.64,
+          "model_price": 173.77,
+          "implied_volatility": 0.138,
+          "delta": 0.4687,
+          "gamma": 0.000817,
+          "theta": -15.5346,
+          "vega": 14.0316,
+          "liquidity_score": 1.0
+        },
+        "put": {
+          "instrument_id": "OPT-NIFTY 50-25550-PE-7D",
+          "asset_class": "OPTION",
+          "symbol": "NIFTY 50-25550-PE",
+          "name": "NIFTY 50 25550 PE (7D)",
+          "exchange": "NSE",
+          "currency": "INR",
+          "is_simulated_price": true,
+          "price_source": "MODELLED_BLACK_SCHOLES",
+          "underlying": "NIFTY 50",
+          "expiry": "7D",
+          "strike": 25550.0,
+          "option_type": "PE",
+          "lot_size": 50,
+          "contract_multiplier": 1,
+          "bid": 215.42,
+          "ask": 217.58,
+          "model_price": 216.5,
+          "implied_volatility": 0.138,
+          "delta": -0.531,
+          "gamma": 0.000817,
+          "theta": -11.8278,
+          "vega": 14.0316,
+          "liquidity_score": 1.0
+        }
+      },
+      {
+        "strike": 25600.0,
+        "is_atm": false,
+        "call": {
+          "instrument_id": "OPT-NIFTY 50-25600-CE-7D",
+          "asset_class": "OPTION",
+          "symbol": "NIFTY 50-25600-CE",
+          "name": "NIFTY 50 25600 CE (7D)",
+          "exchange": "NSE",
+          "currency": "INR",
+          "is_simulated_price": true,
+          "price_source": "MODELLED_BLACK_SCHOLES",
+          "underlying": "NIFTY 50",
+          "expiry": "7D",
+          "strike": 25600.0,
+          "option_type": "CE",
+          "lot_size": 50,
+          "contract_multiplier": 1,
+          "bid": 150.98,
+          "ask": 152.5,
+          "model_price": 151.74,
+          "implied_volatility": 0.138,
+          "delta": 0.4283,
+          "gamma": 0.000806,
+          "theta": -15.2072,
+          "vega": 13.8473,
+          "liquidity_score": 1.0
+        },
+        "put": {
+          "instrument_id": "OPT-NIFTY 50-25600-PE-7D",
+          "asset_class": "OPTION",
+          "symbol": "NIFTY 50-25600-PE",
+          "name": "NIFTY 50 25600 PE (7D)",
+          "exchange": "NSE",
+          "currency": "INR",
+          "is_simulated_price": true,
+          "price_source": "MODELLED_BLACK_SCHOLES",
+          "underlying": "NIFTY 50",
+          "expiry": "7D",
+          "strike": 25600.0,
+          "option_type": "PE",
+          "lot_size": 50,
+          "contract_multiplier": 1,
+          "bid": 243.2,
+          "ask": 245.64,
+          "model_price": 244.42,
+          "implied_volatility": 0.138,
+          "delta": -0.5715,
+          "gamma": 0.000806,
+          "theta": -11.4915,
+          "vega": 13.8473,
+          "liquidity_score": 1.0
+        }
+      },
+      {
+        "strike": 25650.0,
+        "is_atm": false,
+        "call": {
+          "instrument_id": "OPT-NIFTY 50-25650-CE-7D",
+          "asset_class": "OPTION",
+          "symbol": "NIFTY 50-25650-CE",
+          "name": "NIFTY 50 25650 CE (7D)",
+          "exchange": "NSE",
+          "currency": "INR",
+          "is_simulated_price": true,
+          "price_source": "MODELLED_BLACK_SCHOLES",
+          "underlying": "NIFTY 50",
+          "expiry": "7D",
+          "strike": 25650.0,
+          "option_type": "CE",
+          "lot_size": 50,
+          "contract_multiplier": 1,
+          "bid": 131.06,
+          "ask": 132.38,
+          "model_price": 131.72,
+          "implied_volatility": 0.138,
+          "delta": 0.3887,
+          "gamma": 0.000787,
+          "theta": -14.7453,
+          "vega": 13.5238,
+          "liquidity_score": 1.0
+        },
+        "put": {
+          "instrument_id": "OPT-NIFTY 50-25650-PE-7D",
+          "asset_class": "OPTION",
+          "symbol": "NIFTY 50-25650-PE",
+          "name": "NIFTY 50 25650 PE (7D)",
+          "exchange": "NSE",
+          "currency": "INR",
+          "is_simulated_price": true,
+          "price_source": "MODELLED_BLACK_SCHOLES",
+          "underlying": "NIFTY 50",
+          "expiry": "7D",
+          "strike": 25650.0,
+          "option_type": "PE",
+          "lot_size": 50,
+          "contract_multiplier": 1,
+          "bid": 272.95,
+          "ask": 275.69,
+          "model_price": 274.32,
+          "implied_volatility": 0.138,
+          "delta": -0.6111,
+          "gamma": 0.000787,
+          "theta": -11.0207,
+          "vega": 13.5238,
+          "liquidity_score": 1.0
+        }
+      },
+      {
+        "strike": 25700.0,
+        "is_atm": false,
+        "call": {
+          "instrument_id": "OPT-NIFTY 50-25700-CE-7D",
+          "asset_class": "OPTION",
+          "symbol": "NIFTY 50-25700-CE",
+          "name": "NIFTY 50 25700 CE (7D)",
+          "exchange": "NSE",
+          "currency": "INR",
+          "is_simulated_price": true,
+          "price_source": "MODELLED_BLACK_SCHOLES",
+          "underlying": "NIFTY 50",
+          "expiry": "7D",
+          "strike": 25700.0,
+          "option_type": "CE",
+          "lot_size": 50,
+          "contract_multiplier": 1,
+          "bid": 113.06,
+          "ask": 114.2,
+          "model_price": 113.63,
+          "implied_volatility": 0.138,
+          "delta": 0.3502,
+          "gamma": 0.000761,
+          "theta": -14.1609,
+          "vega": 13.072,
+          "liquidity_score": 1.0
+        },
+        "put": {
+          "instrument_id": "OPT-NIFTY 50-25700-PE-7D",
+          "asset_class": "OPTION",
+          "symbol": "NIFTY 50-25700-PE",
+          "name": "NIFTY 50 25700 PE (7D)",
+          "exchange": "NSE",
+          "currency": "INR",
+          "is_simulated_price": true,
+          "price_source": "MODELLED_BLACK_SCHOLES",
+          "underlying": "NIFTY 50",
+          "expiry": "7D",
+          "strike": 25700.0,
+          "option_type": "PE",
+          "lot_size": 50,
+          "contract_multiplier": 1,
+          "bid": 304.64,
+          "ask": 307.7,
+          "model_price": 306.17,
+          "implied_volatility": 0.138,
+          "delta": -0.6495,
+          "gamma": 0.000761,
+          "theta": -10.4274,
+          "vega": 13.072,
+          "liquidity_score": 1.0
+        }
+      },
+      {
+        "strike": 25750.0,
+        "is_atm": false,
+        "call": {
+          "instrument_id": "OPT-NIFTY 50-25750-CE-7D",
+          "asset_class": "OPTION",
+          "symbol": "NIFTY 50-25750-CE",
+          "name": "NIFTY 50 25750 CE (7D)",
+          "exchange": "NSE",
+          "currency": "INR",
+          "is_simulated_price": true,
+          "price_source": "MODELLED_BLACK_SCHOLES",
+          "underlying": "NIFTY 50",
+          "expiry": "7D",
+          "strike": 25750.0,
+          "option_type": "CE",
+          "lot_size": 50,
+          "contract_multiplier": 1,
+          "bid": 96.91,
+          "ask": 97.89,
+          "model_price": 97.4,
+          "implied_volatility": 0.138,
+          "delta": 0.3134,
+          "gamma": 0.000728,
+          "theta": -13.4693,
+          "vega": 12.5059,
+          "liquidity_score": 1.0
+        },
+        "put": {
+          "instrument_id": "OPT-NIFTY 50-25750-PE-7D",
+          "asset_class": "OPTION",
+          "symbol": "NIFTY 50-25750-PE",
+          "name": "NIFTY 50 25750 PE (7D)",
+          "exchange": "NSE",
+          "currency": "INR",
+          "is_simulated_price": true,
+          "price_source": "MODELLED_BLACK_SCHOLES",
+          "underlying": "NIFTY 50",
+          "expiry": "7D",
+          "strike": 25750.0,
+          "option_type": "PE",
+          "lot_size": 50,
+          "contract_multiplier": 1,
+          "bid": 338.19,
+          "ask": 341.59,
+          "model_price": 339.89,
+          "implied_volatility": 0.138,
+          "delta": -0.6864,
+          "gamma": 0.000728,
+          "theta": -9.7269,
+          "vega": 12.5059,
+          "liquidity_score": 1.0
+        }
+      }
+    ],
+    "implied_volatility_pct": 13.8,
+    "price_source": "MODELLED_BLACK_SCHOLES",
+    "as_of": "2026-09-09T10:26:06.417980+00:00"
+  },
+  "recommended_options_strategies": [
+    {
+      "strategy": {
+        "strategy_id": "STRAT-BCS-NIFTY 50-25500-25600-f25e2f",
+        "strategy_type": "BULL_CALL_SPREAD",
+        "underlying": "NIFTY 50",
+        "expiry": "7D",
+        "legs": [
+          {
+            "leg_id": "LEG-1-NIFTY 50-25500-CE",
+            "instrument": {
+              "instrument_id": "OPT-NIFTY 50-25500-CE-7D",
+              "asset_class": "OPTION",
+              "symbol": "NIFTY 50-25500-CE",
+              "name": "NIFTY 50 25500 CE (7D)",
+              "exchange": "NSE",
+              "currency": "INR",
+              "is_simulated_price": true,
+              "price_source": "MODELLED_BLACK_SCHOLES",
+              "underlying": "NIFTY 50",
+              "expiry": "7D",
+              "strike": 25500.0,
+              "option_type": "CE",
+              "lot_size": 50,
+              "contract_multiplier": 1,
+              "bid": 199.64,
+              "ask": 201.64,
+              "model_price": 200.64,
+              "implied_volatility": 0.14,
+              "delta": 0.5096,
+              "gamma": 0.000807,
+              "theta": -15.9201,
+              "vega": 14.0704,
+              "liquidity_score": 1.0
+            },
+            "side": "BUY",
+            "ratio": 1,
+            "quantity": 50,
+            "entry_price": 200.64,
+            "current_price": 200.64
+          },
+          {
+            "leg_id": "LEG-2-NIFTY 50-25600-CE",
+            "instrument": {
+              "instrument_id": "OPT-NIFTY 50-25600-CE-7D",
+              "asset_class": "OPTION",
+              "symbol": "NIFTY 50-25600-CE",
+              "name": "NIFTY 50 25600 CE (7D)",
+              "exchange": "NSE",
+              "currency": "INR",
+              "is_simulated_price": true,
+              "price_source": "MODELLED_BLACK_SCHOLES",
+              "underlying": "NIFTY 50",
+              "expiry": "7D",
+              "strike": 25600.0,
+              "option_type": "CE",
+              "lot_size": 50,
+              "contract_multiplier": 1,
+              "bid": 153.75,
+              "ask": 155.29,
+              "model_price": 154.52,
+              "implied_volatility": 0.14,
+              "delta": 0.4294,
+              "gamma": 0.000795,
+              "theta": -15.4157,
+              "vega": 13.8543,
+              "liquidity_score": 1.0
+            },
+            "side": "SELL",
+            "ratio": 1,
+            "quantity": 50,
+            "entry_price": 154.52,
+            "current_price": 154.52
+          }
+        ],
+        "net_debit": 2306.0,
+        "max_profit": 2694.0,
+        "max_loss": 2306.0,
+        "breakeven": [
+          25546.12
+        ],
+        "risk_reward_ratio": 1.17,
+        "net_delta": 4.01,
+        "net_gamma": 0.0006,
+        "net_theta": -25.22,
+        "net_vega": 10.805,
+        "agent_id": "ALPHA",
+        "status": "PROPOSED",
+        "entry_underlying_price": 25481.3,
+        "current_underlying_price": 25481.3,
+        "current_strategy_value": 2306.0,
+        "unrealized_pnl": 0.0,
+        "realized_pnl": 0.0,
+        "stop_loss_amount": 1614.2,
+        "target_profit_amount": 2155.2,
+        "snapshot_id": "f25e2f5d46acb36121b28d177373aa537213d73b5ed46635b859c4a4b78b3676",
+        "strategy_version": "OPT-1.0",
+        "pricing_model": "BLACK_SCHOLES_VIX",
+        "pricing_version": "BS-1.0",
+        "entry_time": "2026-09-09T10:26:06.418003+00:00",
+        "closed_time": null,
+        "exit_reason": ""
+      },
+      "payoff_curve": [
+        {
+          "spot": 24462.0,
+          "payoff": -2306.0,
+          "is_atm": false
+        },
+        {
+          "spot": 24589.5,
+          "payoff": -2306.0,
+          "is_atm": false
+        },
+        {
+          "spot": 24716.9,
+          "payoff": -2306.0,
+          "is_atm": false
+        },
+        {
+          "spot": 24844.3,
+          "payoff": -2306.0,
+          "is_atm": false
+        },
+        {
+          "spot": 24971.7,
+          "payoff": -2306.0,
+          "is_atm": false
+        },
+        {
+          "spot": 25099.1,
+          "payoff": -2306.0,
+          "is_atm": false
+        },
+        {
+          "spot": 25226.5,
+          "payoff": -2306.0,
+          "is_atm": false
+        },
+        {
+          "spot": 25353.9,
+          "payoff": -2306.0,
+          "is_atm": false
+        },
+        {
+          "spot": 25481.3,
+          "payoff": -2306.0,
+          "is_atm": true
+        },
+        {
+          "spot": 25608.7,
+          "payoff": 2694.0,
+          "is_atm": false
+        },
+        {
+          "spot": 25736.1,
+          "payoff": 2694.0,
+          "is_atm": false
+        },
+        {
+          "spot": 25863.5,
+          "payoff": 2694.0,
+          "is_atm": false
+        },
+        {
+          "spot": 25990.9,
+          "payoff": 2694.0,
+          "is_atm": false
+        },
+        {
+          "spot": 26118.3,
+          "payoff": 2694.0,
+          "is_atm": false
+        },
+        {
+          "spot": 26245.7,
+          "payoff": 2694.0,
+          "is_atm": false
+        },
+        {
+          "spot": 26373.1,
+          "payoff": 2694.0,
+          "is_atm": false
+        },
+        {
+          "spot": 26500.6,
+          "payoff": 2694.0,
+          "is_atm": false
+        }
+      ],
+      "ai_confidence": 81.0,
+      "market_view": "BULLISH",
+      "expected_move": "+1.8% to +2.7%",
+      "risk_engine_status": "APPROVED"
+    },
+    {
+      "strategy": {
+        "strategy_id": "STRAT-BPS-NIFTY 50-25500-25400-f25e2f",
+        "strategy_type": "BEAR_PUT_SPREAD",
+        "underlying": "NIFTY 50",
+        "expiry": "7D",
+        "legs": [
+          {
+            "leg_id": "LEG-1-NIFTY 50-25500-PE",
+            "instrument": {
+              "instrument_id": "OPT-NIFTY 50-25500-PE-7D",
+              "asset_class": "OPTION",
+              "symbol": "NIFTY 50-25500-PE",
+              "name": "NIFTY 50 25500 PE (7D)",
+              "exchange": "NSE",
+              "currency": "INR",
+              "is_simulated_price": true,
+              "price_source": "MODELLED_BLACK_SCHOLES",
+              "underlying": "NIFTY 50",
+              "expiry": "7D",
+              "strike": 25500.0,
+              "option_type": "PE",
+              "lot_size": 50,
+              "contract_multiplier": 1,
+              "bid": 192.46,
+              "ask": 194.4,
+              "model_price": 193.43,
+              "implied_volatility": 0.14,
+              "delta": -0.4902,
+              "gamma": 0.000807,
+              "theta": -12.2222,
+              "vega": 14.0704,
+              "liquidity_score": 1.0
+            },
+            "side": "BUY",
+            "ratio": 1,
+            "quantity": 50,
+            "entry_price": 193.43,
+            "current_price": 193.43
+          },
+          {
+            "leg_id": "LEG-2-NIFTY 50-25400-PE",
+            "instrument": {
+              "instrument_id": "OPT-NIFTY 50-25400-PE-7D",
+              "asset_class": "OPTION",
+              "symbol": "NIFTY 50-25400-PE",
+              "name": "NIFTY 50 25400 PE (7D)",
+              "exchange": "NSE",
+              "currency": "INR",
+              "is_simulated_price": true,
+              "price_source": "MODELLED_BLACK_SCHOLES",
+              "underlying": "NIFTY 50",
+              "expiry": "7D",
+              "strike": 25400.0,
+              "option_type": "PE",
+              "lot_size": 50,
+              "contract_multiplier": 1,
+              "bid": 146.97,
+              "ask": 148.45,
+              "model_price": 147.71,
+              "implied_volatility": 0.14,
+              "delta": -0.4101,
+              "gamma": 0.000787,
+              "theta": -12.1729,
+              "vega": 13.7167,
+              "liquidity_score": 1.0
+            },
+            "side": "SELL",
+            "ratio": 1,
+            "quantity": 50,
+            "entry_price": 147.71,
+            "current_price": 147.71
+          }
+        ],
+        "net_debit": 2286.0,
+        "max_profit": 2714.0,
+        "max_loss": 2286.0,
+        "breakeven": [
+          25454.28
+        ],
+        "risk_reward_ratio": 1.19,
+        "net_delta": -4.005,
+        "net_gamma": 0.001,
+        "net_theta": -2.465,
+        "net_vega": 17.685,
+        "agent_id": "CONTRARIAN",
+        "status": "PROPOSED",
+        "entry_underlying_price": 25481.3,
+        "current_underlying_price": 25481.3,
+        "current_strategy_value": 2286.0,
+        "unrealized_pnl": 0.0,
+        "realized_pnl": 0.0,
+        "stop_loss_amount": 1600.2,
+        "target_profit_amount": 2171.2,
+        "snapshot_id": "f25e2f5d46acb36121b28d177373aa537213d73b5ed46635b859c4a4b78b3676",
+        "strategy_version": "OPT-1.0",
+        "pricing_model": "BLACK_SCHOLES_VIX",
+        "pricing_version": "BS-1.0",
+        "entry_time": "2026-09-09T10:26:06.418020+00:00",
+        "closed_time": null,
+        "exit_reason": ""
+      },
+      "payoff_curve": [
+        {
+          "spot": 24462.0,
+          "payoff": 2714.0,
+          "is_atm": false
+        },
+        {
+          "spot": 24589.5,
+          "payoff": 2714.0,
+          "is_atm": false
+        },
+        {
+          "spot": 24716.9,
+          "payoff": 2714.0,
+          "is_atm": false
+        },
+        {
+          "spot": 24844.3,
+          "payoff": 2714.0,
+          "is_atm": false
+        },
+        {
+          "spot": 24971.7,
+          "payoff": 2714.0,
+          "is_atm": false
+        },
+        {
+          "spot": 25099.1,
+          "payoff": 2714.0,
+          "is_atm": false
+        },
+        {
+          "spot": 25226.5,
+          "payoff": 2714.0,
+          "is_atm": false
+        },
+        {
+          "spot": 25353.9,
+          "payoff": 2714.0,
+          "is_atm": false
+        },
+        {
+          "spot": 25481.3,
+          "payoff": -1351.0,
+          "is_atm": true
+        },
+        {
+          "spot": 25608.7,
+          "payoff": -2286.0,
+          "is_atm": false
+        },
+        {
+          "spot": 25736.1,
+          "payoff": -2286.0,
+          "is_atm": false
+        },
+        {
+          "spot": 25863.5,
+          "payoff": -2286.0,
+          "is_atm": false
+        },
+        {
+          "spot": 25990.9,
+          "payoff": -2286.0,
+          "is_atm": false
+        },
+        {
+          "spot": 26118.3,
+          "payoff": -2286.0,
+          "is_atm": false
+        },
+        {
+          "spot": 26245.7,
+          "payoff": -2286.0,
+          "is_atm": false
+        },
+        {
+          "spot": 26373.1,
+          "payoff": -2286.0,
+          "is_atm": false
+        },
+        {
+          "spot": 26500.6,
+          "payoff": -2286.0,
+          "is_atm": false
+        }
+      ],
+      "ai_confidence": 74.0,
+      "market_view": "BEARISH",
+      "expected_move": "-1.5% to -2.2%",
+      "risk_engine_status": "APPROVED"
+    },
+    {
+      "strategy": {
+        "strategy_id": "STRAT-STRD-NIFTY 50-25500-f25e2f",
+        "strategy_type": "LONG_STRADDLE",
+        "underlying": "NIFTY 50",
+        "expiry": "7D",
+        "legs": [
+          {
+            "leg_id": "LEG-1-NIFTY 50-25500-CE",
+            "instrument": {
+              "instrument_id": "OPT-NIFTY 50-25500-CE-7D",
+              "asset_class": "OPTION",
+              "symbol": "NIFTY 50-25500-CE",
+              "name": "NIFTY 50 25500 CE (7D)",
+              "exchange": "NSE",
+              "currency": "INR",
+              "is_simulated_price": true,
+              "price_source": "MODELLED_BLACK_SCHOLES",
+              "underlying": "NIFTY 50",
+              "expiry": "7D",
+              "strike": 25500.0,
+              "option_type": "CE",
+              "lot_size": 50,
+              "contract_multiplier": 1,
+              "bid": 199.64,
+              "ask": 201.64,
+              "model_price": 200.64,
+              "implied_volatility": 0.14,
+              "delta": 0.5096,
+              "gamma": 0.000807,
+              "theta": -15.9201,
+              "vega": 14.0704,
+              "liquidity_score": 1.0
+            },
+            "side": "BUY",
+            "ratio": 1,
+            "quantity": 50,
+            "entry_price": 200.64,
+            "current_price": 200.64
+          },
+          {
+            "leg_id": "LEG-2-NIFTY 50-25500-PE",
+            "instrument": {
+              "instrument_id": "OPT-NIFTY 50-25500-PE-7D",
+              "asset_class": "OPTION",
+              "symbol": "NIFTY 50-25500-PE",
+              "name": "NIFTY 50 25500 PE (7D)",
+              "exchange": "NSE",
+              "currency": "INR",
+              "is_simulated_price": true,
+              "price_source": "MODELLED_BLACK_SCHOLES",
+              "underlying": "NIFTY 50",
+              "expiry": "7D",
+              "strike": 25500.0,
+              "option_type": "PE",
+              "lot_size": 50,
+              "contract_multiplier": 1,
+              "bid": 192.46,
+              "ask": 194.4,
+              "model_price": 193.43,
+              "implied_volatility": 0.14,
+              "delta": -0.4902,
+              "gamma": 0.000807,
+              "theta": -12.2222,
+              "vega": 14.0704,
+              "liquidity_score": 1.0
+            },
+            "side": "BUY",
+            "ratio": 1,
+            "quantity": 50,
+            "entry_price": 193.43,
+            "current_price": 193.43
+          }
+        ],
+        "net_debit": 19703.5,
+        "max_profit": 191109.75,
+        "max_loss": 19703.5,
+        "breakeven": [
+          25105.93,
+          25894.07
+        ],
+        "risk_reward_ratio": 9.7,
+        "net_delta": 0.97,
+        "net_gamma": 0.0807,
+        "net_theta": -1407.115,
+        "net_vega": 1407.04,
+        "agent_id": "MOMENTUM",
+        "status": "PROPOSED",
+        "entry_underlying_price": 25481.3,
+        "current_underlying_price": 25481.3,
+        "current_strategy_value": 19703.5,
+        "unrealized_pnl": 0.0,
+        "realized_pnl": 0.0,
+        "stop_loss_amount": 9851.75,
+        "target_profit_amount": 15762.8,
+        "snapshot_id": "f25e2f5d46acb36121b28d177373aa537213d73b5ed46635b859c4a4b78b3676",
+        "strategy_version": "OPT-1.0",
+        "pricing_model": "BLACK_SCHOLES_VIX",
+        "pricing_version": "BS-1.0",
+        "entry_time": "2026-09-09T10:26:06.418036+00:00",
+        "closed_time": null,
+        "exit_reason": ""
+      },
+      "payoff_curve": [
+        {
+          "spot": 24462.0,
+          "payoff": 32196.5,
+          "is_atm": false
+        },
+        {
+          "spot": 24589.5,
+          "payoff": 25821.5,
+          "is_atm": false
+        },
+        {
+          "spot": 24716.9,
+          "payoff": 19451.5,
+          "is_atm": false
+        },
+        {
+          "spot": 24844.3,
+          "payoff": 13081.5,
+          "is_atm": false
+        },
+        {
+          "spot": 24971.7,
+          "payoff": 6711.5,
+          "is_atm": false
+        },
+        {
+          "spot": 25099.1,
+          "payoff": 341.5,
+          "is_atm": false
+        },
+        {
+          "spot": 25226.5,
+          "payoff": -6028.5,
+          "is_atm": false
+        },
+        {
+          "spot": 25353.9,
+          "payoff": -12398.5,
+          "is_atm": false
+        },
+        {
+          "spot": 25481.3,
+          "payoff": -18768.5,
+          "is_atm": true
+        },
+        {
+          "spot": 25608.7,
+          "payoff": -14268.5,
+          "is_atm": false
+        },
+        {
+          "spot": 25736.1,
+          "payoff": -7898.5,
+          "is_atm": false
+        },
+        {
+          "spot": 25863.5,
+          "payoff": -1528.5,
+          "is_atm": false
+        },
+        {
+          "spot": 25990.9,
+          "payoff": 4841.5,
+          "is_atm": false
+        },
+        {
+          "spot": 26118.3,
+          "payoff": 11211.5,
+          "is_atm": false
+        },
+        {
+          "spot": 26245.7,
+          "payoff": 17581.5,
+          "is_atm": false
+        },
+        {
+          "spot": 26373.1,
+          "payoff": 23951.5,
+          "is_atm": false
+        },
+        {
+          "spot": 26500.6,
+          "payoff": 30326.5,
+          "is_atm": false
+        }
+      ],
+      "ai_confidence": 76.0,
+      "market_view": "VOLATILITY EXPANSION",
+      "expected_move": "\u00b12.5% Event Move",
+      "risk_engine_status": "APPROVED"
+    },
+    {
+      "strategy": {
+        "strategy_id": "STRAT-PROT-NIFTY 50-25400-f25e2f",
+        "strategy_type": "PROTECTIVE_PUT",
+        "underlying": "NIFTY 50",
+        "expiry": "7D",
+        "legs": [
+          {
+            "leg_id": "LEG-1-NIFTY 50-25400-PE",
+            "instrument": {
+              "instrument_id": "OPT-NIFTY 50-25400-PE-7D",
+              "asset_class": "OPTION",
+              "symbol": "NIFTY 50-25400-PE",
+              "name": "NIFTY 50 25400 PE (7D)",
+              "exchange": "NSE",
+              "currency": "INR",
+              "is_simulated_price": true,
+              "price_source": "MODELLED_BLACK_SCHOLES",
+              "underlying": "NIFTY 50",
+              "expiry": "7D",
+              "strike": 25400.0,
+              "option_type": "PE",
+              "lot_size": 50,
+              "contract_multiplier": 1,
+              "bid": 146.97,
+              "ask": 148.45,
+              "model_price": 147.71,
+              "implied_volatility": 0.14,
+              "delta": -0.4101,
+              "gamma": 0.000787,
+              "theta": -12.1729,
+              "vega": 13.7167,
+              "liquidity_score": 1.0
+            },
+            "side": "BUY",
+            "ratio": 1,
+            "quantity": 50,
+            "entry_price": 147.71,
+            "current_price": 147.71
+          }
+        ],
+        "net_debit": 7385.5,
+        "max_profit": 127406.5,
+        "max_loss": 11450.5,
+        "breakeven": [
+          25629.01
+        ],
+        "risk_reward_ratio": 11.13,
+        "net_delta": 29.495,
+        "net_gamma": 0.03935,
+        "net_theta": -608.645,
+        "net_vega": 685.835,
+        "agent_id": "DEFENSIVE",
+        "status": "PROPOSED",
+        "entry_underlying_price": 25481.3,
+        "current_underlying_price": 25481.3,
+        "current_strategy_value": 7385.5,
+        "unrealized_pnl": 0.0,
+        "realized_pnl": 0.0,
+        "stop_loss_amount": 11450.5,
+        "target_profit_amount": 127406.5,
+        "snapshot_id": "f25e2f5d46acb36121b28d177373aa537213d73b5ed46635b859c4a4b78b3676",
+        "strategy_version": "OPT-1.0",
+        "pricing_model": "BLACK_SCHOLES_VIX",
+        "pricing_version": "BS-1.0",
+        "entry_time": "2026-09-09T10:26:06.418046+00:00",
+        "closed_time": null,
+        "exit_reason": ""
+      },
+      "payoff_curve": [
+        {
+          "spot": 24462.0,
+          "payoff": 39514.5,
+          "is_atm": false
+        },
+        {
+          "spot": 24589.5,
+          "payoff": 33139.5,
+          "is_atm": false
+        },
+        {
+          "spot": 24716.9,
+          "payoff": 26769.5,
+          "is_atm": false
+        },
+        {
+          "spot": 24844.3,
+          "payoff": 20399.5,
+          "is_atm": false
+        },
+        {
+          "spot": 24971.7,
+          "payoff": 14029.5,
+          "is_atm": false
+        },
+        {
+          "spot": 25099.1,
+          "payoff": 7659.5,
+          "is_atm": false
+        },
+        {
+          "spot": 25226.5,
+          "payoff": 1289.5,
+          "is_atm": false
+        },
+        {
+          "spot": 25353.9,
+          "payoff": -5080.5,
+          "is_atm": false
+        },
+        {
+          "spot": 25481.3,
+          "payoff": -7385.5,
+          "is_atm": true
+        },
+        {
+          "spot": 25608.7,
+          "payoff": -7385.5,
+          "is_atm": false
+        },
+        {
+          "spot": 25736.1,
+          "payoff": -7385.5,
+          "is_atm": false
+        },
+        {
+          "spot": 25863.5,
+          "payoff": -7385.5,
+          "is_atm": false
+        },
+        {
+          "spot": 25990.9,
+          "payoff": -7385.5,
+          "is_atm": false
+        },
+        {
+          "spot": 26118.3,
+          "payoff": -7385.5,
+          "is_atm": false
+        },
+        {
+          "spot": 26245.7,
+          "payoff": -7385.5,
+          "is_atm": false
+        },
+        {
+          "spot": 26373.1,
+          "payoff": -7385.5,
+          "is_atm": false
+        },
+        {
+          "spot": 26500.6,
+          "payoff": -7385.5,
+          "is_atm": false
+        }
+      ],
+      "ai_confidence": 84.0,
+      "market_view": "DOWNSIDE HEDGE",
+      "expected_move": "Tail-Risk Protection",
+      "risk_engine_status": "APPROVED"
+    }
+  ],
+  "asset_classes": {
+    "equities": {
+      "status": "ACTIVE",
+      "name": "Equities",
+      "active_universe": "NIFTY 50",
+      "supported_indices": [
+        "NIFTY 50",
+        "NIFTY 100 (Coming Soon)",
+        "BANK NIFTY (Coming Soon)"
+      ],
+      "count": 50
+    },
+    "mutual_funds": {
+      "status": "COMING_SOON",
+      "name": "Mutual Funds",
+      "label": "Mutual Fund Intelligence \u2014 Coming Soon",
+      "description": "Architecture & data structures prepared for Fund Explorer, Categories, Top Rated, and SIP Analytics.",
+      "is_enabled": false
+    },
+    "derivatives": {
+      "status": "ACTIVE",
+      "name": "Derivatives",
+      "futures_mode": "PAPER TRADING (Cost-of-Carry)",
+      "options_mode": "PAPER TRADING (Deterministic Black-Scholes)",
+      "supported_strategies": [
+        "Long Call",
+        "Long Put",
+        "Bull Call Spread",
+        "Bear Put Spread",
+        "Long Straddle",
+        "Long Strangle",
+        "Protective Put"
+      ],
+      "price_source": "MODELLED"
+    },
+    "commodities": {
+      "status": "COMING_SOON",
+      "name": "Commodities",
+      "label": "Commodity Intelligence \u2014 Coming Soon",
+      "description": "Architecture ready for Gold, Silver, Crude Oil, and Natural Gas.",
+      "is_enabled": false
+    }
+  },
+  "operations": {
+    "health": {
+      "market_clock": "HEALTHY",
+      "data_ingestion": "HEALTHY",
+      "ai_agents": "HEALTHY (5/5 Autonomous Agents Active)",
+      "risk_engine": "HEALTHY (8 Quantitative Invariants Enforced)",
+      "paper_broker": "HEALTHY (Idempotent Multi-Leg Execution)",
+      "options_engine": "HEALTHY (Black-Scholes & Analytical Greeks)",
+      "database": "HEALTHY (SQLite WAL Mode)",
+      "scheduler": "HEALTHY"
+    },
+    "automation": {
+      "last_forecast_job": {
+        "id": 21,
+        "job_type": "PRE_MARKET_NIGHT_FORECAST",
+        "started_at": "2026-09-09T12:53:51.664216",
+        "completed_at": "2026-09-09T12:53:57.720247",
+        "status": "SUCCESS",
+        "target_date": "2026-09-10",
+        "records_stored": 10,
+        "log_summary": "Successfully generated and locked 10 v3 stock prediction snapshots for session 2026-09-10."
+      },
+      "last_audit_job": {
+        "id": 19,
+        "job_type": "POST_MARKET_AUDIT",
+        "started_at": "2026-09-08T16:10:14.553607",
+        "completed_at": "2026-09-08T16:10:14.553613",
+        "status": "FAILED",
+        "target_date": "2026-09-08",
+        "records_stored": 0,
+        "log_summary": "Job failed with error: [Errno 32] Broken pipe"
+      },
+      "all_job_logs": [
+        {
+          "id": 21,
+          "job_type": "PRE_MARKET_NIGHT_FORECAST",
+          "started_at": "2026-09-09T12:53:51.664216",
+          "completed_at": "2026-09-09T12:53:57.720247",
+          "status": "SUCCESS",
+          "target_date": "2026-09-10",
+          "records_stored": 10,
+          "log_summary": "Successfully generated and locked 10 v3 stock prediction snapshots for session 2026-09-10."
+        },
+        {
+          "id": 20,
+          "job_type": "PRE_MARKET_NIGHT_FORECAST",
+          "started_at": "2026-09-08T20:44:36.625453",
+          "completed_at": "2026-09-08T20:44:46.144246",
+          "status": "SUCCESS",
+          "target_date": "2026-09-09",
+          "records_stored": 10,
+          "log_summary": "Successfully generated and locked 10 stock predictions for session 2026-09-09."
+        },
+        {
+          "id": 19,
+          "job_type": "POST_MARKET_AUDIT",
+          "started_at": "2026-09-08T16:10:14.553607",
+          "completed_at": "2026-09-08T16:10:14.553613",
+          "status": "FAILED",
+          "target_date": "2026-09-08",
+          "records_stored": 0,
+          "log_summary": "Job failed with error: [Errno 32] Broken pipe"
+        },
+        {
+          "id": 18,
+          "job_type": "POST_MARKET_AUDIT",
+          "started_at": "2026-09-08T16:10:12.118679",
+          "completed_at": "2026-09-08T16:10:14.550106",
+          "status": "SUCCESS",
+          "target_date": "2026-09-08",
+          "records_stored": 10,
+          "log_summary": "Audited 10 stock predictions. Directional accuracy: 5/10 (50.0%)."
+        },
+        {
+          "id": 17,
+          "job_type": "PRE_MARKET_NIGHT_FORECAST",
+          "started_at": "2026-09-07T20:32:12.467616",
+          "completed_at": "2026-09-07T20:32:40.861281",
+          "status": "SUCCESS",
+          "target_date": "2026-09-08",
+          "records_stored": 10,
+          "log_summary": "Successfully generated and locked 10 stock predictions for session 2026-09-08."
+        },
+        {
+          "id": 16,
+          "job_type": "POST_MARKET_AUDIT",
+          "started_at": "2026-09-07T15:57:03.093677",
+          "completed_at": "2026-09-07T15:57:05.576641",
+          "status": "SUCCESS",
+          "target_date": "2026-09-07",
+          "records_stored": 10,
+          "log_summary": "Audited 10 stock predictions. Directional accuracy: 6/10 (60.0%)."
+        },
+        {
+          "id": 15,
+          "job_type": "PRE_MARKET_NIGHT_FORECAST",
+          "started_at": "2026-09-04T20:48:05.844763",
+          "completed_at": "2026-09-04T20:48:05.844767",
+          "status": "FAILED",
+          "target_date": "2026-09-07",
+          "records_stored": 0,
+          "log_summary": "Job failed with error: [Errno 32] Broken pipe"
+        },
+        {
+          "id": 14,
+          "job_type": "PRE_MARKET_NIGHT_FORECAST",
+          "started_at": "2026-09-04T20:47:57.370391",
+          "completed_at": "2026-09-04T20:48:05.841434",
+          "status": "SUCCESS",
+          "target_date": "2026-09-07",
+          "records_stored": 10,
+          "log_summary": "Successfully generated and locked 10 stock predictions for session 2026-09-07."
+        },
+        {
+          "id": 13,
+          "job_type": "POST_MARKET_AUDIT",
+          "started_at": "2026-09-04T15:57:07.848686",
+          "completed_at": "2026-09-04T15:57:10.029795",
+          "status": "SUCCESS",
+          "target_date": "2026-09-04",
+          "records_stored": 10,
+          "log_summary": "Audited 10 stock predictions. Directional accuracy: 0/10 (0.0%)."
+        },
+        {
+          "id": 12,
+          "job_type": "PRE_MARKET_NIGHT_FORECAST",
+          "started_at": "2026-09-03T20:32:12.198531",
+          "completed_at": "2026-09-03T20:32:12.338452",
+          "status": "SUCCESS",
+          "target_date": "2026-09-04",
+          "records_stored": 10,
+          "log_summary": "Successfully generated and locked 10 stock predictions for session 2026-09-04."
+        },
+        {
+          "id": 11,
+          "job_type": "POST_MARKET_AUDIT",
+          "started_at": "2026-09-03T16:29:09.476957",
+          "completed_at": "2026-09-03T16:29:09.476959",
+          "status": "FAILED",
+          "target_date": "2026-09-03",
+          "records_stored": 0,
+          "log_summary": "Job failed with error: [Errno 32] Broken pipe"
+        },
+        {
+          "id": 10,
+          "job_type": "POST_MARKET_AUDIT",
+          "started_at": "2026-09-03T16:29:09.379301",
+          "completed_at": "2026-09-03T16:29:09.473166",
+          "status": "SUCCESS",
+          "target_date": "2026-09-03",
+          "records_stored": 10,
+          "log_summary": "Audited 10 stock predictions. Directional accuracy: 9/10 (90.0%)."
+        },
+        {
+          "id": 9,
+          "job_type": "PRE_MARKET_NIGHT_FORECAST",
+          "started_at": "2026-09-02T20:35:33.996049",
+          "completed_at": "2026-09-02T20:35:42.261235",
+          "status": "SUCCESS",
+          "target_date": "2026-09-03",
+          "records_stored": 10,
+          "log_summary": "Successfully generated and locked 10 stock predictions for session 2026-09-03."
+        },
+        {
+          "id": 8,
+          "job_type": "POST_MARKET_AUDIT",
+          "started_at": "2026-09-02T15:54:59.275629",
+          "completed_at": "2026-09-02T15:55:01.437743",
+          "status": "SUCCESS",
+          "target_date": "2026-09-02",
+          "records_stored": 10,
+          "log_summary": "Audited 10 stock predictions. Directional accuracy: 6/10 (60.0%)."
+        },
+        {
+          "id": 7,
+          "job_type": "PRE_MARKET_NIGHT_FORECAST",
+          "started_at": "2026-09-01T20:31:28.883577",
+          "completed_at": "2026-09-01T20:46:51.452007",
+          "status": "SUCCESS",
+          "target_date": "2026-09-02",
+          "records_stored": 10,
+          "log_summary": "Successfully generated and locked 10 stock predictions for session 2026-09-02."
+        },
+        {
+          "id": 6,
+          "job_type": "POST_MARKET_AUDIT",
+          "started_at": "2026-09-01T15:52:25.276490",
+          "completed_at": "2026-09-01T15:52:27.250214",
+          "status": "SUCCESS",
+          "target_date": "2026-09-01",
+          "records_stored": 10,
+          "log_summary": "Audited 10 stock predictions. Directional accuracy: 1/10 (10.0%)."
+        },
+        {
+          "id": 5,
+          "job_type": "PRE_MARKET_NIGHT_FORECAST",
+          "started_at": "2026-08-31T20:31:23.067617",
+          "completed_at": "2026-08-31T20:31:30.692008",
+          "status": "SUCCESS",
+          "target_date": "2026-09-01",
+          "records_stored": 10,
+          "log_summary": "Successfully generated and locked 10 stock predictions for session 2026-09-01."
+        },
+        {
+          "id": 4,
+          "job_type": "POST_MARKET_AUDIT",
+          "started_at": "2026-08-31T16:09:40.626493",
+          "completed_at": "2026-08-31T16:10:25.999122",
+          "status": "SUCCESS",
+          "target_date": "2026-08-31",
+          "records_stored": 30,
+          "log_summary": "Audited 30 stock predictions. Directional accuracy: 5/30 (16.7%)."
+        },
+        {
+          "id": 3,
+          "job_type": "PRE_MARKET_NIGHT_FORECAST",
+          "started_at": "2026-08-30T08:47:45.198799",
+          "completed_at": "2026-08-30T08:47:56.099479",
+          "status": "SUCCESS",
+          "target_date": "2026-08-31",
+          "records_stored": 10,
+          "log_summary": "Successfully generated and locked 10 stock predictions for session 2026-08-31."
+        },
+        {
+          "id": 2,
+          "job_type": "POST_MARKET_AUDIT",
+          "started_at": "2026-08-29T22:57:23.296652",
+          "completed_at": "2026-08-29T22:57:27.085310",
+          "status": "SUCCESS",
+          "target_date": "2026-08-29",
+          "records_stored": 20,
+          "log_summary": "Audited 20 stock predictions. Directional accuracy: 18/20 (90.0%)."
+        }
+      ]
+    },
+    "data": {
+      "provider": "SQLite (WAL Mode) + Supabase Dual Sync",
+      "total_audit_records": 120,
+      "total_prediction_records": 110,
+      "total_frozen_snapshots": 11,
+      "schema_version": "V3.3 Multi-Asset"
+    },
+    "forensics": {
+      "total_failures_audited": 33,
+      "failures": [
+        {
+          "symbol": "LT.NS",
+          "short_name": "L&T",
+          "trade_date": "2026-09-01",
+          "predicted_direction": "BULLISH",
+          "predicted_pct": 1.07,
+          "actual_direction": "BEARISH",
+          "actual_pct": -1.6,
+          "pnl": -160.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected -1.60% volatility in LT.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "LT.NS",
+          "short_name": "L&T",
+          "trade_date": "2026-09-08",
+          "predicted_direction": "BULLISH",
+          "predicted_pct": 1.33,
+          "actual_direction": "BEARISH",
+          "actual_pct": -1.32,
+          "pnl": -132.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected -1.32% volatility in LT.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "MARUTI.NS",
+          "short_name": "Maruti Suzuki",
+          "trade_date": "2026-09-08",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": -0.42,
+          "actual_direction": "BEARISH",
+          "actual_pct": -0.93,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "FACTOR_MISCALIBRATED",
+          "diagnostic_explanation": "Moderate divergence: Expected +0.00%, actual -0.93%. Sector beta drift outweighed stock-specific news.",
+          "refactoring_suggestion": "Increase macro/Nifty broader index weight relative to single-stock headline score."
+        },
+        {
+          "symbol": "INFY.NS",
+          "short_name": "Infosys",
+          "trade_date": "2026-09-08",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": -0.15,
+          "actual_direction": "BEARISH",
+          "actual_pct": -41.04,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected -41.04% volatility in INFY.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "ICICIBANK.NS",
+          "short_name": "ICICI Bank",
+          "trade_date": "2026-09-08",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.18,
+          "actual_direction": "BEARISH",
+          "actual_pct": -1.97,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected -1.97% volatility in ICICIBANK.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "HDFCBANK.NS",
+          "short_name": "HDFC Bank",
+          "trade_date": "2026-09-08",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.14,
+          "actual_direction": "BEARISH",
+          "actual_pct": -57.13,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected -57.13% volatility in HDFCBANK.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "TCS.NS",
+          "short_name": "TCS",
+          "trade_date": "2026-09-07",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.31,
+          "actual_direction": "BEARISH",
+          "actual_pct": -1.48,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected -1.48% volatility in TCS.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "SBIN.NS",
+          "short_name": "SBI",
+          "trade_date": "2026-09-07",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.5,
+          "actual_direction": "BEARISH",
+          "actual_pct": -1.0,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected -1.00% volatility in SBIN.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "RELIANCE.NS",
+          "short_name": "Reliance",
+          "trade_date": "2026-09-07",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.45,
+          "actual_direction": "BEARISH",
+          "actual_pct": -0.95,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "FACTOR_MISCALIBRATED",
+          "diagnostic_explanation": "Moderate divergence: Expected +0.00%, actual -0.95%. Sector beta drift outweighed stock-specific news.",
+          "refactoring_suggestion": "Increase macro/Nifty broader index weight relative to single-stock headline score."
+        },
+        {
+          "symbol": "INFY.NS",
+          "short_name": "Infosys",
+          "trade_date": "2026-09-07",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.03,
+          "actual_direction": "BEARISH",
+          "actual_pct": -3.76,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected -3.76% volatility in INFY.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "TCS.NS",
+          "short_name": "TCS",
+          "trade_date": "2026-09-04",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.0,
+          "actual_direction": "BEARISH",
+          "actual_pct": -44.08,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected -44.08% volatility in TCS.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "SBIN.NS",
+          "short_name": "SBI",
+          "trade_date": "2026-09-04",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.0,
+          "actual_direction": "BULLISH",
+          "actual_pct": 24.67,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected +24.67% volatility in SBIN.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "RELIANCE.NS",
+          "short_name": "Reliance",
+          "trade_date": "2026-09-04",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.07,
+          "actual_direction": "BULLISH",
+          "actual_pct": 2.72,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected +2.72% volatility in RELIANCE.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "MARUTI.NS",
+          "short_name": "Maruti Suzuki",
+          "trade_date": "2026-09-04",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.0,
+          "actual_direction": "BEARISH",
+          "actual_pct": -5.1,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected -5.10% volatility in MARUTI.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "LT.NS",
+          "short_name": "L&T",
+          "trade_date": "2026-09-04",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.0,
+          "actual_direction": "BULLISH",
+          "actual_pct": 8.61,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected +8.61% volatility in LT.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "ITC.NS",
+          "short_name": "ITC",
+          "trade_date": "2026-09-04",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.0,
+          "actual_direction": "BEARISH",
+          "actual_pct": -46.1,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected -46.10% volatility in ITC.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "INFY.NS",
+          "short_name": "Infosys",
+          "trade_date": "2026-09-04",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.0,
+          "actual_direction": "BEARISH",
+          "actual_pct": -38.42,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected -38.42% volatility in INFY.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "ICICIBANK.NS",
+          "short_name": "ICICI Bank",
+          "trade_date": "2026-09-04",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.0,
+          "actual_direction": "BULLISH",
+          "actual_pct": 17.14,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected +17.14% volatility in ICICIBANK.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "HDFCBANK.NS",
+          "short_name": "HDFC Bank",
+          "trade_date": "2026-09-04",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.0,
+          "actual_direction": "BEARISH",
+          "actual_pct": -56.58,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected -56.58% volatility in HDFCBANK.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "BHARTIARTL.NS",
+          "short_name": "Bharti Airtel",
+          "trade_date": "2026-09-04",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.0,
+          "actual_direction": "BULLISH",
+          "actual_pct": 15.72,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected +15.72% volatility in BHARTIARTL.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "LT.NS",
+          "short_name": "L&T",
+          "trade_date": "2026-09-03",
+          "predicted_direction": "BULLISH",
+          "predicted_pct": 1.56,
+          "actual_direction": "NEUTRAL",
+          "actual_pct": 0.0,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F11",
+          "primary_category": "MARKET_NOISE_DRIFT",
+          "diagnostic_explanation": "Stock traded in a tight consolidation range (+0.00%). Neutral drift with low volatility.",
+          "refactoring_suggestion": "Tighten HOLD threshold bands to avoid false trigger entries on low conviction setups."
+        },
+        {
+          "symbol": "TCS.NS",
+          "short_name": "TCS",
+          "trade_date": "2026-09-02",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.23,
+          "actual_direction": "BEARISH",
+          "actual_pct": -0.89,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "FACTOR_MISCALIBRATED",
+          "diagnostic_explanation": "Moderate divergence: Expected +0.00%, actual -0.89%. Sector beta drift outweighed stock-specific news.",
+          "refactoring_suggestion": "Increase macro/Nifty broader index weight relative to single-stock headline score."
+        },
+        {
+          "symbol": "SBIN.NS",
+          "short_name": "SBI",
+          "trade_date": "2026-09-02",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.5,
+          "actual_direction": "BEARISH",
+          "actual_pct": -1.31,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected -1.31% volatility in SBIN.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "INFY.NS",
+          "short_name": "Infosys",
+          "trade_date": "2026-09-02",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.1,
+          "actual_direction": "BEARISH",
+          "actual_pct": -1.38,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected -1.38% volatility in INFY.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "HDFCBANK.NS",
+          "short_name": "HDFC Bank",
+          "trade_date": "2026-09-02",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.04,
+          "actual_direction": "BEARISH",
+          "actual_pct": -1.56,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected -1.56% volatility in HDFCBANK.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "TCS.NS",
+          "short_name": "TCS",
+          "trade_date": "2026-09-01",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.23,
+          "actual_direction": "BEARISH",
+          "actual_pct": -1.26,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected -1.26% volatility in TCS.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "SBIN.NS",
+          "short_name": "SBI",
+          "trade_date": "2026-09-01",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.46,
+          "actual_direction": "BEARISH",
+          "actual_pct": -2.41,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected -2.41% volatility in SBIN.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "RELIANCE.NS",
+          "short_name": "Reliance",
+          "trade_date": "2026-09-01",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.2,
+          "actual_direction": "BULLISH",
+          "actual_pct": 2.51,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected +2.51% volatility in RELIANCE.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "MARUTI.NS",
+          "short_name": "Maruti Suzuki",
+          "trade_date": "2026-09-01",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": -0.4,
+          "actual_direction": "BEARISH",
+          "actual_pct": -4.41,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected -4.41% volatility in MARUTI.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "ITC.NS",
+          "short_name": "ITC",
+          "trade_date": "2026-09-01",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.08,
+          "actual_direction": "BULLISH",
+          "actual_pct": 4.34,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected +4.34% volatility in ITC.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "INFY.NS",
+          "short_name": "Infosys",
+          "trade_date": "2026-09-01",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.07,
+          "actual_direction": "BULLISH",
+          "actual_pct": 1.96,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected +1.96% volatility in INFY.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "ICICIBANK.NS",
+          "short_name": "ICICI Bank",
+          "trade_date": "2026-09-01",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.2,
+          "actual_direction": "BEARISH",
+          "actual_pct": -1.1,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected -1.10% volatility in ICICIBANK.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        },
+        {
+          "symbol": "BHARTIARTL.NS",
+          "short_name": "Bharti Airtel",
+          "trade_date": "2026-09-01",
+          "predicted_direction": "NEUTRAL",
+          "predicted_pct": 0.22,
+          "actual_direction": "BULLISH",
+          "actual_pct": 3.6,
+          "pnl": 0.0,
+          "is_failure": true,
+          "primary_failure_code": "F02",
+          "primary_category": "MISSED_CATALYST",
+          "diagnostic_explanation": "Unexpected +3.60% volatility in BHARTIARTL.NS. Pre-market news sentiment was neutral (+0.00), indicating an intraday breaking headline or sudden institutional FII/DII block deal.",
+          "refactoring_suggestion": "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+        }
+      ],
+      "taxonomy": "F01\u2013F18 Comprehensive Root Cause Classification"
+    },
+    "audit": {
+      "provenance_mode": "SHA-256 Cryptographic Snapshot Lock",
+      "snapshot_id": "f25e2f5d46acb36121b28d177373aa537213d73b5ed46635b859c4a4b78b3676",
+      "market_timestamp": "2026-09-09T10:26:06.452598+00:00",
+      "integrity_status": "VERIFIED"
+    }
+  },
   "system_status": {
     "engine_version": "V3.2 AI Trading Arena",
     "market_clock": {
-      "current_phase": "INTRADAY",
-      "is_market_open": true,
-      "can_accept_orders": true,
-      "status_reason": "MARKET_ACTIVE: Order accepted for execution simulation.",
-      "ist_timestamp": "2026-09-09 14:43:29 IST",
-      "ist_time": "14:43 IST",
+      "current_phase": "POST_MARKET_AUDIT",
+      "is_market_open": false,
+      "can_accept_orders": false,
+      "status_reason": "AUDIT_IN_PROGRESS: Market session ended. Post-market reconciliation active.",
+      "ist_timestamp": "2026-09-09 15:56:06 IST",
+      "ist_time": "15:56 IST",
       "market_date": "2026-09-09",
       "order_cutoff_time": "15:30 IST",
       "forecast_run_time": "20:30 IST",
       "audit_run_time": "15:45 IST",
-      "phase": "INTRADAY",
-      "phase_desc": "MARKET_ACTIVE: Order accepted for execution simulation.",
-      "is_trading_allowed": true
+      "phase": "POST_MARKET_AUDIT",
+      "phase_desc": "AUDIT_IN_PROGRESS: Market session ended. Post-market reconciliation active.",
+      "is_trading_allowed": false
     },
     "total_virtual_capital": "\u20b91,00,00,000",
     "agent_count": 5,
@@ -4388,7 +6534,7 @@
       ]
     }
   },
-  "generated_at": "2026-09-09T14:43:32.320328",
+  "generated_at": "2026-09-09T15:56:09.248486",
   "next_trading_day": "2026-09-10",
   "scorecard": {
     "total_evaluations": 670,
@@ -12956,10 +15102,10 @@
       "CAPTURED_SUCCESS": 12
     },
     "refactoring_priorities": [
-      "Tighten HOLD threshold bands to avoid false trigger entries on low conviction setups.",
-      "Weights and sensitivity for this sector/event type are well-calibrated. Maintain current parameter matrix.",
       "Increase macro/Nifty broader index weight relative to single-stock headline score.",
-      "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+      "Weights and sensitivity for this sector/event type are well-calibrated. Maintain current parameter matrix.",
+      "Incorporate intra-day live news polling and broaden sector peer contagion weights.",
+      "Tighten HOLD threshold bands to avoid false trigger entries on low conviction setups."
     ]
   },
   "job_logs": [
@@ -14181,7 +16327,7 @@
         1322.0,
         1309.5,
         1294.9,
-        1285.1
+        1279.0
       ],
       "volume": [
         23620214,
@@ -14250,7 +16396,7 @@
         13031534,
         10210522,
         9799528,
-        9900206
+        12152063
       ]
     },
     "HDFCBANK.NS": {
@@ -14528,7 +16674,7 @@
         708.35,
         707.05,
         703.0,
-        690.65
+        687.1
       ],
       "close": [
         726.34,
@@ -14597,7 +16743,7 @@
         712.1,
         710.5,
         703.0,
-        691.55
+        687.1
       ],
       "volume": [
         38539563,
@@ -14666,7 +16812,7 @@
         14488024,
         12180390,
         19883515,
-        31211517
+        39138036
       ]
     },
     "ICICIBANK.NS": {
@@ -15013,7 +17159,7 @@
         1423.2,
         1427.5,
         1399.4,
-        1395.9
+        1389.1
       ],
       "volume": [
         22368579,
@@ -15082,7 +17228,7 @@
         6693889,
         8035111,
         12123411,
-        12031709
+        14183709
       ]
     },
     "TCS.NS": {
@@ -15429,7 +17575,7 @@
         2304.0,
         2270.0,
         2255.5,
-        2213.1
+        2208.0
       ],
       "volume": [
         4148655,
@@ -15498,7 +17644,7 @@
         2564322,
         2297551,
         2148114,
-        2464992
+        3369412
       ]
     },
     "INFY.NS": {
@@ -15776,7 +17922,7 @@
         1125.4,
         1085.0,
         1078.9,
-        1030.5
+        1026.5
       ],
       "close": [
         1155.3,
@@ -15845,7 +17991,7 @@
         1130.0,
         1087.5,
         1082.0,
-        1031.2
+        1035.0
       ],
       "volume": [
         10984054,
@@ -15914,7 +18060,7 @@
         5881388,
         7668346,
         6269037,
-        11165968
+        13523332
       ]
     },
     "BHARTIARTL.NS": {
@@ -16261,7 +18407,7 @@
         1840.0,
         1854.0,
         1844.0,
-        1826.0
+        1814.7
       ],
       "volume": [
         10377475,
@@ -16330,7 +18476,7 @@
         3614328,
         5972458,
         4169706,
-        4587820
+        5573757
       ]
     },
     "SBIN.NS": {
@@ -16677,7 +18823,7 @@
         1016.1,
         1005.9,
         1008.0,
-        1005.0
+        1000.5
       ],
       "volume": [
         22142480,
@@ -16746,7 +18892,7 @@
         6724566,
         10220001,
         7084768,
-        5853004
+        7087006
       ]
     },
     "LT.NS": {
@@ -17024,7 +19170,7 @@
         3964.1,
         3960.9,
         3946.1,
-        3935.3
+        3922.6
       ],
       "close": [
         3900.6,
@@ -17093,7 +19239,7 @@
         3964.1,
         3999.0,
         3946.1,
-        3945.0
+        3922.6
       ],
       "volume": [
         1506501,
@@ -17162,7 +19308,7 @@
         1319056,
         1256683,
         1200872,
-        2495910
+        2954282
       ]
     },
     "ITC.NS": {
@@ -17509,7 +19655,7 @@
         264.1,
         263.5,
         263.5,
-        262.6
+        260.8
       ],
       "volume": [
         12302522,
@@ -17578,7 +19724,7 @@
         9519153,
         6688002,
         7406617,
-        8040831
+        10059662
       ]
     },
     "MARUTI.NS": {
@@ -17787,7 +19933,7 @@
         12880.0,
         12833.0,
         12758.0,
-        12680.0
+        12692.0
       ],
       "low": [
         12723.22,
@@ -17925,7 +20071,7 @@
         12694.0,
         12760.0,
         12641.0,
-        12653.0
+        12618.0
       ],
       "volume": [
         428323,
@@ -17994,7 +20140,7 @@
         322752,
         413778,
         356860,
-        466447
+        534725
       ]
     }
   },

@@ -14,6 +14,22 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
+from .asset_models import (
+    AssetClass,
+    StrategyType,
+    LegSide,
+    StrategyStatus,
+    EquityInstrument,
+    MutualFundInstrument,
+    FutureInstrument,
+    OptionInstrument,
+    CommodityInstrument,
+    StrategyLeg,
+    MultiLegStrategy,
+    OptionStrikeData,
+    OptionChain,
+)
+
 
 
 class InstrumentType(str, Enum):
@@ -120,6 +136,7 @@ class ProposedTrade:
     decision_reason: str = ""
     snapshot_id: str = ""
     sequence: int = 1
+    strategy: Optional[MultiLegStrategy] = None
     timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
     def generate_trade_id(self, market_date: str) -> str:
@@ -150,6 +167,7 @@ class ProposedTrade:
             "decision_reason": self.decision_reason,
             "snapshot_id": self.snapshot_id,
             "sequence": self.sequence,
+            "strategy": self.strategy.to_dict() if self.strategy else None,
             "timestamp": self.timestamp,
         }
 

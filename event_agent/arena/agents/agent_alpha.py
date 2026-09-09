@@ -17,6 +17,8 @@ from ..models import (
     TradeAction,
     TradeDirection,
 )
+from ..asset_models import MultiLegStrategy, OptionInstrument, StrategyType
+from ..options_engine import OptionsStrategyBuilder, OptionsStrategySelector
 from .base_agent import BaseAgent
 
 
@@ -112,7 +114,25 @@ class AgentAlpha(BaseAgent):
             if needs_hedge:
                 reason += " Elevated macro risk detected; NIFTY PUT hedge attached."
 
-            inst_type = InstrumentType.EQUITY
+
+            # If highest conviction catalyst (>= 75%) and predicted move >= 1.0%, generate a deterministic multi-leg options strategy
+            strat = None
+            if seq <= 2 and conviction >= 72.0 and abs(pred_pct) >= 0.8:
+                bias = "BULLISH" if pred_pct > 0 else "BEARISH"
+                strat = OptionsStrategySelector.select_strategy(
+                    underlying=symbol,
+                    spot_price=base_price,
+                    directional_bias=bias,
+                    expected_move_pct=pred_pct,
+                    confidence=conviction,
+                    agent_id=self.agent_id,
+                    snapshot_id=snapshot_id,
+                )
+                if strat:
+                    inst_type = InstrumentType.OPTION
+                    reason += f" High catalyst conviction triggered multi-leg {strat.strategy_type.value} strategy (Risk: ₹{strat.max_loss:,.0f}, Target: ₹{strat.max_profit:,.0f})."
+
+            inst_type = InstrumentType.OPTION if strat else InstrumentType.EQUITY
             inst = Instrument(underlying=symbol, instrument_type=inst_type)
 
             proposals.append(
@@ -134,6 +154,7 @@ class AgentAlpha(BaseAgent):
                     decision_reason=reason,
                     snapshot_id=snapshot_id,
                     sequence=seq,
+                    strategy=strat,
                 )
             )
 

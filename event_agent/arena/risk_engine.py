@@ -31,6 +31,7 @@ from ..config import (
     NIFTY50_UNIVERSE,
 )
 from .market_clock import MarketClock, MarketPhase
+from .asset_models import MultiLegStrategy, LegSide, StrategyStatus
 from .models import (
     HedgeDecision,
     InstrumentType,
@@ -274,5 +275,138 @@ class RiskEngine:
             adjusted_quantity=raw_quantity,
             max_loss=max_loss,
             risk_reward_ratio=rr_ratio,
+            checks_passed=checks_passed,
+        )
+
+    def evaluate_strategy(
+        self,
+        strategy: MultiLegStrategy,
+        agent_equity: float,
+        agent_cash: float,
+        current_open_strategies: List[MultiLegStrategy],
+        daily_starting_equity: float,
+        check_market_clock: bool = True,
+    ) -> RiskEvaluation:
+        """
+        Evaluate a multi-leg options strategy against risk limits:
+        1. Market clock (15:30 IST cutoff)
+        2. Drawdown circuit breaker (30%)
+        3. Daily loss limit (1.5%)
+        4. Max strategy loss (0.5% capital cap = ₹10,000)
+        5. Cash sufficiency for net debit
+        6. Liquidity checks on each option leg
+        7. Net Delta exposure limit
+        8. Active options strategy count (max 3 concurrent per agent)
+        """
+        checks_passed: List[str] = []
+
+        # 1. Market Clock verification
+        if check_market_clock:
+            can_trade, clock_reason = MarketClock.can_accept_new_orders()
+            if not can_trade:
+                return RiskEvaluation(
+                    is_approved=False,
+                    rejection_reason=f"MARKET_CLOCK_REJECT: {clock_reason}",
+                    checks_passed=checks_passed,
+                )
+            checks_passed.append("MARKET_CLOCK_ACTIVE")
+
+        # 2. Drawdown Circuit Breaker
+        drawdown_pct = 0.0
+        if daily_starting_equity > 0 and agent_equity < daily_starting_equity:
+            drawdown_pct = ((daily_starting_equity - agent_equity) / daily_starting_equity) * 100.0
+        if drawdown_pct >= self.drawdown_suspend_pct:
+            return RiskEvaluation(
+                is_approved=False,
+                rejection_reason=f"CIRCUIT_BREAKER_SUSPEND: Drawdown ({drawdown_pct:.1f}%) exceeds limit",
+                checks_passed=checks_passed,
+            )
+        checks_passed.append("DRAWDOWN_WITHIN_LIMIT")
+
+        # 3. Daily Loss Limit
+        daily_loss_pct = 0.0
+        if daily_starting_equity > 0:
+            daily_loss = daily_starting_equity - agent_equity
+            daily_loss_pct = max(0.0, (daily_loss / daily_starting_equity) * 100.0)
+        if daily_loss_pct >= self.daily_loss_limit_pct:
+            return RiskEvaluation(
+                is_approved=False,
+                rejection_reason=f"CIRCUIT_BREAKER_DAILY_LOSS: Daily loss ({daily_loss_pct:.2f}%) exceeds 1.5% limit",
+                checks_passed=checks_passed,
+            )
+        checks_passed.append("DAILY_LOSS_WITHIN_LIMIT")
+
+        # 4. Active options strategies limit (max 3 per agent)
+        active_strats = [s for s in current_open_strategies if s.status == StrategyStatus.OPEN]
+        existing_unds = {s.underlying for s in active_strats}
+        if strategy.underlying in existing_unds:
+            return RiskEvaluation(
+                is_approved=False,
+                rejection_reason=f"STRATEGY_ALREADY_OPEN: Agent already has an active options strategy on {strategy.underlying}",
+                checks_passed=checks_passed,
+            )
+        if len(active_strats) >= 3:
+            return RiskEvaluation(
+                is_approved=False,
+                rejection_reason=f"MAX_OPTIONS_STRATEGIES_REACHED: Agent already has {len(active_strats)} active options strategies (limit: 3)",
+                checks_passed=checks_passed,
+            )
+        checks_passed.append("OPTIONS_COUNT_WITHIN_LIMIT")
+
+        # 5. Maximum Strategy Loss Limit (0.5% risk capital = ₹10,000 on ₹20L)
+        max_allowed_risk = agent_equity * (self.risk_per_trade_pct / 100.0)
+        if strategy.max_loss > max_allowed_risk * 1.5:  # Allow 1.5x tolerance for predefined spreads (e.g. ₹15,000)
+            return RiskEvaluation(
+                is_approved=False,
+                rejection_reason=f"STRATEGY_MAX_LOSS_EXCEEDED: Defined max loss ₹{strategy.max_loss:,.2f} exceeds risk cap ₹{max_allowed_risk * 1.5:,.2f}",
+                checks_passed=checks_passed,
+            )
+        checks_passed.append("STRATEGY_MAX_LOSS_APPROVED")
+
+        # 6. Cash Sufficiency for Net Debit
+        if strategy.net_debit > agent_cash:
+            return RiskEvaluation(
+                is_approved=False,
+                rejection_reason=f"INSUFFICIENT_CASH_FOR_DEBIT: Requires ₹{strategy.net_debit:,.2f}, has ₹{agent_cash:,.2f}",
+                checks_passed=checks_passed,
+            )
+        checks_passed.append("CASH_SUFFICIENT_FOR_DEBIT")
+
+        # 7. Liquidity Check for each Option Leg
+        for leg in strategy.legs:
+            inst = leg.instrument
+            if inst.bid <= 0 or inst.ask <= 0:
+                return RiskEvaluation(
+                    is_approved=False,
+                    rejection_reason=f"INSUFFICIENT_LIQUIDITY: Leg {inst.symbol} lacks valid bid/ask quotes",
+                    checks_passed=checks_passed,
+                )
+            spread = inst.ask - inst.bid
+            mid = (inst.ask + inst.bid) / 2.0
+            if mid > 1.0 and (spread / mid) > 0.15:  # Max 15% bid-ask spread width
+                return RiskEvaluation(
+                    is_approved=False,
+                    rejection_reason=f"EXCESSIVE_SPREAD_WIDTH: Leg {inst.symbol} spread width ({spread/mid*100:.1f}%) exceeds 15%",
+                    checks_passed=checks_passed,
+                )
+        checks_passed.append("OPTIONS_LIQUIDITY_VERIFIED")
+
+        # 8. Net Delta Exposure Limit (Max 25% of equity)
+        delta_exposure = abs(strategy.net_delta) * strategy.entry_underlying_price
+        max_delta_cap = agent_equity * 0.25
+        if delta_exposure > max_delta_cap:
+            return RiskEvaluation(
+                is_approved=False,
+                rejection_reason=f"NET_DELTA_EXPOSURE_EXCEEDED: Delta exposure ₹{delta_exposure:,.2f} exceeds 25% cap ₹{max_delta_cap:,.2f}",
+                checks_passed=checks_passed,
+            )
+        checks_passed.append("NET_DELTA_WITHIN_LIMIT")
+
+        return RiskEvaluation(
+            is_approved=True,
+            rejection_reason="APPROVED",
+            adjusted_quantity=strategy.legs[0].quantity if strategy.legs else 50,
+            max_loss=strategy.max_loss,
+            risk_reward_ratio=strategy.risk_reward_ratio,
             checks_passed=checks_passed,
         )

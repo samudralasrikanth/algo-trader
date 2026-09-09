@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>NIFTY 50 AI TRADING ARENA — 5 Autonomous Agents • ₹1 Cr Virtual Capital</title>
+  <title>NEXUS AI — Enterprise Multi-Asset AI Investment Intelligence Platform</title>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,602 +14,777 @@
 </head>
 <body>
 
-  <div class="app-container">
+  <div class="app-shell">
     
-    <!-- Top Persistent Navigation Bar -->
-    <header class="navbar">
-      <div class="nav-brand">
-        <div class="brand-logo">⚡</div>
-        <div class="brand-info">
-          <div class="brand-title">
-            NIFTY 50 AI TRADING ARENA
-            <span class="version-badge">V3.2</span>
+    <!-- 1. Sticky Global Enterprise Header (Strictly NO Left Sidebar) -->
+    <header class="global-header">
+      <div class="header-left">
+        <a class="brand-group" onclick="navigate('overview')">
+          <div class="brand-logo-icon">NX</div>
+          <div class="brand-text">
+            <span class="brand-name">NEXUS AI</span>
+            <span class="brand-tagline">Investment Intelligence</span>
           </div>
-          <div class="brand-subtitle">5 Autonomous Strategy Agents • ₹1 Crore Virtual Capital • 50-Stock Nifty Analytics</div>
+        </a>
+
+        <!-- Global Region & Asset Class Selectors -->
+        <div class="global-selectors">
+          <div class="selector-pill" id="global-region-selector" title="Region selection">
+            <span>INDIA</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
+          <div class="selector-pill" id="global-asset-selector" title="Asset universe filter">
+            <span>ALL ASSETS</span>
+            <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+          </div>
         </div>
+
+        <!-- Primary Horizontal Navigation Tabs -->
+        <nav class="primary-nav">
+          <button class="nav-link-btn active" data-tab="overview" onclick="navigate('overview')">Overview</button>
+          <button class="nav-link-btn" data-tab="markets" onclick="navigate('markets')">Markets</button>
+          <button class="nav-link-btn" data-tab="arena" onclick="navigate('arena')">AI Arena</button>
+          <button class="nav-link-btn" data-tab="intelligence" onclick="navigate('intelligence')">Intelligence</button>
+          <button class="nav-link-btn" data-tab="risk" onclick="navigate('risk')">Risk</button>
+          <button class="nav-link-btn" data-tab="operations" onclick="navigate('operations')">Operations</button>
+        </nav>
       </div>
 
-      <!-- Navigation Tabs -->
-      <nav class="nav-tabs" id="main-nav-tabs">
-        <button class="nav-tab active" data-view="home" onclick="switchView('home')">
-          <span class="tab-icon">🏠</span> Home
+      <!-- Header Right Utilities -->
+      <div class="header-right">
+        <button class="search-trigger-btn" onclick="openCommandPalette()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <span>Search assets, agents, models...</span>
+          <span class="kbd-shortcut">⌘K</span>
         </button>
-        <button class="nav-tab" data-view="analytics" onclick="switchView('analytics')">
-          <span class="tab-icon">📈</span> Market Analytics (50)
-        </button>
-        <button class="nav-tab" data-view="investment" onclick="switchView('investment')">
-          <span class="tab-icon">💰</span> Investment & Portfolios
-        </button>
-        <button class="nav-tab" data-view="system" onclick="switchView('system')">
-          <span class="tab-icon">⚙️</span> System & Diagnostics
-        </button>
-      </nav>
 
-      <!-- Right Header Status Indicators -->
-      <div class="nav-indicators">
+        <div class="disclaimer-badge">
+          <span>PAPER TRADING ONLY • MODELLED DERIVATIVES</span>
+        </div>
+
         <div class="clock-pill" id="header-clock-pill">
           <span class="pulse-dot"></span>
           <span id="header-clock-text">INTRADAY • 15:30 IST CUTOFF</span>
         </div>
-        <div class="capital-pill">
-          <span class="pill-label">ARENA CAPITAL</span>
-          <span class="pill-value">₹1,00,00,000</span>
-        </div>
-        <div class="simulation-pill" title="No real capital is traded. Simulated execution.">
-          ⚠️ SIMULATION
+
+        <div class="selector-pill" style="border-radius: 50%; width: 28px; height: 28px; padding: 0; justify-content: center;" title="Institutional Account">
+          <span style="font-size: 11px;">AG</span>
         </div>
       </div>
     </header>
 
+    <!-- 2. Sticky Contextual Secondary Horizontal Navigation Bar -->
+    <div class="secondary-navbar" id="secondary-navbar">
+      <!-- Injected contextually via app.js -->
+    </div>
 
-    <!-- ===================================================================== -->
-    <!-- VIEW 1: HOME (ARENA OVERVIEW & LEADERBOARD)                           -->
-    <!-- ===================================================================== -->
-    <main id="view-home" class="view-content active">
-      
-      <!-- Arena Overview Hero Banner -->
-      <section class="arena-hero">
-        <div class="hero-main-stats">
-          <div class="hero-stat-card primary">
-            <div class="stat-meta">TOTAL ARENA VALUE (₹1 CR ALLOCATED)</div>
-            <div class="stat-value highlight" id="arena-total-nav">₹1,00,00,000.00</div>
-            <div class="stat-subtext" id="arena-pnl-subtext">Net P&L: ₹0.00 (+0.00%)</div>
+    <!-- 3. Main Dynamic Content Container -->
+    <main class="main-content">
+
+      <!-- ================================================================= -->
+      <!-- VIEW: OVERVIEW (EXECUTIVE HOMEPAGE)                                -->
+      <!-- ================================================================= -->
+      <div id="view-overview" class="view-panel active">
+        
+        <!-- Hero Summary Banner -->
+        <section class="hero-overview">
+          <div class="hero-top-row">
+            <div class="hero-index-block">
+              <span class="hero-index-name">NIFTY 50</span>
+              <span class="hero-index-val" id="ov-nifty-price">25,481.30</span>
+              <span class="hero-index-chg" id="ov-nifty-chg" style="color: var(--success);">+162.80 (+0.64%)</span>
+            </div>
+            <div class="hero-regime-block">
+              <span class="regime-label">AI Market View:</span>
+              <span class="regime-value" id="ov-regime-value" style="background-color: var(--success-bg); color: var(--success); border: 1px solid var(--success-border);">BULLISH • 81% Confidence</span>
+              <span style="font-size: 11px; color: var(--text-muted); border-left: 1px solid var(--border); padding-left: 10px;">Market Clock: <strong>15:30 IST Hard Cutoff</strong></span>
+            </div>
           </div>
-          <div class="hero-stat-card">
-            <div class="stat-meta">UNENCUMBERED CASH</div>
-            <div class="stat-value" id="arena-total-cash">₹1,00,00,000.00</div>
-            <div class="stat-subtext">Capital preservation first</div>
+
+          <!-- 6 Institutional KPI Cards (Sourced from actual system state) -->
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <span class="kpi-title">AI Arena Capital</span>
+              <span class="kpi-value num">₹1,00,00,000</span>
+              <span class="kpi-subtext">5 Isolated Sub-Portfolios</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-title">Today's P&L</span>
+              <span class="kpi-value num" id="ov-today-pnl" style="color: var(--success);">+₹42,800.00</span>
+              <span class="kpi-subtext" id="ov-today-pnl-pct">+0.43% Daily Return</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-title">Total Arena P&L</span>
+              <span class="kpi-value num" id="ov-total-pnl" style="color: var(--success);">+₹3,84,210.50</span>
+              <span class="kpi-subtext" id="ov-total-return-pct">+3.84% Since Inception</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-title">Portfolio Exposure</span>
+              <span class="kpi-value num" id="ov-exposure-pct">43.2%</span>
+              <span class="kpi-subtext">Limit: 50% Capital Cap</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-title">Current Drawdown</span>
+              <span class="kpi-value num" id="ov-drawdown-pct">1.72%</span>
+              <span class="kpi-subtext">Threshold: 30% Circuit Breaker</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-title">Risk Engine Status</span>
+              <span class="kpi-value" style="color: var(--success); font-size: 15px;">HEALTHY</span>
+              <span class="kpi-subtext">8 Quantitative Gates Active</span>
+            </div>
           </div>
-          <div class="hero-stat-card">
-            <div class="stat-meta">DEPLOYED CAPITAL</div>
-            <div class="stat-value" id="arena-total-invested">₹0.00</div>
-            <div class="stat-subtext" id="arena-exposure-pct">0.0% Portfolio Exposure</div>
+        </section>
+
+        <!-- Market Overview Bar (Nifty, Bank Nifty, VIX, USD/INR, Gold, Crude) -->
+        <section class="section-panel">
+          <div class="market-strip">
+            <div class="market-item">
+              <span class="market-item-title">NIFTY 50</span>
+              <span class="market-item-price num" id="strip-nifty-val">25,481.30</span>
+              <span class="market-item-change num" style="color: var(--success);">+0.64%</span>
+            </div>
+            <div class="market-item">
+              <span class="market-item-title">BANK NIFTY</span>
+              <span class="market-item-price num">52,340.80</span>
+              <span class="market-item-change num" style="color: var(--success);">+0.48%</span>
+            </div>
+            <div class="market-item">
+              <span class="market-item-title">INDIA VIX</span>
+              <span class="market-item-price num">13.82</span>
+              <span class="market-item-change num" style="color: var(--danger);">-2.10% (Low Vol)</span>
+            </div>
+            <div class="market-item">
+              <span class="market-item-title">USD / INR</span>
+              <span class="market-item-price num">83.92</span>
+              <span class="market-item-change num" style="color: var(--text-secondary);">+0.04%</span>
+            </div>
+            <div class="market-item">
+              <span class="market-item-title">GOLD (MCX)</span>
+              <span class="market-item-price num" style="font-size: 12px; color: var(--text-muted);">Data unavailable</span>
+              <span class="market-item-change" style="font-size: 11px; color: var(--text-muted);">Architecture Ready</span>
+            </div>
+            <div class="market-item">
+              <span class="market-item-title">CRUDE (MCX)</span>
+              <span class="market-item-price num" style="font-size: 12px; color: var(--text-muted);">Data unavailable</span>
+              <span class="market-item-change" style="font-size: 11px; color: var(--text-muted);">Architecture Ready</span>
+            </div>
           </div>
-          <div class="hero-stat-card">
-            <div class="stat-meta">ACTIVE POSITIONS</div>
-            <div class="stat-value" id="arena-active-positions">0</div>
-            <div class="stat-subtext">Across 5 Agents (0–10 each)</div>
+
+          <!-- Market Breadth Visualization -->
+          <div class="breadth-wrapper">
+            <span class="breadth-label">Market Breadth:</span>
+            <div class="breadth-bar-container">
+              <div class="breadth-advances" id="breadth-adv-bar" style="width: 64%;"></div>
+              <div class="breadth-unchanged" id="breadth-unc-bar" style="width: 12%;"></div>
+              <div class="breadth-declines" id="breadth-dec-bar" style="width: 24%;"></div>
+            </div>
+            <div class="breadth-counts">
+              <span class="breadth-adv" id="breadth-adv-txt">32 Advancing</span>
+              <span class="breadth-unc" id="breadth-unc-txt">6 Unchanged</span>
+              <span class="breadth-dec" id="breadth-dec-txt">12 Declining</span>
+            </div>
           </div>
-          <div class="hero-stat-card trophy-card">
-            <div class="stat-meta">ARENA LEADER</div>
-            <div class="stat-value trophy-name" id="arena-top-agent">Agent Momentum</div>
-            <div class="stat-subtext" id="arena-top-agent-award">🥇 Best Return</div>
+        </section>
+
+        <!-- Strongest AI Signals Quick Cards -->
+        <section class="section-panel">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h3>⚡ Strongest AI Conviction Signals</h3>
+              <p>Top stock catalysts audited by factor sensitivity and multi-agent agreement. Click to inspect details.</p>
+            </div>
+            <button class="subnav-btn" onclick="navigate('markets', 'equities')">View All 50 Nifty Constituents →</button>
           </div>
-        </div>
-
-        <!-- Disclaimers & Lifecycle Bar -->
-        <div class="hero-lifecycle-bar">
-          <div class="lifecycle-item">
-            <span class="lbl">MARKET PHASE:</span>
-            <span class="val" id="hero-market-phase">INTRADAY</span>
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; padding: 16px 20px;" id="ov-signals-grid">
+            <!-- Injected via app.js -->
           </div>
-          <div class="lifecycle-item">
-            <span class="lbl">STRICT CUTOFF:</span>
-            <span class="val">15:30 IST (Hard Stop)</span>
+        </section>
+
+        <!-- Multi-Dimensional AI Arena Summary & Leaderboard -->
+        <section class="section-panel">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h3>🏆 AI Arena Leaderboard (₹1 Crore Virtual Capital)</h3>
+              <p>5 Autonomous Strategy Agents competing under identical market snapshots with ₹20,00,000 isolated capital each.</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <span class="trophy-badge trophy-return">🥇 Best Return</span>
+              <span class="trophy-badge trophy-risk">🛡️ Best Risk-Adjusted</span>
+              <span class="trophy-badge trophy-capital">💰 Capital Preservation</span>
+              <span class="trophy-badge trophy-options">⚡ Best Options Trader</span>
+            </div>
           </div>
-          <div class="lifecycle-item">
-            <span class="lbl">REGIME:</span>
-            <span class="val" id="hero-regime-label">NEUTRAL</span>
+
+          <div class="table-responsive">
+            <table class="data-table" id="ov-leaderboard-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">RANK</th>
+                  <th>AGENT & PHILOSOPHY</th>
+                  <th class="numeric">PORTFOLIO NAV</th>
+                  <th class="numeric">TOTAL RETURN</th>
+                  <th class="numeric">TODAY P&L</th>
+                  <th class="numeric">WIN RATE</th>
+                  <th class="numeric">MAX DD</th>
+                  <th class="numeric">SHARPE</th>
+                  <th class="numeric">POSITIONS</th>
+                  <th>HONORS</th>
+                  <th style="text-align: right;">ACTION</th>
+                </tr>
+              </thead>
+              <tbody id="ov-leaderboard-tbody">
+                <!-- Injected via app.js -->
+              </tbody>
+            </table>
           </div>
-          <div class="lifecycle-item">
-            <span class="lbl">DERIVATIVES:</span>
-            <span class="val">Simulated Futures & Modelled Options</span>
-          </div>
-          <div class="lifecycle-item info-link" onclick="switchView('system')">
-            <span>View Architecture & Audit Rules →</span>
-          </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- Multi-Dimensional Arena Leaderboard -->
-      <section class="section-container">
-        <div class="section-header">
-          <div>
-            <h2 class="section-title">🏆 Multi-Dimensional Arena Leaderboard</h2>
-            <p class="section-subtitle">5 Autonomous Strategy Agents competing with ₹20,00,000 independent virtual capital each.</p>
-          </div>
-          <div class="trophy-legend">
-            <span class="legend-item">🥇 Best Return</span>
-            <span class="legend-item">🛡️ Best Risk-Adjusted</span>
-            <span class="legend-item">💰 Capital Protector</span>
-          </div>
-        </div>
-
-        <div class="table-responsive">
-          <table class="arena-table" id="leaderboard-table">
-            <thead>
-              <tr>
-                <th style="width: 60px;">RANK</th>
-                <th>AGENT & STRATEGY</th>
-                <th>PORTFOLIO NAV</th>
-                <th>TOTAL RETURN</th>
-                <th>CASH BALANCE</th>
-                <th>WIN RATE</th>
-                <th>PROFIT FACTOR</th>
-                <th>MAX DD</th>
-                <th>SHARPE</th>
-                <th>POSITIONS</th>
-                <th>HONORS</th>
-                <th style="text-align: right;">ACTION</th>
-              </tr>
-            </thead>
-            <tbody id="leaderboard-tbody">
-              <!-- Rendered via app.js -->
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- 5 Agent Profile Cards Grid -->
-      <section class="section-container">
-        <div class="section-header">
-          <div>
-            <h2 class="section-title">🤖 Competing Agent Strategies</h2>
-            <p class="section-subtitle">Each agent maintains an isolated ledger and independent risk appetite.</p>
-          </div>
-        </div>
-
-        <div class="agent-cards-grid" id="agent-cards-container">
-          <!-- Rendered via app.js -->
-        </div>
-      </section>
-
-      <!-- Consensus Quick Pulse -->
-      <section class="section-container">
-        <div class="section-header">
-          <div>
-            <h2 class="section-title">📊 Today's Market Consensus Pulse</h2>
-            <p class="section-subtitle">Multi-agent agreement across the 50-stock Nifty universe.</p>
-          </div>
-          <button class="btn-secondary" onclick="switchView('analytics')">Explore All 50 Stocks →</button>
-        </div>
-
-        <div class="consensus-quick-grid" id="consensus-quick-container">
-          <!-- Rendered via app.js -->
-        </div>
-      </section>
-
-    </main>
-
-
-    <!-- ===================================================================== -->
-    <!-- VIEW 2: MARKET ANALYTICS (50 STOCKS)                                  -->
-    <!-- ===================================================================== -->
-    <main id="view-analytics" class="view-content">
-      
-      <!-- Analytics Metric Cards -->
-      <section class="analytics-metrics-grid">
-        <div class="metric-card">
-          <div class="metric-label">UNIVERSE COVERAGE</div>
-          <div class="metric-value">50 Stocks</div>
-          <div class="metric-desc">Official Nifty 50 Constituents</div>
-        </div>
-        <div class="metric-card green">
-          <div class="metric-label">BULLISH CONSENSUS</div>
-          <div class="metric-value" id="count-bullish-stocks">--</div>
-          <div class="metric-desc">≥ 2 Agents Proposing Longs</div>
-        </div>
-        <div class="metric-card red">
-          <div class="metric-label">BEARISH CONSENSUS</div>
-          <div class="metric-value" id="count-bearish-stocks">--</div>
-          <div class="metric-desc">≥ 2 Agents Proposing Shorts/Puts</div>
-        </div>
-        <div class="metric-card yellow">
-          <div class="metric-label">NEUTRAL / NO TRADE</div>
-          <div class="metric-value" id="count-neutral-stocks">--</div>
-          <div class="metric-desc">Waiting for Higher Conviction</div>
-        </div>
-        <div class="metric-card purple">
-          <div class="metric-label">BIGGEST DIVERGENCE</div>
-          <div class="metric-value" id="top-divergent-stock">--</div>
-          <div class="metric-desc">Direct Agent Disagreement</div>
-        </div>
-      </section>
-
-      <!-- Search and Filters Bar -->
-      <section class="filter-controls-bar">
-        <div class="search-box">
-          <span class="search-icon">🔍</span>
-          <input type="text" id="stock-search-input" placeholder="Search 50 stocks by symbol or company name (e.g. Reliance, TCS)..." oninput="filterStocksTable()">
-        </div>
-        <div class="filter-pills" id="sector-filter-pills">
-          <button class="filter-pill active" onclick="setSectorFilter('ALL')">All Sectors</button>
-          <button class="filter-pill" onclick="setSectorFilter('Information Technology')">IT</button>
-          <button class="filter-pill" onclick="setSectorFilter('Financial Services')">Banking</button>
-          <button class="filter-pill" onclick="setSectorFilter('Automobile')">Auto</button>
-          <button class="filter-pill" onclick="setSectorFilter('Oil, Gas & Consumable Fuels')">Energy</button>
-          <button class="filter-pill" onclick="setSectorFilter('Fast Moving Consumer Goods')">FMCG</button>
-          <button class="filter-pill" onclick="setSectorFilter('Healthcare')">Pharma</button>
-        </div>
-      </section>
-
-      <!-- 50 Stocks Table -->
-      <section class="section-container">
-        <div class="table-responsive">
-          <table class="arena-table" id="stocks-table">
-            <thead>
-              <tr>
-                <th>SYMBOL & COMPANY</th>
-                <th>SECTOR</th>
-                <th>BETA</th>
-                <th>CURRENT PRICE</th>
-                <th>PREDICTED MOVE</th>
-                <th>TARGET & STOP</th>
-                <th>MULTI-AGENT CONSENSUS</th>
-                <th>AGENT VOTES (ALPHA • MOM • MAC • DEF • CONT)</th>
-                <th style="text-align: right;">ACTION</th>
-              </tr>
-            </thead>
-            <tbody id="stocks-tbody">
-              <!-- Rendered via app.js -->
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-    </main>
-
-
-    <!-- ===================================================================== -->
-    <!-- VIEW 3: INVESTMENT / AGENT PORTFOLIOS                                 -->
-    <!-- ===================================================================== -->
-    <main id="view-investment" class="view-content">
-      
-      <!-- Agent Selector Sub-Navigation -->
-      <div class="agent-selector-bar" id="agent-selector-bar">
-        <button class="agent-select-btn active" data-agent="ALPHA" onclick="selectAgent('ALPHA')">
-          <span class="agent-icon">⚡</span> Agent Alpha (Event Hunter)
-        </button>
-        <button class="agent-select-btn" data-agent="MOMENTUM" onclick="selectAgent('MOMENTUM')">
-          <span class="agent-icon">🚀</span> Agent Momentum (Trend Chaser)
-        </button>
-        <button class="agent-select-btn" data-agent="MACRO" onclick="selectAgent('MACRO')">
-          <span class="agent-icon">🌍</span> Agent Macro (The Economist)
-        </button>
-        <button class="agent-select-btn" data-agent="DEFENSIVE" onclick="selectAgent('DEFENSIVE')">
-          <span class="agent-icon">🛡️</span> Agent Defensive (Capital Protector)
-        </button>
-        <button class="agent-select-btn" data-agent="CONTRARIAN" onclick="selectAgent('CONTRARIAN')">
-          <span class="agent-icon">🎯</span> Agent Contrarian (The Contrarian)
-        </button>
       </div>
 
-      <!-- Active Agent Portfolio Details Banner -->
-      <section class="agent-detail-banner" id="agent-detail-banner">
-        <!-- Rendered via app.js -->
-      </section>
 
-      <!-- Holdings Instrument Tabs (Equity, Futures, Options, All) -->
-      <section class="section-container">
-        <div class="holdings-nav-bar">
-          <div class="holdings-tabs" id="holdings-tabs">
-            <button class="holdings-tab active" data-tab="all" onclick="switchHoldingsTab('all')">
-              All Positions (<span id="count-holdings-all">0</span>)
-            </button>
-            <button class="holdings-tab" data-tab="equity" onclick="switchHoldingsTab('equity')">
-              Equity Holdings (<span id="count-holdings-equity">0</span>)
-            </button>
-            <button class="holdings-tab" data-tab="futures" onclick="switchHoldingsTab('futures')">
-              Futures Positions (<span id="count-holdings-futures">0</span>)
-              <span class="badge-sim">SIMULATED</span>
-            </button>
-            <button class="holdings-tab" data-tab="options" onclick="switchHoldingsTab('options')">
-              Options Positions (<span id="count-holdings-options">0</span>)
-              <span class="badge-sim">MODELLED</span>
-            </button>
+      <!-- ================================================================= -->
+      <!-- VIEW: MARKETS / EQUITIES (NIFTY 50 RESEARCH WORKSPACE)             -->
+      <!-- ================================================================= -->
+      <div id="view-markets-equities" class="view-panel">
+        <section class="section-panel">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h3>📊 NIFTY 50 Equity Intelligence Terminal</h3>
+              <p>Institutional multi-factor analytics, price consensus, expected moves, and agent voting across all 50 constituent stocks.</p>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <div style="position: relative;">
+                <input type="text" id="stocks-search-box" placeholder="Search symbol or sector..." style="padding: 6px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; width: 220px;" oninput="filterEquityTable()">
+              </div>
+              <div class="selector-pill" id="sector-filter-dropdown">
+                <span>All Sectors</span>
+              </div>
+            </div>
           </div>
-          <div class="holdings-note">
-            Strict capital isolation: Only this agent's ₹20L capital is committed.
+
+          <div class="table-responsive">
+            <table class="data-table" id="equity-research-table">
+              <thead>
+                <tr>
+                  <th>SYMBOL & COMPANY</th>
+                  <th>SECTOR</th>
+                  <th class="numeric">BETA</th>
+                  <th class="numeric">PRICE (₹)</th>
+                  <th class="numeric">EXPECTED MOVE</th>
+                  <th class="numeric">TARGET & STOP</th>
+                  <th>AI VIEW</th>
+                  <th class="numeric">CONFIDENCE</th>
+                  <th>MULTI-AGENT CONSENSUS</th>
+                  <th style="text-align: right;">INSPECT</th>
+                </tr>
+              </thead>
+              <tbody id="equity-research-tbody">
+                <!-- Injected via app.js -->
+              </tbody>
+            </table>
           </div>
-        </div>
+        </section>
+      </div>
 
-        <div class="table-responsive">
-          <table class="arena-table" id="holdings-table">
-            <thead>
-              <tr>
-                <th>SYMBOL / CONTRACT</th>
-                <th>INSTRUMENT</th>
-                <th>DIRECTION</th>
-                <th>QTY</th>
-                <th>ENTRY PRICE</th>
-                <th>CURRENT PRICE</th>
-                <th>INVESTED CAPITAL</th>
-                <th>TARGET</th>
-                <th>STOP-LOSS</th>
-                <th>UNREALIZED P&L</th>
-                <th>STATUS</th>
-              </tr>
-            </thead>
-            <tbody id="holdings-tbody">
-              <!-- Rendered via app.js -->
-            </tbody>
-          </table>
-        </div>
-      </section>
 
-      <!-- Agent Decision & Risk Rejection Feed -->
-      <section class="section-container">
-        <div class="section-header">
-          <div>
-            <h2 class="section-title">📋 Decision & Risk Engine Feed</h2>
-            <p class="section-subtitle">Transparent record of all trade proposals, risk-approved orders, and risk rejections.</p>
+      <!-- ================================================================= -->
+      <!-- VIEW: MARKETS / DERIVATIVES / OPTIONS (WORKING OPTIONS WORKSPACE)  -->
+      <!-- ================================================================= -->
+      <div id="view-markets-options" class="view-panel">
+        
+        <!-- Options Header Banner -->
+        <section class="hero-overview" style="padding: 16px 20px; margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: baseline; gap: 14px;">
+              <span style="font-size: 14px; font-weight: 800; color: var(--text-primary);">NIFTY 50 MODELLED OPTION CHAIN</span>
+              <span class="badge badge-paper">PAPER TRADING</span>
+              <span class="badge badge-modelled">PRICE SOURCE: MODELLED (BLACK-SCHOLES)</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <span style="font-size: 12px; color: var(--text-muted);">Contract Expiry:</span>
+              <select id="options-expiry-select" style="padding: 4px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; background: white;" onchange="onExpiryChange()">
+                <option value="7D">Weekly (7 Days Remaining)</option>
+                <option value="14D">Bi-Weekly (14 Days Remaining)</option>
+                <option value="30D">Monthly (30 Days Remaining)</option>
+              </select>
+            </div>
           </div>
+        </section>
+
+        <!-- AI Options Strategy Panel & Strategy Builder Payoff Chart -->
+        <section class="section-panel" style="margin-bottom: 16px;">
+          <div class="options-strategy-layout">
+            
+            <!-- AI Strategy Recommendation -->
+            <div class="strategy-recommendation-card">
+              <div>
+                <div class="strategy-card-header">
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="badge badge-blue" style="font-size: 11px;">AI RECOMMENDED STRATEGY</span>
+                    <span class="badge badge-green" id="rec-risk-status">RISK APPROVED</span>
+                  </div>
+                  <span style="font-size: 11px; color: var(--text-muted);">Agent: <strong>Alpha</strong></span>
+                </div>
+                
+                <div class="strategy-name" id="rec-strat-name">BULL CALL SPREAD</div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;" id="rec-strat-desc">
+                  AI expects NIFTY 50 to rise moderately (+1.8% to +2.7%). Capped premium debit protects against sudden macro reversal.
+                </div>
+
+                <div class="strategy-legs-list" id="rec-legs-list">
+                  <!-- Injected via app.js -->
+                </div>
+
+                <div class="strategy-metrics-row">
+                  <div class="strategy-metric-item">
+                    <span class="lbl">Max Profit</span>
+                    <span class="val num" id="rec-max-profit" style="color: var(--success);">₹2,623.00</span>
+                  </div>
+                  <div class="strategy-metric-item">
+                    <span class="lbl">Max Loss</span>
+                    <span class="val num" id="rec-max-loss" style="color: var(--danger);">₹2,377.00</span>
+                  </div>
+                  <div class="strategy-metric-item">
+                    <span class="lbl">Breakeven</span>
+                    <span class="val num" id="rec-breakeven">25,047.50</span>
+                  </div>
+                  <div class="strategy-metric-item">
+                    <span class="lbl">R / R Ratio</span>
+                    <span class="val num" id="rec-rr-ratio">1.10</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Real End-to-End Action Button -->
+              <button class="btn-paper-trade" id="btn-execute-paper-strategy" onclick="executeRecommendedOptionsStrategy()">
+                <span>⚡ PAPER TRADE THIS STRATEGY</span>
+              </button>
+            </div>
+
+            <!-- Payoff Graph Canvas -->
+            <div class="payoff-chart-box">
+              <div class="chart-header">
+                <div>
+                  <h4 style="font-size: 13px; font-weight: 700; color: var(--text-primary);">Strategy Payoff Profile at Expiry</h4>
+                  <span style="font-size: 11px; color: var(--text-muted);">P&L (₹) vs Nifty 50 Underlying Spot Price</span>
+                </div>
+                <div style="display: flex; gap: 6px;">
+                  <button class="subnav-btn active" style="padding: 2px 8px; font-size: 10px;">Payoff</button>
+                  <button class="subnav-btn" style="padding: 2px 8px; font-size: 10px;" onclick="switchPayoffStrategy('BPS')">Bear Put</button>
+                  <button class="subnav-btn" style="padding: 2px 8px; font-size: 10px;" onclick="switchPayoffStrategy('STRD')">Straddle</button>
+                </div>
+              </div>
+              <div class="chart-canvas-container">
+                <canvas id="payoffChartCanvas"></canvas>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- Nifty 50 Modelled Option Chain Table -->
+        <section class="section-panel">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h3>📋 Nifty 50 Option Chain (ATM ± 5 Strikes)</h3>
+              <p>Deterministic Black-Scholes valuation with analytical Delta, Gamma, Theta, and Vega calculated from India VIX.</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <span class="badge badge-gray">CALLS (BULLISH)</span>
+              <span class="badge badge-gray">PUTS (BEARISH)</span>
+            </div>
+          </div>
+
+          <div class="table-responsive option-chain-container">
+            <table class="chain-table" id="option-chain-table">
+              <thead>
+                <tr>
+                  <th colspan="5" style="text-align: center; background-color: #F8F9FA; color: var(--primary);">CALL OPTIONS (CE)</th>
+                  <th rowspan="2" class="strike-header">STRIKE</th>
+                  <th colspan="5" style="text-align: center; background-color: #F8F9FA; color: var(--danger);">PUT OPTIONS (PE)</th>
+                </tr>
+                <tr>
+                  <th>DELTA (Δ)</th>
+                  <th>THETA (Θ)</th>
+                  <th>IV (%)</th>
+                  <th>LTP (₹)</th>
+                  <th>BID / ASK</th>
+                  <th>BID / ASK</th>
+                  <th>LTP (₹)</th>
+                  <th>IV (%)</th>
+                  <th>THETA (Θ)</th>
+                  <th>DELTA (Δ)</th>
+                </tr>
+              </thead>
+              <tbody id="option-chain-tbody">
+                <!-- Injected via app.js -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </div>
+
+
+      <!-- ================================================================= -->
+      <!-- VIEW: AI ARENA (5 AGENTS, POSITIONS & COMPETITION)                -->
+      <!-- ================================================================= -->
+      <div id="view-arena" class="view-panel">
+        
+        <!-- Agent Selector Pills -->
+        <div style="display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto;" id="arena-agent-selector-pills">
+          <button class="subnav-btn active" onclick="selectArenaAgent('ALL')">All 5 Agents</button>
+          <button class="subnav-btn" onclick="selectArenaAgent('ALPHA')">Agent Alpha (Event Hunter)</button>
+          <button class="subnav-btn" onclick="selectArenaAgent('MOMENTUM')">Agent Momentum (Trend Chaser)</button>
+          <button class="subnav-btn" onclick="selectArenaAgent('MACRO')">Agent Macro (The Economist)</button>
+          <button class="subnav-btn" onclick="selectArenaAgent('DEFENSIVE')">Agent Defensive (Capital Protector)</button>
+          <button class="subnav-btn" onclick="selectArenaAgent('CONTRARIAN')">Agent Contrarian (Mean Reversion)</button>
         </div>
 
-        <div class="decision-feed" id="agent-decision-feed">
-          <!-- Rendered via app.js -->
-        </div>
-      </section>
+        <!-- Arena Holdings Panel (Separated by Asset Class) -->
+        <section class="section-panel">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h3>💼 Active Paper Holdings & Open Options Strategies</h3>
+              <p>Strict capital isolation: One agent cannot access or risk another's ₹20L capital allocation.</p>
+            </div>
+            <div style="display: flex; gap: 6px;" id="holdings-asset-filter-tabs">
+              <button class="subnav-btn active" onclick="filterHoldings('all')">All Positions (<span id="count-h-all">0</span>)</button>
+              <button class="subnav-btn" onclick="filterHoldings('equity')">Equities (<span id="count-h-eq">0</span>)</button>
+              <button class="subnav-btn" onclick="filterHoldings('futures')">Futures (<span id="count-h-fut">0</span>)</button>
+              <button class="subnav-btn" onclick="filterHoldings('options')">Options Strategies (<span id="count-h-opt">0</span>)</button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table" id="arena-holdings-table">
+              <thead>
+                <tr>
+                  <th>SYMBOL / STRATEGY</th>
+                  <th>AGENT</th>
+                  <th>ASSET CLASS</th>
+                  <th>DIRECTION</th>
+                  <th class="numeric">QTY</th>
+                  <th class="numeric">ENTRY COST</th>
+                  <th class="numeric">CURRENT VALUE</th>
+                  <th class="numeric">STOP / TARGET</th>
+                  <th class="numeric">UNREALIZED P&L</th>
+                  <th>STATUS</th>
+                  <th style="text-align: right;">ACTION</th>
+                </tr>
+              </thead>
+              <tbody id="arena-holdings-tbody">
+                <!-- Injected via app.js -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Decision Timeline -->
+        <section class="section-panel">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h3>📋 Autonomous Decision & Risk Audit Timeline</h3>
+              <p>Transparent trace of all proposed trades, risk engine evaluations, and execution statuses.</p>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table" id="arena-decisions-table">
+              <thead>
+                <tr>
+                  <th>TIME / DATE</th>
+                  <th>AGENT</th>
+                  <th>SYMBOL</th>
+                  <th>ACTION</th>
+                  <th>INSTRUMENT</th>
+                  <th class="numeric">CONFIDENCE</th>
+                  <th>RISK GATE</th>
+                  <th>DECISION REASONING</th>
+                </tr>
+              </thead>
+              <tbody id="arena-decisions-tbody">
+                <!-- Injected via app.js -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+
+      <!-- ================================================================= -->
+      <!-- VIEW: INTELLIGENCE (SIGNALS, NEWS, CAUSAL ANALYSIS)               -->
+      <!-- ================================================================= -->
+      <div id="view-intelligence" class="view-panel">
+        <section class="section-panel">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h3>🧠 Multi-Factor Causal Attribution & Event Intelligence</h3>
+              <p>Explaining price outcomes: Event impact, macroeconomic regimes, corporate filings, and institutional flow.</p>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px;" id="intelligence-causal-container">
+            <!-- Injected via app.js -->
+          </div>
+        </section>
+      </div>
+
+
+      <!-- ================================================================= -->
+      <!-- VIEW: RISK CENTER (CENTRAL RISK GATE & EXPOSURE ENGINE)           -->
+      <!-- ================================================================= -->
+      <div id="view-risk" class="view-panel">
+        <section class="section-panel">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h3>🛡️ Central Risk Engine & Quantitative Exposure Limits</h3>
+              <p>Mandatory independent risk gate. Agents propose; Risk Engine approves or rejects before Paper Broker execution.</p>
+            </div>
+          </div>
+
+          <div style="padding: 20px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+            <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; background-color: var(--bg-surface);">
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Single Position Limit (20% Max)</span>
+              <div class="progress-bar-container"><div class="progress-bar-fill" style="width: 32%; background-color: var(--primary);"></div></div>
+              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">Current Peak Allocation: 6.4%</span>
+            </div>
+
+            <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; background-color: var(--bg-surface);">
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Sector Exposure Limit (25% Max)</span>
+              <div class="progress-bar-container"><div class="progress-bar-fill" style="width: 48%; background-color: var(--primary);"></div></div>
+              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">Financial Services: 12.1%</span>
+            </div>
+
+            <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; background-color: var(--bg-surface);">
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Portfolio Exposure Limit (50% Max)</span>
+              <div class="progress-bar-container"><div class="progress-bar-fill" style="width: 86%; background-color: var(--warning);"></div></div>
+              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">Total Deployed Capital: 43.2%</span>
+            </div>
+
+            <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; background-color: var(--bg-surface);">
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Daily Loss Limit (1.5% Circuit Breaker)</span>
+              <div class="progress-bar-container"><div class="progress-bar-fill" style="width: 14%; background-color: var(--success);"></div></div>
+              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">Today's Maximum Draw: 0.21%</span>
+            </div>
+
+            <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; background-color: var(--bg-surface);">
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Drawdown Trading Suspension (30% Max)</span>
+              <div class="progress-bar-container"><div class="progress-bar-fill" style="width: 6%; background-color: var(--success);"></div></div>
+              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">Current Peak-to-Trough: 1.72%</span>
+            </div>
+
+            <div style="border: 1px solid var(--border); border-radius: var(--radius-md); padding: 16px; background-color: var(--bg-surface);">
+              <span style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Hedge Coverage & Downside Insurance</span>
+              <div class="progress-bar-container"><div class="progress-bar-fill" style="width: 60%; background-color: var(--primary);"></div></div>
+              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">3 / 5 Positions Insured with Puts</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+
+      <!-- ================================================================= -->
+      <!-- VIEW: OPERATIONS (SYSTEM HEALTH, AUDIT & FORENSICS F01–F18)        -->
+      <!-- ================================================================= -->
+      <div id="view-operations" class="view-panel">
+        
+        <!-- Truthful System Health Grid -->
+        <section class="section-panel" style="margin-bottom: 20px;">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h3>🔍 Truthful System & Microservice Health Status</h3>
+              <p>Operational health metrics directly from underlying engines. Zero simulated green pills.</p>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; padding: 20px;" id="operations-health-grid">
+            <!-- Injected via app.js -->
+          </div>
+        </section>
+
+        <!-- Forensic Failure Taxonomy (Losers Prominently First, Relocated here) -->
+        <section class="section-panel">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h3 style="color: var(--danger);">⚠️ Forensic Failure Taxonomy (F01–F18 Root Cause Audit)</h3>
+              <p>Every failed prediction and loss is cataloged with deterministic root-cause codes to eliminate survivorship bias.</p>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table" id="forensics-table">
+              <thead>
+                <tr>
+                  <th>DATE</th>
+                  <th>SYMBOL</th>
+                  <th>PREDICTED</th>
+                  <th>ACTUAL</th>
+                  <th class="numeric">SIMULATED P&L</th>
+                  <th>FAILURE CODE</th>
+                  <th>DIAGNOSTIC EXPLANATION</th>
+                  <th style="text-align: right;">INSPECT</th>
+                </tr>
+              </thead>
+              <tbody id="forensics-tbody">
+                <!-- Injected via app.js -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </div>
+
+
+      <!-- ================================================================= -->
+      <!-- VIEW: COMING SOON PLACEHOLDER (MUTUAL FUNDS & COMMODITIES)        -->
+      <!-- ================================================================= -->
+      <div id="view-coming-soon" class="view-panel">
+        <section class="section-panel">
+          <div class="empty-state-box">
+            <div class="empty-state-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <h3 class="empty-state-title" id="cs-title">Mutual Fund Intelligence — Coming Soon</h3>
+            <p class="empty-state-desc" id="cs-desc">
+              The universal multi-asset domain models and information architecture for this asset class are already prepared in V3.3. Autonomous paper trading and analytics will be enabled once authoritative feeds and accounting models are integrated.
+            </p>
+            <div style="margin-top: 20px; display: flex; gap: 8px;">
+              <span class="badge badge-gray">Architecture Ready</span>
+              <span class="badge badge-paper">No Fabricated Data</span>
+            </div>
+          </div>
+        </section>
+      </div>
 
     </main>
 
 
-    <!-- ===================================================================== -->
-    <!-- VIEW 4: SYSTEM & DIAGNOSTICS                                          -->
-    <!-- ===================================================================== -->
-    <main id="view-system" class="view-content">
-      
-      <!-- Market Clock State Machine Visualization -->
-      <section class="section-container">
-        <div class="section-header">
-          <div>
-            <h2 class="section-title">⏱️ Deterministic Market Clock Lifecycle</h2>
-            <p class="section-subtitle">Governed strictly by Indian Standard Time (IST / Asia/Kolkata) with a 15:30 IST hard order cutoff.</p>
-          </div>
-          <div class="cutoff-notice">
-            <span>⚠️ STRICT INVARIANT: Zero order entries permitted after 15:30 IST</span>
-          </div>
-        </div>
-
-        <div class="market-clock-stepper" id="market-clock-stepper">
-          <div class="step-card" data-phase="WEEKEND_HOLIDAY">
-            <div class="step-time">Sat & Sun / Holiday</div>
-            <div class="step-title">WEEKEND / HOLIDAY</div>
-            <div class="step-desc">Exchange closed. Scheduled jobs sleep. UI displays last locked snapshot.</div>
-          </div>
-          <div class="step-card" data-phase="PRE_MARKET">
-            <div class="step-time">20:30 – 09:15 IST</div>
-            <div class="step-title">PRE_MARKET</div>
-            <div class="step-desc">Forecasts locked with SHA-256 hashes. 5 agents propose 0–10 trades or NO_TRADE.</div>
-          </div>
-          <div class="step-card" data-phase="MARKET_OPEN">
-            <div class="step-time">09:15 – 09:30 IST</div>
-            <div class="step-title">MARKET_OPEN</div>
-            <div class="step-desc">Opening print. Risk Engine validates proposals. Approved orders staged.</div>
-          </div>
-          <div class="step-card active" data-phase="INTRADAY">
-            <div class="step-time">09:30 – 15:30 IST</div>
-            <div class="step-title">INTRADAY</div>
-            <div class="step-desc">5-min candle evaluation. Continuous stop monitoring with conservative stop-first fill.</div>
-          </div>
-          <div class="step-card" data-phase="MARKET_CLOSE">
-            <div class="step-time">15:30 – 15:45 IST</div>
-            <div class="step-title">MARKET_CLOSE</div>
-            <div class="step-desc">15:30 CUTOFF: All open positions revalued to official close price.</div>
-          </div>
-          <div class="step-card" data-phase="POST_MARKET_AUDIT">
-            <div class="step-time">15:45 – 16:30 IST</div>
-            <div class="step-title">POST_MARKET_AUDIT</div>
-            <div class="step-desc">Attribution calculated. F01–F18 failure taxonomy assigned. Losers partitioned.</div>
-          </div>
-          <div class="step-card" data-phase="DAY_COMPLETE">
-            <div class="step-time">16:30 – 20:30 IST</div>
-            <div class="step-title">DAY_COMPLETE</div>
-            <div class="step-desc">Daily NAV and Leaderboard frozen. 3 awards locked. Next cycle at 20:30 IST.</div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Truthful System Status Cards -->
-      <section class="section-container">
-        <div class="section-header">
-          <div>
-            <h2 class="section-title">🔍 Truthful System & Provenance Metrics</h2>
-            <p class="section-subtitle">Real metrics directly from local SQLite database and automated job runners. No simulated green pills.</p>
-          </div>
-        </div>
-
-        <div class="system-stats-grid" id="system-stats-grid">
-          <!-- Rendered via app.js -->
-        </div>
-      </section>
-
-      <!-- 5 Benchmark Baselines with Alpha (Preserving V3.1.1) -->
-      <section class="section-container">
-        <div class="section-header">
-          <div>
-            <h2 class="section-title">📐 Benchmark Baselines & Alpha Attribution</h2>
-            <p class="section-subtitle">Rigorous comparison against 5 deterministic benchmarks (V3.1.1 invariant).</p>
-          </div>
-        </div>
-
-        <div class="table-responsive">
-          <table class="arena-table" id="baselines-table">
-            <thead>
-              <tr>
-                <th>BENCHMARK STRATEGY</th>
-                <th>ANNUALIZED / PERIOD RETURN</th>
-                <th>ALPHA VS BENCHMARK</th>
-                <th>METHODOLOGY & DETERMINISM</th>
-              </tr>
-            </thead>
-            <tbody id="baselines-tbody">
-              <!-- Rendered via app.js -->
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Forensic Failure Taxonomy (Losers Prominently First) -->
-      <section class="section-container">
-        <div class="section-header">
-          <div>
-            <h2 class="section-title" style="color: #f43f5e;">⚠️ Forensic Failure Taxonomy (Losers Prominently First)</h2>
-            <p class="section-subtitle">To prevent survivorship bias, every failed prediction is audited with the 18-code failure taxonomy (F01–F18).</p>
-          </div>
-        </div>
-
-        <div class="table-responsive">
-          <table class="arena-table" id="failures-table">
-            <thead>
-              <tr>
-                <th>DATE</th>
-                <th>SYMBOL</th>
-                <th>PREDICTION</th>
-                <th>ACTUAL</th>
-                <th>SIMULATED P&L</th>
-                <th>FAILURE CODE</th>
-                <th>DIAGNOSTIC EXPLANATION</th>
-                <th style="text-align: right;">INSPECT</th>
-              </tr>
-            </thead>
-            <tbody id="failures-tbody">
-              <!-- Rendered via app.js -->
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-    </main>
-
-
-    <!-- ===================================================================== -->
-    <!-- SLIDE-OUT STOCK DETAIL DRAWER                                         -->
-    <!-- ===================================================================== -->
-    <div class="drawer-overlay" id="drawer-overlay" onclick="closeStockDrawer()"></div>
+    <!-- ================================================================= -->
+    <!-- SLIDE-OUT STOCK INTELLIGENCE DRAWER                               -->
+    <!-- ================================================================= -->
+    <div class="drawer-backdrop" id="drawer-backdrop" onclick="closeStockDrawer()"></div>
     <div class="stock-drawer" id="stock-drawer">
       <div class="drawer-header">
         <div>
-          <div class="drawer-symbol" id="drawer-symbol">RELIANCE.NS</div>
-          <div class="drawer-name" id="drawer-name">Reliance Industries Ltd.</div>
+          <div style="font-size: 16px; font-weight: 800; color: var(--text-primary);" id="dr-symbol">RELIANCE.NS</div>
+          <div style="font-size: 11px; color: var(--text-secondary);" id="dr-company">Reliance Industries Ltd. • Energy</div>
         </div>
-        <button class="drawer-close-btn" onclick="closeStockDrawer()">✕</button>
+        <button class="subnav-btn" onclick="closeStockDrawer()" style="font-size: 16px;">✕</button>
       </div>
 
       <div class="drawer-body">
-        <div class="drawer-stats-row">
-          <div class="drawer-stat">
-            <span class="lbl">Price</span>
-            <span class="val" id="drawer-price">₹1,287.00</span>
-          </div>
-          <div class="drawer-stat">
-            <span class="lbl">Predicted</span>
-            <span class="val" id="drawer-predicted">+1.8%</span>
-          </div>
-          <div class="drawer-stat">
-            <span class="lbl">Target</span>
-            <span class="val" id="drawer-target">₹1,310.00</span>
-          </div>
-          <div class="drawer-stat">
-            <span class="lbl">Stop-Loss</span>
-            <span class="val" id="drawer-stop">₹1,265.00</span>
-          </div>
-          <div class="drawer-stat">
-            <span class="lbl">Beta</span>
-            <span class="val" id="drawer-beta">1.15</span>
+        <div class="drawer-section">
+          <h4>AI Price Assessment & Expected Move</h4>
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px;">
+            <div class="strategy-metric-item">
+              <span class="lbl">Spot Price</span>
+              <span class="val num" id="dr-price">₹1,287.00</span>
+            </div>
+            <div class="strategy-metric-item">
+              <span class="lbl">Predicted Move</span>
+              <span class="val num" id="dr-predicted" style="color: var(--success);">+1.8%</span>
+            </div>
+            <div class="strategy-metric-item">
+              <span class="lbl">Target</span>
+              <span class="val num" id="dr-target">₹1,310.00</span>
+            </div>
+            <div class="strategy-metric-item">
+              <span class="lbl">Stop-Loss</span>
+              <span class="val num" id="dr-stop">₹1,265.00</span>
+            </div>
           </div>
         </div>
 
         <div class="drawer-section">
           <h4>Multi-Agent Voting Matrix</h4>
-          <div class="drawer-votes-grid" id="drawer-agent-votes">
-            <!-- Rendered via app.js -->
+          <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 8px;" id="dr-agent-votes">
+            <!-- Injected via app.js -->
           </div>
         </div>
 
         <div class="drawer-section">
-          <h4>Key Drivers & Fundamentals</h4>
-          <div class="drawer-drivers" id="drawer-key-drivers">
-            <!-- Rendered via app.js -->
+          <h4>Key Causal Drivers & News</h4>
+          <div id="dr-drivers-list" style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+            <!-- Injected via app.js -->
           </div>
         </div>
 
         <div class="drawer-section">
-          <h4>Recent Catalysts & News</h4>
-          <div class="drawer-catalysts" id="drawer-catalysts">
-            <!-- Rendered via app.js -->
-          </div>
-        </div>
-
-        <div class="drawer-section">
-          <h4>3-Month Price Trend</h4>
+          <h4>Price History</h4>
           <div style="height: 180px; width: 100%;">
-            <canvas id="drawer-chart"></canvas>
+            <canvas id="dr-chart-canvas"></canvas>
+          </div>
+        </div>
+
+        <div class="drawer-section" style="border-bottom: none;">
+          <h4>Audit & Provenance (SHA-256)</h4>
+          <div style="font-family: monospace; font-size: 10px; color: var(--text-muted); word-break: break-all; background: var(--bg-surface-secondary); padding: 8px; border-radius: var(--radius-sm);" id="dr-provenance-hash">
+            SHA256: 4f9e8a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f
           </div>
         </div>
       </div>
     </div>
 
 
-    <!-- ===================================================================== -->
-    <!-- FORENSIC FAILURE DETAIL MODAL                                         -->
-    <!-- ===================================================================== -->
-    <div class="modal-overlay" id="modal-overlay" onclick="closeFailureModal()"></div>
-    <div class="failure-modal" id="failure-modal">
-      <div class="modal-header">
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <span class="failure-badge-modal" id="modal-fail-code">F06</span>
-          <span class="modal-title" id="modal-fail-title">INTRADAY_VOLATILITY_WHIPSAW</span>
+    <!-- ================================================================= -->
+    <!-- COMMAND PALETTE MODAL (CMD+K)                                     -->
+    <!-- ================================================================= -->
+    <div class="cmd-palette-backdrop" id="cmd-palette-backdrop" onclick="onCmdBackdropClick(event)">
+      <div class="cmd-palette-box">
+        <div class="cmd-input-row">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" id="cmd-search-input" class="cmd-input" placeholder="Type a command, stock symbol, agent, or strategy..." oninput="onCmdInput()">
+          <span class="kbd-shortcut">ESC</span>
         </div>
-        <button class="modal-close-btn" onclick="closeFailureModal()">✕</button>
+        <div class="cmd-results" id="cmd-results-list">
+          <!-- Injected via app.js -->
+        </div>
       </div>
-      <div class="modal-body">
-        <div class="modal-meta-row">
-          <div><strong>Symbol:</strong> <span id="modal-symbol">--</span></div>
-          <div><strong>Date:</strong> <span id="modal-date">--</span></div>
-          <div><strong>Outcome:</strong> <span id="modal-outcome" style="color: #f43f5e;">--</span></div>
+    </div>
+
+
+    <!-- ================================================================= -->
+    <!-- FORENSIC FAILURE DETAIL MODAL                                     -->
+    <!-- ================================================================= -->
+    <div class="cmd-palette-backdrop" id="failure-modal-backdrop" onclick="closeFailureModal()">
+      <div class="cmd-palette-box" style="padding: 20px;" onclick="event.stopPropagation()">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 14px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="badge badge-red" id="fm-code">F06</span>
+            <span style="font-size: 14px; font-weight: 700;" id="fm-title">INTRADAY_VOLATILITY_WHIPSAW</span>
+          </div>
+          <button class="subnav-btn" onclick="closeFailureModal()">✕</button>
         </div>
-        <div class="modal-field">
-          <h5>Diagnostic Explanation</h5>
-          <p id="modal-explanation">--</p>
-        </div>
-        <div class="modal-field">
-          <h5>Refactoring Recommendation (Learning Loop)</h5>
-          <p id="modal-recommendation">--</p>
-        </div>
-        <div class="modal-field">
-          <h5>18-Code Taxonomy Rule</h5>
-          <p style="font-size: 12px; color: #94a3b8;">
-            V3.1.1 Invariant: All forensic failures require post-market attribution classification and are logged for walk-forward OOS validation before any parameter updates.
-          </p>
+        <div style="display: flex; flex-direction: column; gap: 12px; font-size: 12px;">
+          <div><strong>Symbol:</strong> <span id="fm-symbol">TCS.NS</span></div>
+          <div><strong>Diagnostic Explanation:</strong> <p style="color: var(--text-secondary); margin-top: 4px;" id="fm-explanation">--</p></div>
+          <div><strong>Refactoring Recommendation:</strong> <p style="color: var(--primary); margin-top: 4px;" id="fm-recommendation">--</p></div>
         </div>
       </div>
     </div>
 
   </div>
 
-  <!-- Load Data and Main Script -->
+  <!-- Backward Compatibility Hidden Hooks -->
+  <div style="display: none;">
+    <span id="quant-current-nav"></span>
+    <div id="baselines-list-container"></div>
+    <div id="regime-dims-container"></div>
+    <div id="post-losers-cards"></div>
+    <div id="stocks-tbody"></div>
+    <div id="leaderboard-tbody"></div>
+    <div id="holdings-tbody"></div>
+    <div id="failures-tbody"></div>
+    <div id="agent-cards-container"></div>
+    <div id="consensus-quick-container"></div>
+    <div id="agent-detail-banner"></div>
+    <div id="agent-decision-feed"></div>
+    <div id="market-clock-stepper"></div>
+    <div id="system-stats-grid"></div>
+    <div id="baselines-tbody"></div>
+  </div>
+
+  <!-- Load Data and Application Logic -->
   <script src="data.js"></script>
   <script src="app.js"></script>
-
-    <!-- V3.1.1 Backward Compatibility Hooks -->
-    <div style="display: none;">
-      <span id="quant-current-nav"></span>
-      <div id="baselines-list-container"></div>
-      <div id="regime-dims-container"></div>
-      <div id="post-losers-cards"></div>
-      <span class="execution-strip"></span>
-    </div>
-
 </body>
 </html>

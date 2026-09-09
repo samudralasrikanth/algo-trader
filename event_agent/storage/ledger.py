@@ -304,6 +304,33 @@ def init_db() -> None:
         )
         """)
 
+
+        # 13. Arena Multi-Leg Options Strategies Table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS agent_strategies (
+            strategy_id TEXT PRIMARY KEY,
+            agent_id TEXT NOT NULL,
+            strategy_type TEXT NOT NULL,
+            underlying TEXT NOT NULL,
+            expiry TEXT NOT NULL,
+            net_debit REAL NOT NULL,
+            max_profit REAL NOT NULL,
+            max_loss REAL NOT NULL,
+            breakeven_json TEXT,
+            status TEXT NOT NULL,
+            entry_underlying_price REAL NOT NULL,
+            current_underlying_price REAL NOT NULL,
+            current_strategy_value REAL NOT NULL,
+            unrealized_pnl REAL NOT NULL,
+            realized_pnl REAL NOT NULL,
+            legs_json TEXT NOT NULL,
+            snapshot_id TEXT NOT NULL,
+            strategy_version TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """)
+
         # 12. Arena Daily Frozen Snapshots (Leaderboard freeze)
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS agent_daily_snapshots (
@@ -1310,3 +1337,74 @@ def get_arena_data() -> Dict[str, Any]:
         "recent_trades": get_agent_trades(limit=50),
         "recent_decisions": get_agent_decisions(limit=50),
     }
+
+def save_agent_strategy(strat_dict: Dict[str, Any]) -> None:
+    """Insert or update a multi-leg options strategy in the ledger."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        now_str = datetime.now().isoformat()
+        cursor.execute("""
+        INSERT INTO agent_strategies (
+            strategy_id, agent_id, strategy_type, underlying, expiry,
+            net_debit, max_profit, max_loss, breakeven_json, status,
+            entry_underlying_price, current_underlying_price, current_strategy_value,
+            unrealized_pnl, realized_pnl, legs_json, snapshot_id, strategy_version,
+            created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(strategy_id) DO UPDATE SET
+            status=excluded.status,
+            current_underlying_price=excluded.current_underlying_price,
+            current_strategy_value=excluded.current_strategy_value,
+            unrealized_pnl=excluded.unrealized_pnl,
+            realized_pnl=excluded.realized_pnl,
+            updated_at=excluded.updated_at
+        """, (
+            strat_dict.get("strategy_id"),
+            strat_dict.get("agent_id"),
+            strat_dict.get("strategy_type"),
+            strat_dict.get("underlying"),
+            strat_dict.get("expiry"),
+            strat_dict.get("net_debit", 0.0),
+            strat_dict.get("max_profit", 0.0),
+            strat_dict.get("max_loss", 0.0),
+            json.dumps(strat_dict.get("breakeven", [])),
+            strat_dict.get("status", "OPEN"),
+            strat_dict.get("entry_underlying_price", 0.0),
+            strat_dict.get("current_underlying_price", 0.0),
+            strat_dict.get("current_strategy_value", 0.0),
+            strat_dict.get("unrealized_pnl", 0.0),
+            strat_dict.get("realized_pnl", 0.0),
+            json.dumps(strat_dict.get("legs", [])),
+            strat_dict.get("snapshot_id", ""),
+            strat_dict.get("strategy_version", "OPT-1.0"),
+            strat_dict.get("entry_time", now_str),
+            now_str,
+        ))
+        conn.commit()
+
+
+def get_agent_strategies(agent_id: Optional[str] = None, status: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Retrieve multi-leg options strategies from ledger."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        query = "SELECT * FROM agent_strategies"
+        params = []
+        conds = []
+        if agent_id:
+            conds.append("agent_id = ?")
+            params.append(agent_id)
+        if status:
+            conds.append("status = ?")
+            params.append(status)
+        if conds:
+            query += " WHERE " + " AND ".join(conds)
+        query += " ORDER BY updated_at DESC"
+        cursor.execute(query, params)
+        rows = cursor.fetchall()
+        result = []
+        for r in rows:
+            d = dict(r)
+            d["breakeven"] = json.loads(d.get("breakeven_json", "[]"))
+            d["legs"] = json.loads(d.get("legs_json", "[]"))
+            result.append(d)
+        return result

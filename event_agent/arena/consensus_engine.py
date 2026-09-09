@@ -130,6 +130,32 @@ class ConsensusEngine:
                 "effective_to": meta.get("effective_to"),
             }
 
+
+        # Also include any custom/index prediction passed in predictions (e.g. NIFTY50)
+        for p_sym, p_data in pred_map.items():
+            if p_sym and p_sym not in stocks:
+                stocks[p_sym] = {
+                    "symbol": p_sym,
+                    "name": p_data.get("name", p_sym),
+                    "short_name": p_sym,
+                    "sector": p_data.get("sector", "Index"),
+                    "beta": 1.0,
+                    "base_price": float(p_data.get("base_price", 25000.0)),
+                    "predicted_1d_pct": float(p_data.get("predicted_1d_pct", 0.0)),
+                    "conviction": float(p_data.get("conviction", 60.0)),
+                    "volatility_5d": 0.14,
+                    "catalysts": p_data.get("occurred_events", p_data.get("catalysts", [])),
+                    "stock_sentiment": float(p_data.get("stock_sentiment", 0.0)),
+                    "action": p_data.get("action", "BUY"),
+                    "direction": p_data.get("direction", "BULLISH"),
+                    "target_price": float(p_data.get("target_price", 0.0)),
+                    "stop_loss": float(p_data.get("stop_loss", 0.0)),
+                    "baselines": {},
+                    "key_drivers": [],
+                    "effective_from": None,
+                    "effective_to": None,
+                }
+
         # Deterministic snapshot hash
         payload_data = [
             market_date,
