@@ -16,6 +16,14 @@ Instruments tracked:
 
 import hashlib
 import logging
+from enum import Enum
+
+class DataQuality(str, Enum):
+    FRESH = "FRESH"
+    STALE = "STALE"
+    DEGRADED = "DEGRADED"
+    INVALID = "INVALID"
+
 from abc import ABC, abstractmethod
 from datetime import date, datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional
@@ -82,6 +90,72 @@ class MarketDataProvider(ABC):
     def get_provider_info(self) -> Dict[str, str]:
         """Return provider name and version for execution snapshots."""
         ...
+
+    def _format_quote(self, symbol: str, price: float, market_time: datetime) -> Dict[str, Any]:
+        now = datetime.now(timezone.utc)
+        if market_time.tzinfo is None:
+            market_time = market_time.replace(tzinfo=timezone.utc)
+        freshness_seconds = max(0.0, (now - market_time).total_seconds())
+
+        if freshness_seconds <= 60.0:
+            quality = DataQuality.FRESH.value
+        elif freshness_seconds <= 300.0:
+            quality = DataQuality.STALE.value
+        elif freshness_seconds <= 900.0:
+            quality = DataQuality.DEGRADED.value
+        else:
+            quality = DataQuality.INVALID.value
+
+        source_name = self.get_provider_info().get("name", "unknown")
+        return {
+            "symbol": symbol,
+            "exchange": "NSE",
+            "price": price,
+            "bid": price,
+            "ask": price,
+            "volume": 0.0,
+            "market_timestamp": market_time.isoformat(),
+            "provider": source_name,
+            "source": source_name,
+            "ingestion_timestamp": now.isoformat(),
+            "freshness_seconds": freshness_seconds,
+            "quality": quality,
+        }
+
+    def get_quote(self, symbol: str) -> Dict[str, Any]:
+        """Fetch quote and return canonical envelope."""
+        price = self.get_current_price(symbol)
+        now_iso = datetime.now(timezone.utc).isoformat()
+        return {
+            "symbol": symbol,
+            "exchange": "NSE",
+            "price": price,
+            "bid": price,
+            "ask": price,
+            "volume": 0.0,
+            "market_timestamp": now_iso,
+            "provider": self.get_provider_info().get("name", "unknown"),
+            "ingestion_timestamp": now_iso,
+            "freshness_seconds": 0.0,
+            "quality": "FRESH" if price and price > 0 else "INVALID",
+        }
+
+    def get_index_quote(self, index_symbol: str = "^NSEI") -> Dict[str, Any]:
+        return self.get_quote(index_symbol)
+
+    def get_option_chain(self, symbol: str, expiry: Optional[str] = None) -> Optional[Dict[str, Any]]:
+        return None
+
+    def get_market_status(self) -> Dict[str, Any]:
+        return {
+            "market": "NSE",
+            "status": "OPEN",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "provider": self.get_provider_info().get("name", "unknown"),
+        }
+
+    def get_timestamp(self) -> datetime:
+        return datetime.now(timezone.utc)
 
     def create_execution_snapshot(
         self,
@@ -196,6 +270,101 @@ class YFinanceProvider(MarketDataProvider):
         except Exception as exc:
             logger.error("yfinance get_current_price(%s) failed: %s", symbol, exc)
             return None
+
+
+    def _format_quote(self, symbol: str, price: float, market_time: datetime) -> Dict[str, Any]:
+        now = datetime.now(timezone.utc)
+        if market_time.tzinfo is None:
+            market_time = market_time.replace(tzinfo=timezone.utc)
+        freshness_seconds = max(0.0, (now - market_time).total_seconds())
+
+        if freshness_seconds <= 60.0:
+            quality = DataQuality.FRESH.value
+        elif freshness_seconds <= 300.0:
+            quality = DataQuality.STALE.value
+        elif freshness_seconds <= 900.0:
+            quality = DataQuality.DEGRADED.value
+        else:
+            quality = DataQuality.INVALID.value
+
+        source_name = self.get_provider_info().get("name", "unknown")
+        return {
+            "symbol": symbol,
+            "exchange": "NSE",
+            "price": price,
+            "bid": price,
+            "ask": price,
+            "volume": 0.0,
+            "market_timestamp": market_time.isoformat(),
+            "provider": source_name,
+            "source": source_name,
+            "ingestion_timestamp": now.isoformat(),
+            "freshness_seconds": freshness_seconds,
+            "quality": quality,
+        }
+
+    def get_quote(self, symbol: str) -> Dict[str, Any]:
+        now = datetime.now(timezone.utc)
+        now_iso = now.isoformat()
+        if not self._available:
+            return {
+                "symbol": symbol,
+                "exchange": "NSE",
+                "price": None,
+                "market_timestamp": now_iso,
+                "provider": "yfinance",
+                "source": "yfinance",
+                "ingestion_timestamp": now_iso,
+                "freshness_seconds": 999.0,
+                "quality": "INVALID",
+            }
+        try:
+            ticker = self._yf.Ticker(symbol)
+            hist = ticker.history(period="1d")
+            if hist.empty:
+                return {
+                    "symbol": symbol,
+                    "exchange": "NSE",
+                    "price": None,
+                    "market_timestamp": now_iso,
+                    "provider": "yfinance",
+                "source": "yfinance",
+                    "ingestion_timestamp": now_iso,
+                    "freshness_seconds": 999.0,
+                    "quality": "INVALID",
+                }
+            last_row = hist.iloc[-1]
+            price = round(float(last_row["Close"]), 2)
+            bid = round(float(last_row.get("Low", price)), 2)
+            ask = round(float(last_row.get("High", price)), 2)
+            volume = float(last_row.get("Volume", 0.0))
+            return {
+                "symbol": symbol,
+                "exchange": "NSE",
+                "price": price,
+                "bid": bid,
+                "ask": ask,
+                "volume": volume,
+                "market_timestamp": str(hist.index[-1]),
+                "provider": "yfinance",
+                "source": "yfinance",
+                "ingestion_timestamp": now_iso,
+                "freshness_seconds": 5.0,
+                "quality": "FRESH" if price > 0 else "INVALID",
+            }
+        except Exception as exc:
+            logger.error(f"yfinance get_quote({symbol}) failed: {exc}")
+            return {
+                "symbol": symbol,
+                "exchange": "NSE",
+                "price": None,
+                "market_timestamp": now_iso,
+                "provider": "yfinance",
+                "source": "yfinance",
+                "ingestion_timestamp": now_iso,
+                "freshness_seconds": 999.0,
+                "quality": "INVALID",
+            }
 
     def get_multiple_prices(
         self,

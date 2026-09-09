@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2026-09-09T10:26:06.452598+00:00",
+    "generated_at": "2026-09-09T12:28:28.249501+00:00",
     "system_name": "NEXUS AI \u2014 ENTERPRISE MULTI-ASSET INVESTMENT INTELLIGENCE",
     "subtitle": "Equities \u2022 Derivatives (Paper Options & Futures) \u2022 \u20b91 Crore AI Arena \u2022 Real-time Risk Gate",
     "version_record": {
@@ -22,16 +22,16 @@
   "arena": {
     "summary": {
       "total_virtual_capital": 10000000.0,
-      "total_arena_value": 9999054.42,
-      "total_arena_cash": 9205594.42,
-      "total_arena_invested": 793460.0,
-      "total_arena_pnl": -945.58,
+      "total_arena_value": 9998924.28,
+      "total_arena_cash": 9205464.28,
+      "total_arena_invested": 793590.0,
+      "total_arena_pnl": -1075.72,
       "total_arena_return_pct": -0.01,
       "total_active_positions": 2,
       "top_agent": "Agent Macro",
       "active_agents_count": 5,
-      "market_phase": "POST_MARKET_AUDIT",
-      "market_phase_desc": "AUDIT_IN_PROGRESS: Market session ended. Post-market reconciliation active.",
+      "market_phase": "DAY_COMPLETE",
+      "market_phase_desc": "SESSION_CLOSED: Daily cycle frozen. Next forecast opens at 20:30 IST.",
       "is_trading_allowed": false,
       "cutoff_time": "15:30 IST"
     },
@@ -79,9 +79,21 @@
             "icon": "\ud83d\udcb0",
             "title": "Capital Protector",
             "desc": "Highest unencumbered cash balance and lowest loss profile"
+          },
+          {
+            "code": "BEST_OPTIONS_TRADER",
+            "icon": "\u26a1",
+            "title": "Best Options Trader",
+            "desc": "Superior multi-leg options strategy execution and profitability"
           }
         ],
-        "rank": 1
+        "rank": 1,
+        "honors": [
+          "BEST_RETURN",
+          "BEST_RISK_ADJUSTED",
+          "BEST_CAPITAL_PRESERVATION",
+          "BEST_OPTIONS_TRADER"
+        ]
       },
       {
         "agent_id": "DEFENSIVE",
@@ -109,7 +121,8 @@
           "all": []
         },
         "trophies": [],
-        "rank": 2
+        "rank": 2,
+        "honors": []
       },
       {
         "agent_id": "CONTRARIAN",
@@ -137,7 +150,8 @@
           "all": []
         },
         "trophies": [],
-        "rank": 3
+        "rank": 3,
+        "honors": []
       },
       {
         "agent_id": "ALPHA",
@@ -146,16 +160,16 @@
         "personality_quote": "I trade what changed.",
         "strategy_version": "ALPHA-1.0",
         "starting_capital": 2000000.0,
-        "portfolio_value": 1999527.21,
-        "cash": 1602797.21,
-        "invested": 396730.0,
-        "total_return_pct": -0.02,
-        "day_return_pct": 0.0,
+        "portfolio_value": 1999462.14,
+        "cash": 1602732.14,
+        "invested": 396795.0,
+        "total_return_pct": -0.03,
+        "day_return_pct": -0.0,
         "realized_pnl": 0.0,
-        "unrealized_pnl": 0.0,
+        "unrealized_pnl": -65.0,
         "win_rate": 0.0,
         "profit_factor": 1.0,
-        "max_drawdown": 0.02,
+        "max_drawdown": 0.03,
         "sharpe_ratio": 0.0,
         "positions_count": 1,
         "holdings": {
@@ -177,19 +191,19 @@
               },
               "direction": "BUY",
               "quantity": 100,
-              "entry_price": 3967.3,
+              "entry_price": 3967.95,
               "current_price": 3967.3,
               "stop_loss": 3943.73,
               "target": 4006.58,
-              "invested_capital": 396730.0,
-              "margin_or_premium": 396730.0,
-              "unrealized_pnl": 0.0,
-              "pnl_pct": 0.0,
+              "invested_capital": 396795.0,
+              "margin_or_premium": 396795.0,
+              "unrealized_pnl": -65.0,
+              "pnl_pct": -0.02,
               "hedge_decision": "NO",
               "hedge_instrument": null,
               "days_held": 0,
               "days_to_expiry": 30,
-              "entry_time": "2026-09-09T10:26:06.417686+00:00",
+              "entry_time": "2026-09-09T12:28:28.210577+00:00",
               "trade_id": "TRD-2026-09-09-ALPHA-LT-EQUITY-1-e83c0d40",
               "status": "OPEN"
             }
@@ -214,26 +228,27 @@
               },
               "direction": "BUY",
               "quantity": 100,
-              "entry_price": 3967.3,
+              "entry_price": 3967.95,
               "current_price": 3967.3,
               "stop_loss": 3943.73,
               "target": 4006.58,
-              "invested_capital": 396730.0,
-              "margin_or_premium": 396730.0,
-              "unrealized_pnl": 0.0,
-              "pnl_pct": 0.0,
+              "invested_capital": 396795.0,
+              "margin_or_premium": 396795.0,
+              "unrealized_pnl": -65.0,
+              "pnl_pct": -0.02,
               "hedge_decision": "NO",
               "hedge_instrument": null,
               "days_held": 0,
               "days_to_expiry": 30,
-              "entry_time": "2026-09-09T10:26:06.417686+00:00",
+              "entry_time": "2026-09-09T12:28:28.210577+00:00",
               "trade_id": "TRD-2026-09-09-ALPHA-LT-EQUITY-1-e83c0d40",
               "status": "OPEN"
             }
           ]
         },
         "trophies": [],
-        "rank": 4
+        "rank": 4,
+        "honors": []
       },
       {
         "agent_id": "MOMENTUM",
@@ -242,16 +257,16 @@
         "personality_quote": "I follow strength.",
         "strategy_version": "MOMENTUM-1.0",
         "starting_capital": 2000000.0,
-        "portfolio_value": 1999527.21,
-        "cash": 1602797.21,
-        "invested": 396730.0,
-        "total_return_pct": -0.02,
-        "day_return_pct": 0.0,
+        "portfolio_value": 1999462.14,
+        "cash": 1602732.14,
+        "invested": 396795.0,
+        "total_return_pct": -0.03,
+        "day_return_pct": -0.0,
         "realized_pnl": 0.0,
-        "unrealized_pnl": 0.0,
+        "unrealized_pnl": -65.0,
         "win_rate": 0.0,
         "profit_factor": 1.0,
-        "max_drawdown": 0.02,
+        "max_drawdown": 0.03,
         "sharpe_ratio": 0.0,
         "positions_count": 1,
         "holdings": {
@@ -273,19 +288,19 @@
               },
               "direction": "BUY",
               "quantity": 100,
-              "entry_price": 3967.3,
+              "entry_price": 3967.95,
               "current_price": 3967.3,
               "stop_loss": 3947.66,
               "target": 4018.36,
-              "invested_capital": 396730.0,
-              "margin_or_premium": 396730.0,
-              "unrealized_pnl": 0.0,
-              "pnl_pct": 0.0,
+              "invested_capital": 396795.0,
+              "margin_or_premium": 396795.0,
+              "unrealized_pnl": -65.0,
+              "pnl_pct": -0.02,
               "hedge_decision": "NO",
               "hedge_instrument": null,
               "days_held": 0,
               "days_to_expiry": 30,
-              "entry_time": "2026-09-09T10:26:06.417695+00:00",
+              "entry_time": "2026-09-09T12:28:28.210595+00:00",
               "trade_id": "TRD-2026-09-09-MOMENTUM-LT-EQUITY-1-e83c0d40",
               "status": "OPEN"
             }
@@ -310,26 +325,27 @@
               },
               "direction": "BUY",
               "quantity": 100,
-              "entry_price": 3967.3,
+              "entry_price": 3967.95,
               "current_price": 3967.3,
               "stop_loss": 3947.66,
               "target": 4018.36,
-              "invested_capital": 396730.0,
-              "margin_or_premium": 396730.0,
-              "unrealized_pnl": 0.0,
-              "pnl_pct": 0.0,
+              "invested_capital": 396795.0,
+              "margin_or_premium": 396795.0,
+              "unrealized_pnl": -65.0,
+              "pnl_pct": -0.02,
               "hedge_decision": "NO",
               "hedge_instrument": null,
               "days_held": 0,
               "days_to_expiry": 30,
-              "entry_time": "2026-09-09T10:26:06.417695+00:00",
+              "entry_time": "2026-09-09T12:28:28.210595+00:00",
               "trade_id": "TRD-2026-09-09-MOMENTUM-LT-EQUITY-1-e83c0d40",
               "status": "OPEN"
             }
           ]
         },
         "trophies": [],
-        "rank": 5
+        "rank": 5,
+        "honors": []
       }
     ],
     "portfolios": {
@@ -337,16 +353,16 @@
         "agent_id": "ALPHA",
         "strategy_version": "ALPHA-1.0",
         "starting_capital": 2000000.0,
-        "current_cash": 1602797.21,
-        "invested_capital": 396730.0,
-        "portfolio_value": 1999527.21,
+        "current_cash": 1602732.14,
+        "invested_capital": 396795.0,
+        "portfolio_value": 1999462.14,
         "realized_pnl": 0.0,
-        "unrealized_pnl": 0.0,
-        "total_pnl": 0.0,
-        "return_pct": -0.02,
+        "unrealized_pnl": -65.0,
+        "total_pnl": -65.0,
+        "return_pct": -0.03,
         "win_rate_pct": 0.0,
         "profit_factor": 1.0,
-        "max_drawdown_pct": 0.02,
+        "max_drawdown_pct": 0.03,
         "total_trades": 0,
         "open_positions_count": 1,
         "exposure_pct": 19.8
@@ -355,16 +371,16 @@
         "agent_id": "MOMENTUM",
         "strategy_version": "MOMENTUM-1.0",
         "starting_capital": 2000000.0,
-        "current_cash": 1602797.21,
-        "invested_capital": 396730.0,
-        "portfolio_value": 1999527.21,
+        "current_cash": 1602732.14,
+        "invested_capital": 396795.0,
+        "portfolio_value": 1999462.14,
         "realized_pnl": 0.0,
-        "unrealized_pnl": 0.0,
-        "total_pnl": 0.0,
-        "return_pct": -0.02,
+        "unrealized_pnl": -65.0,
+        "total_pnl": -65.0,
+        "return_pct": -0.03,
         "win_rate_pct": 0.0,
         "profit_factor": 1.0,
-        "max_drawdown_pct": 0.02,
+        "max_drawdown_pct": 0.03,
         "total_trades": 0,
         "open_positions_count": 1,
         "exposure_pct": 19.8
@@ -497,7 +513,7 @@
         "symbol": "LT.NS",
         "instrument": "EQUITY",
         "shares": 100,
-        "price": 3967.3,
+        "price": 3967.95,
         "status": "EXECUTED",
         "is_multi_leg": false
       },
@@ -506,24 +522,24 @@
         "symbol": "LT.NS",
         "instrument": "EQUITY",
         "shares": 100,
-        "price": 3967.3,
+        "price": 3967.95,
         "status": "EXECUTED",
         "is_multi_leg": false
       }
     ],
     "market_clock": {
-      "current_phase": "POST_MARKET_AUDIT",
+      "current_phase": "DAY_COMPLETE",
       "is_market_open": false,
       "can_accept_orders": false,
-      "status_reason": "AUDIT_IN_PROGRESS: Market session ended. Post-market reconciliation active.",
-      "ist_timestamp": "2026-09-09 15:56:06 IST",
-      "ist_time": "15:56 IST",
+      "status_reason": "SESSION_CLOSED: Daily cycle frozen. Next forecast opens at 20:30 IST.",
+      "ist_timestamp": "2026-09-09 17:58:28 IST",
+      "ist_time": "17:58 IST",
       "market_date": "2026-09-09",
       "order_cutoff_time": "15:30 IST",
       "forecast_run_time": "20:30 IST",
       "audit_run_time": "15:45 IST",
-      "phase": "POST_MARKET_AUDIT",
-      "phase_desc": "AUDIT_IN_PROGRESS: Market session ended. Post-market reconciliation active.",
+      "phase": "DAY_COMPLETE",
+      "phase_desc": "SESSION_CLOSED: Daily cycle frozen. Next forecast opens at 20:30 IST.",
       "is_trading_allowed": false
     }
   },
@@ -2448,7 +2464,7 @@
     ],
     "implied_volatility_pct": 13.8,
     "price_source": "MODELLED_BLACK_SCHOLES",
-    "as_of": "2026-09-09T10:26:06.417980+00:00"
+    "as_of": "2026-09-09T12:28:28.210897+00:00"
   },
   "recommended_options_strategies": [
     {
@@ -2549,7 +2565,7 @@
         "strategy_version": "OPT-1.0",
         "pricing_model": "BLACK_SCHOLES_VIX",
         "pricing_version": "BS-1.0",
-        "entry_time": "2026-09-09T10:26:06.418003+00:00",
+        "entry_time": "2026-09-09T12:28:28.210918+00:00",
         "closed_time": null,
         "exit_reason": ""
       },
@@ -2743,7 +2759,7 @@
         "strategy_version": "OPT-1.0",
         "pricing_model": "BLACK_SCHOLES_VIX",
         "pricing_version": "BS-1.0",
-        "entry_time": "2026-09-09T10:26:06.418020+00:00",
+        "entry_time": "2026-09-09T12:28:28.210935+00:00",
         "closed_time": null,
         "exit_reason": ""
       },
@@ -2938,7 +2954,7 @@
         "strategy_version": "OPT-1.0",
         "pricing_model": "BLACK_SCHOLES_VIX",
         "pricing_version": "BS-1.0",
-        "entry_time": "2026-09-09T10:26:06.418036+00:00",
+        "entry_time": "2026-09-09T12:28:28.210951+00:00",
         "closed_time": null,
         "exit_reason": ""
       },
@@ -3099,7 +3115,7 @@
         "strategy_version": "OPT-1.0",
         "pricing_model": "BLACK_SCHOLES_VIX",
         "pricing_version": "BS-1.0",
-        "entry_time": "2026-09-09T10:26:06.418046+00:00",
+        "entry_time": "2026-09-09T12:28:28.210962+00:00",
         "closed_time": null,
         "exit_reason": ""
       },
@@ -3985,25 +4001,111 @@
     "audit": {
       "provenance_mode": "SHA-256 Cryptographic Snapshot Lock",
       "snapshot_id": "f25e2f5d46acb36121b28d177373aa537213d73b5ed46635b859c4a4b78b3676",
-      "market_timestamp": "2026-09-09T10:26:06.452598+00:00",
+      "market_timestamp": "2026-09-09T12:28:28.249501+00:00",
       "integrity_status": "VERIFIED"
     }
   },
+  "data_source_health": {
+    "sources": {
+      "YFINANCE": "HEALTHY",
+      "NSE": "HEALTHY",
+      "NEWS_RSS": "HEALTHY",
+      "EVENT_DATA": "DEGRADED",
+      "OPTION_CHAIN": "UNAVAILABLE"
+    },
+    "last_checked": "2026-09-09T12:28:28.249501+00:00"
+  },
+  "execution_telemetry": {
+    "data_quality": "GOOD",
+    "market_data_age": "8 sec",
+    "news_data_age": "3 min",
+    "sources_count": 3,
+    "conflicts_count": 0,
+    "mode": "PAPER_LIVE"
+  },
+  "orders": [
+    {
+      "order_id": "ORD-TRD-2026-09-09-ALPHA-LT-EQUITY-1-e83c0d40",
+      "portfolio_id": "ALPHA",
+      "agent_id": "ALPHA",
+      "symbol": "LT.NS",
+      "side": "BUY",
+      "quantity": 100,
+      "order_type": "MARKET",
+      "requested_price": 3967.3,
+      "limit_price": null,
+      "stop_price": null,
+      "submitted_at": "2026-09-09T12:28:28.210556+00:00",
+      "fill_price": 3967.95,
+      "fill_quantity": 100,
+      "slippage": 65.0,
+      "estimated_charges": 472.86,
+      "status": "FILLED",
+      "rejection_reason": "",
+      "strategy_id": null,
+      "trade_proposal_id": "TRD-2026-09-09-ALPHA-LT-EQUITY-1-e83c0d40",
+      "execution_mode": "PAPER_LIVE",
+      "fills": [
+        {
+          "fill_id": "FILL-ORD-TRD-2026-09-09-ALPHA-LT-EQUITY-1-e83c0d40-1228282105",
+          "order_id": "ORD-TRD-2026-09-09-ALPHA-LT-EQUITY-1-e83c0d40",
+          "fill_price": 3967.95,
+          "fill_quantity": 100,
+          "slippage": 65.0,
+          "charges": 0.0,
+          "timestamp": "2026-09-09T12:28:28.210567+00:00"
+        }
+      ]
+    },
+    {
+      "order_id": "ORD-TRD-2026-09-09-MOMENTUM-LT-EQUITY-1-e83c0d40",
+      "portfolio_id": "MOMENTUM",
+      "agent_id": "MOMENTUM",
+      "symbol": "LT.NS",
+      "side": "BUY",
+      "quantity": 100,
+      "order_type": "MARKET",
+      "requested_price": 3967.3,
+      "limit_price": null,
+      "stop_price": null,
+      "submitted_at": "2026-09-09T12:28:28.210584+00:00",
+      "fill_price": 3967.95,
+      "fill_quantity": 100,
+      "slippage": 65.0,
+      "estimated_charges": 472.86,
+      "status": "FILLED",
+      "rejection_reason": "",
+      "strategy_id": null,
+      "trade_proposal_id": "TRD-2026-09-09-MOMENTUM-LT-EQUITY-1-e83c0d40",
+      "execution_mode": "PAPER_LIVE",
+      "fills": [
+        {
+          "fill_id": "FILL-ORD-TRD-2026-09-09-MOMENTUM-LT-EQUITY-1-e83c0d40-1228282105",
+          "order_id": "ORD-TRD-2026-09-09-MOMENTUM-LT-EQUITY-1-e83c0d40",
+          "fill_price": 3967.95,
+          "fill_quantity": 100,
+          "slippage": 65.0,
+          "charges": 0.0,
+          "timestamp": "2026-09-09T12:28:28.210590+00:00"
+        }
+      ]
+    }
+  ],
   "system_status": {
     "engine_version": "V3.2 AI Trading Arena",
     "market_clock": {
-      "current_phase": "POST_MARKET_AUDIT",
+      "current_phase": "DAY_COMPLETE",
       "is_market_open": false,
       "can_accept_orders": false,
-      "status_reason": "AUDIT_IN_PROGRESS: Market session ended. Post-market reconciliation active.",
-      "ist_timestamp": "2026-09-09 15:56:06 IST",
-      "ist_time": "15:56 IST",
+      "status_reason": "SESSION_CLOSED: Daily cycle frozen. Next forecast opens at 20:30 IST.",
+      "ist_timestamp": "2026-09-09 17:58:28 IST",
+      "ist_time": "17:58 IST",
       "market_date": "2026-09-09",
       "order_cutoff_time": "15:30 IST",
       "forecast_run_time": "20:30 IST",
       "audit_run_time": "15:45 IST",
-      "phase": "POST_MARKET_AUDIT",
-      "phase_desc": "AUDIT_IN_PROGRESS: Market session ended. Post-market reconciliation active.",
+      "phase": "DAY_COMPLETE",
+      "phase_desc": "SESSION_CLOSED: Daily cycle frozen. Next forecast opens at 20:30 IST.",
       "is_trading_allowed": false
     },
     "total_virtual_capital": "\u20b91,00,00,000",
@@ -6534,7 +6636,7 @@
       ]
     }
   },
-  "generated_at": "2026-09-09T15:56:09.248486",
+  "generated_at": "2026-09-09T17:58:30.743844",
   "next_trading_day": "2026-09-10",
   "scorecard": {
     "total_evaluations": 670,
@@ -15102,10 +15204,10 @@
       "CAPTURED_SUCCESS": 12
     },
     "refactoring_priorities": [
-      "Increase macro/Nifty broader index weight relative to single-stock headline score.",
+      "Tighten HOLD threshold bands to avoid false trigger entries on low conviction setups.",
       "Weights and sensitivity for this sector/event type are well-calibrated. Maintain current parameter matrix.",
-      "Incorporate intra-day live news polling and broaden sector peer contagion weights.",
-      "Tighten HOLD threshold bands to avoid false trigger entries on low conviction setups."
+      "Increase macro/Nifty broader index weight relative to single-stock headline score.",
+      "Incorporate intra-day live news polling and broaden sector peer contagion weights."
     ]
   },
   "job_logs": [

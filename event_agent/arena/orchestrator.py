@@ -360,6 +360,7 @@ class ArenaOrchestrator:
             "executed_trades": executed_trades_info,
             "option_chain": nifty_chain.to_dict(),
             "recommended_options_strategies": recommended_options_strategies,
+            "orders": [o.to_dict() for o in getattr(self.broker, "orders", {}).values()],
             "portfolios": {
                 aid: self.broker.get_agent_portfolio(aid).get_summary()
                 for aid in ["ALPHA", "MOMENTUM", "MACRO", "DEFENSIVE", "CONTRARIAN"]
@@ -527,3 +528,11 @@ class ArenaOrchestrator:
         # 3. Decisions
         for dec in cycle_result.get("decisions", []):
             save_agent_decision(dec)
+        # 4. Orders
+        try:
+            from ..storage.ledger import save_order
+            for order in getattr(self.broker, "orders", {}).values():
+                save_order(order.to_dict())
+        except Exception as exc:
+            logger.debug(f"Orders persistence: {exc}")
+

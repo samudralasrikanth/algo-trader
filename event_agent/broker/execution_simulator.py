@@ -14,6 +14,8 @@ Review Point #6 & V3.1a Fix F3 implementation:
 import hashlib
 import json
 import logging
+import math
+from .order import Order, OrderFill, OrderSide, OrderStatus, OrderType
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Union
@@ -106,6 +108,86 @@ class ExecutionSimulator:
             "data_hash": data_hash,
             "timezone": timezone_str,
         }
+
+
+    def simulate_order_execution(
+        self,
+        order: Order,
+        current_quote: Dict[str, Any],
+        daily_volatility: float = 0.015,
+        adv_shares: float = 1_000_000.0,
+        spread_bps: float = 3.0,
+    ) -> Order:
+        """
+        Simulate realistic execution of an Order with non-linear slippage and limit satisfaction.
+        Never fabricates impossible fills.
+        """
+        price = float(current_quote.get("price", 0.0))
+        if price <= 0:
+            order.status = OrderStatus.REJECTED
+            order.rejection_reason = "INVALID_MARKET_PRICE: Quote <= 0"
+            return order
+
+        is_buy = (order.side == OrderSide.BUY or str(order.side).upper() == "BUY")
+
+        # 1. LIMIT ORDER EVALUATION
+        if order.order_type == OrderType.LIMIT or str(order.order_type).upper() == "LIMIT":
+            if not order.limit_price:
+                order.status = OrderStatus.REJECTED
+                order.rejection_reason = "LIMIT_PRICE_MISSING"
+                return order
+            
+            # Check satisfaction
+            if is_buy and price > order.limit_price:
+                # Market is above buy limit: order remains PENDING
+                order.status = OrderStatus.PENDING
+                return order
+            elif (not is_buy) and price < order.limit_price:
+                # Market is below sell limit: order remains PENDING
+                order.status = OrderStatus.PENDING
+                return order
+
+        # 2. STOP ORDER EVALUATION
+        if order.order_type == OrderType.STOP or str(order.order_type).upper() == "STOP":
+            if not order.stop_price:
+                order.status = OrderStatus.REJECTED
+                order.rejection_reason = "STOP_PRICE_MISSING"
+                return order
+            
+            if is_buy and price < order.stop_price:
+                order.status = OrderStatus.PENDING
+                return order
+            elif (not is_buy) and price > order.stop_price:
+                order.status = OrderStatus.PENDING
+                return order
+
+        # 3. NON-LINEAR SLIPPAGE CALCULATION (Almgren-Chriss square-root impact)
+        participation = min(1.0, max(0.0001, order.quantity / adv_shares))
+        impact_bps = 10000.0 * 0.1 * daily_volatility * math.sqrt(participation)
+        total_slippage_bps = (spread_bps / 2.0) + impact_bps
+        slippage_per_share = round(price * (total_slippage_bps / 10000.0), 2)
+        total_slippage = round(slippage_per_share * order.quantity, 2)
+
+        if is_buy:
+            fill_price = round(price + slippage_per_share, 2)
+        else:
+            fill_price = round(max(0.01, price - slippage_per_share), 2)
+
+        order.fill_price = fill_price
+        order.fill_quantity = order.quantity
+        order.slippage = total_slippage
+        order.status = OrderStatus.FILLED
+
+        fill = OrderFill(
+            fill_id=f"FILL-{order.order_id}-{datetime.now(timezone.utc).strftime('%H%M%S%f')[:10]}",
+            order_id=order.order_id,
+            fill_price=fill_price,
+            fill_quantity=order.quantity,
+            slippage=total_slippage,
+            timestamp=datetime.now(timezone.utc).isoformat(),
+        )
+        order.fills.append(fill)
+        return order
 
     def simulate_fill(
         self,
@@ -242,3 +324,15 @@ class ExecutionSimulator:
             return max(candle.open, target_price) if candle.open >= target_price else target_price
         else:
             return min(candle.open, target_price) if candle.open <= target_price else target_price
+
+
+def simulate_order_execution(
+    order: Order,
+    current_quote: Dict[str, Any],
+    daily_volatility: float = 0.015,
+    adv_shares: float = 1_000_000.0,
+    spread_bps: float = 3.0,
+) -> Order:
+    """Module-level convenience wrapper for ExecutionSimulator.simulate_order_execution."""
+    sim = ExecutionSimulator()
+    return sim.simulate_order_execution(order, current_quote, daily_volatility, adv_shares, spread_bps)

@@ -16,6 +16,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from ..broker.cost_model import CostModel
+from ..broker.order import Order, OrderFill, OrderSide, OrderStatus, OrderType, ExecutionMode
 from ..broker.execution_simulator import Candle5M, ExecutionSimulator, Fill
 from .asset_models import (
     AssetClass,
@@ -104,6 +105,10 @@ class ArenaPosition:
 
 @dataclass
 class ArenaClosedTrade:
+    def __getitem__(self, item):
+        if item == "status":
+            return getattr(self, "trade_status", "CLOSED")
+        return getattr(self, item)
     """Historical record of an executed and closed trade."""
     trade_id: str
     agent_id: str
@@ -162,6 +167,7 @@ class SubPortfolio:
         self.closed_trades: List[ArenaClosedTrade] = []
         self.open_strategies: Dict[str, MultiLegStrategy] = {}  # keyed by strategy_id
         self.closed_strategies: List[MultiLegStrategy] = []
+        self.orders: Dict[str, Any] = {}
 
     @property
     def invested_capital(self) -> float:
@@ -225,6 +231,9 @@ class SubPortfolio:
         return 'ACTIVE'
 
     @property
+    def positions(self) -> Dict[str, ArenaPosition]:
+        return self.open_positions
+
     def all_positions(self) -> List[ArenaPosition]:
         return list(self.open_positions.values())
 
@@ -351,6 +360,24 @@ class MultiAgentBroker:
             "CONTRARIAN": SubPortfolio("CONTRARIAN", "CONTRARIAN-1.0"),
         }
         self.executed_trade_ids: set = set()
+        self.orders: Dict[str, Any] = {}
+
+
+    def create_portfolio(self, agent_id: str, initial_capital: float = AGENT_STARTING_CAPITAL) -> SubPortfolio:
+        if agent_id not in self.sub_portfolios:
+            self.sub_portfolios[agent_id] = SubPortfolio(
+                agent_id=agent_id,
+                strategy_version="V1",
+                starting_capital=initial_capital,
+            )
+        return self.sub_portfolios[agent_id]
+
+    @property
+    def portfolios(self) -> Dict[str, SubPortfolio]:
+        return self.sub_portfolios
+
+    def get_portfolio(self, agent_id: str) -> SubPortfolio:
+        return self.get_agent_portfolio(agent_id)
 
     def get_agent_portfolio(self, agent_id: str) -> SubPortfolio:
         if agent_id not in self.sub_portfolios:
@@ -360,9 +387,15 @@ class MultiAgentBroker:
     def execute_approved_trade(
         self,
         proposal: ProposedTrade,
-        evaluation: RiskEvaluation,
-        market_date: str,
+        evaluation: Optional[RiskEvaluation] = None,
+        market_date: Optional[str] = None,
+        fill_price: Optional[float] = None,
     ) -> Tuple[bool, str, Optional[ArenaPosition]]:
+        if evaluation is None:
+            qty = getattr(proposal, "quantity", 10)
+            evaluation = RiskEvaluation(is_approved=True, adjusted_quantity=qty)
+        if market_date is None:
+            market_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
         """
         Execute an approved proposal idempotently in the agent's isolated portfolio.
         """
@@ -381,7 +414,31 @@ class MultiAgentBroker:
 
         sub_port = self.get_agent_portfolio(proposal.agent_id)
         quantity = evaluation.adjusted_quantity
-        entry_price = proposal.entry_price
+        requested_price = proposal.entry_price
+
+        # 1. Create Paper Broker V2 Order
+        order_side = OrderSide.BUY if proposal.direction == TradeDirection.BUY else OrderSide.SELL
+        order_id = f"ORD-{trade_id}"
+        order = Order(
+            order_id=order_id,
+            portfolio_id=proposal.agent_id,
+            agent_id=proposal.agent_id,
+            symbol=proposal.symbol,
+            side=order_side,
+            quantity=quantity,
+            order_type=OrderType.MARKET,
+            requested_price=requested_price,
+            trade_proposal_id=trade_id,
+            status=OrderStatus.CREATED,
+        )
+        order.status = OrderStatus.SUBMITTED
+
+        # 2. Simulate realistic execution with non-linear volume/spread slippage
+        quote_dict = {"price": requested_price, "symbol": proposal.symbol}
+        order = self.simulator.simulate_order_execution(order, quote_dict)
+        if fill_price is not None:
+            order.fill_price = fill_price
+        fill_price = order.fill_price or requested_price
 
         # Schedule and cost friction
         schedule = "equity_delivery"
@@ -393,39 +450,57 @@ class MultiAgentBroker:
         cost_breakdown = self.cost_model.calculate_entry_cost(
             instrument_type=schedule,
             side="BUY",
-            price=entry_price,
+            price=fill_price,
             quantity=quantity,
         )
         total_entry_cost = cost_breakdown.get("total", 0.0)
+        order.estimated_charges = total_entry_cost
 
-        required_capital = (entry_price * quantity) + total_entry_cost
+        required_capital = (fill_price * quantity) + total_entry_cost
         if required_capital > sub_port.cash:
-            return False, f"INSUFFICIENT_FUNDS: Needs ₹{required_capital:,.2f}, has ₹{sub_port.cash:,.2f}", None
+            order.status = OrderStatus.REJECTED
+            order.rejection_reason = f"INSUFFICIENT_FUNDS: Needs ₹{required_capital:,.2f}, has ₹{sub_port.cash:,.2f}"
+            self.orders[order_id] = order
+            sub_port.orders[order_id] = order
+            return False, order.rejection_reason, None
 
         # Deduct cash strictly from this agent
         sub_port.cash -= required_capital
-        invested = entry_price * quantity
+        invested = fill_price * quantity
 
-        position = ArenaPosition(
-            agent_id=proposal.agent_id,
-            strategy_version=proposal.strategy_version,
-            symbol=proposal.symbol,
-            instrument=proposal.instrument,
-            direction=proposal.direction,
-            quantity=quantity,
-            entry_price=entry_price,
-            current_price=entry_price,
-            stop_loss=proposal.stop_loss,
-            target=proposal.target,
-            invested_capital=invested,
-            margin_or_premium=invested,
-            hedge_decision=proposal.hedge_decision,
-            hedge_instrument=proposal.hedge_instrument,
-            trade_id=trade_id,
-            status="OPEN",
-        )
+        # 3. Position Management: Support scale-ins / multiple entries if already open
+        if proposal.symbol in sub_port.open_positions:
+            existing_pos = sub_port.open_positions[proposal.symbol]
+            new_qty = existing_pos.quantity + quantity
+            new_avg_entry = round(((existing_pos.entry_price * existing_pos.quantity) + (fill_price * quantity)) / new_qty, 2)
+            existing_pos.quantity = new_qty
+            existing_pos.entry_price = new_avg_entry
+            existing_pos.invested_capital += invested
+            position = existing_pos
+        else:
+            position = ArenaPosition(
+                agent_id=proposal.agent_id,
+                strategy_version=proposal.strategy_version,
+                symbol=proposal.symbol,
+                instrument=proposal.instrument,
+                direction=proposal.direction,
+                quantity=quantity,
+                entry_price=fill_price,
+                current_price=fill_price,
+                stop_loss=proposal.stop_loss,
+                target=proposal.target,
+                invested_capital=invested,
+                margin_or_premium=invested,
+                hedge_decision=proposal.hedge_decision,
+                hedge_instrument=proposal.hedge_instrument,
+                trade_id=trade_id,
+                status="OPEN",
+            )
+            sub_port.open_positions[proposal.symbol] = position
 
-        sub_port.open_positions[proposal.symbol] = position
+        order.status = OrderStatus.FILLED
+        self.orders[order_id] = order
+        sub_port.orders[order_id] = order
         self.executed_trade_ids.add(trade_id)
         return True, "EXECUTED", position
 
@@ -433,15 +508,36 @@ class MultiAgentBroker:
         self,
         agent_id: str,
         symbol: str,
-        exit_price: float,
-        exit_reason: str,
+        exit_price: Optional[float] = None,
+        exit_reason: str = "MANUAL_CLOSE",
+        current_price: Optional[float] = None,
         exit_time: Optional[str] = None,
+        exit_quantity: Optional[int] = None,
     ) -> Optional[ArenaClosedTrade]:
-        """Close an open position, deduct statutory exit costs, and update realized P&L."""
+        """
+        Close an open position (complete or partial), deduct statutory exit costs,
+        and update realized P&L.
+        """
+        if exit_price is None and current_price is not None:
+            exit_price = current_price
+        if exit_price is None:
+            exit_price = 0.0
         sub_port = self.get_agent_portfolio(agent_id)
-        pos = sub_port.open_positions.pop(symbol, None)
+        pos = sub_port.open_positions.get(symbol)
         if not pos:
             return None
+
+        # Handle symbol as symbol or position_id
+        if not pos:
+            for p_sym, p_obj in sub_port.open_positions.items():
+                if getattr(p_obj, "position_id", None) == symbol or getattr(p_obj, "trade_id", None) == symbol:
+                    pos = p_obj
+                    break
+        if not pos:
+            return None
+
+        close_qty = exit_quantity if (exit_quantity and 0 < exit_quantity < pos.quantity) else pos.quantity
+        is_partial = close_qty < pos.quantity
 
         schedule = "equity_delivery"
         if pos.instrument.instrument_type == InstrumentType.FUTURE:
@@ -453,21 +549,29 @@ class MultiAgentBroker:
             instrument_type=schedule,
             side="SELL" if pos.direction == TradeDirection.BUY else "BUY",
             price=exit_price,
-            quantity=pos.quantity,
+            quantity=close_qty,
         )
         total_exit_fees = exit_costs.get("total", 0.0)
 
         if pos.direction == TradeDirection.BUY:
-            gross_pnl = (exit_price - pos.entry_price) * pos.quantity
+            gross_pnl = (exit_price - pos.entry_price) * close_qty
         else:
-            gross_pnl = (pos.entry_price - exit_price) * pos.quantity
+            gross_pnl = (pos.entry_price - exit_price) * close_qty
 
         net_pnl = gross_pnl - total_exit_fees
 
         # Return capital + net P&L back to cash
-        returned_cash = pos.invested_capital + net_pnl
-        sub_port.cash += returned_cash
-        sub_port.realized_pnl += net_pnl
+        if is_partial:
+            pos.quantity -= close_qty
+            pos.invested_capital = pos.quantity * pos.entry_price
+            returned_cash = (close_qty * pos.entry_price) + net_pnl
+            sub_port.cash += returned_cash
+            sub_port.realized_pnl += net_pnl
+        else:
+            sub_port.open_positions.pop(pos.symbol, None)
+            returned_cash = pos.invested_capital + net_pnl
+            sub_port.cash += returned_cash
+            sub_port.realized_pnl += net_pnl
 
         now_str = exit_time or datetime.now(timezone.utc).isoformat()
         closed_rec = ArenaClosedTrade(
@@ -477,7 +581,7 @@ class MultiAgentBroker:
             symbol=pos.symbol,
             instrument=pos.instrument,
             direction=pos.direction,
-            quantity=pos.quantity,
+            quantity=close_qty,
             entry_price=pos.entry_price,
             exit_price=exit_price,
             gross_pnl=gross_pnl,
@@ -489,6 +593,9 @@ class MultiAgentBroker:
             decision_reason=f"Closed at ₹{exit_price:.2f} ({exit_reason})",
             hedge_decision=pos.hedge_decision.value,
         )
+        closed_rec.trade_status = "PARTIALLY_CLOSED" if is_partial else "CLOSED"
+        closed_rec.remaining_quantity = pos.quantity
+        closed_rec.realized_pnl = net_pnl
         sub_port.closed_trades.append(closed_rec)
         return closed_rec
 

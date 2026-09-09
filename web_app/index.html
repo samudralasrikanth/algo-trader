@@ -187,6 +187,24 @@
           </div>
         </section>
 
+
+        <!-- Data Source Health Dashboard (Dual-Source & Freshness Telemetry) -->
+        <section class="section-panel" style="background: linear-gradient(180deg, #F8FAFC 0%, #FFFFFF 100%);">
+          <div class="section-header" style="padding-bottom: 8px;">
+            <div class="section-title-group">
+              <h3>📡 Data Source Health & Feed Telemetry</h3>
+              <p>Dual-source market data reconciliation, news latency, and real-time feed integrity audit.</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="badge badge-green" id="dsh-overall-status">ALL SYSTEMS RECONCILED</span>
+              <span style="font-size: 11px; color: var(--text-muted);" id="dsh-last-check">Reconciliation Active</span>
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; padding: 12px 20px 18px 20px;" id="data-source-health-banner">
+            <!-- Injected via app.js -->
+          </div>
+        </section>
+
         <!-- Strongest AI Signals Quick Cards -->
         <section class="section-panel">
           <div class="section-header">
@@ -513,6 +531,45 @@
 
 
       <!-- ================================================================= -->
+
+        <!-- Execution Engine V2: Orders & Broker Routing State Machine -->
+        <section class="section-panel">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h3>⚡ Execution Simulator V2 — Orders & Broker Fills</h3>
+              <p>Order lifecycle state machine (CREATED → SUBMITTED → FILLED), non-linear market impact, and broker routing.</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <span class="badge badge-blue">Broker: INTERNAL PAPER</span>
+              <span class="badge badge-gray">Sandbox: UPSTOX READY</span>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table" id="arena-orders-table">
+              <thead>
+                <tr>
+                  <th>TIME</th>
+                  <th>ORDER ID</th>
+                  <th>AGENT</th>
+                  <th>SYMBOL</th>
+                  <th>SIDE</th>
+                  <th>TYPE</th>
+                  <th class="numeric">QTY</th>
+                  <th class="numeric">REF PRICE</th>
+                  <th class="numeric">EXEC PRICE</th>
+                  <th class="numeric">SLIPPAGE</th>
+                  <th>BROKER</th>
+                  <th>STATUS</th>
+                  <th>PROVENANCE</th>
+                </tr>
+              </thead>
+              <tbody id="arena-orders-tbody">
+                <!-- Injected via app.js -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
       <!-- VIEW: INTELLIGENCE (SIGNALS, NEWS, CAUSAL ANALYSIS)               -->
       <!-- ================================================================= -->
       <div id="view-intelligence" class="view-panel">
@@ -764,7 +821,65 @@
 
   </div>
 
-  <!-- Backward Compatibility Hidden Hooks -->
+
+    <!-- ================================================================= -->
+    <!-- TRADE PROVENANCE & EXECUTION TELEMETRY MODAL                     -->
+    <!-- ================================================================= -->
+    <div class="cmd-palette-backdrop" id="trade-modal-backdrop" onclick="closeTradeModal()">
+      <div class="cmd-palette-box" style="padding: 24px; max-width: 600px;" onclick="event.stopPropagation()">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="badge badge-blue" id="tm-symbol">TCS.NS</span>
+            <span style="font-size: 15px; font-weight: 700;" id="tm-title">Trade Execution Provenance Audit</span>
+          </div>
+          <button class="subnav-btn" onclick="closeTradeModal()">✕</button>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+          <div style="background: var(--bg-surface); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+            <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Data Quality Score</div>
+            <div style="font-size: 14px; font-weight: 700; color: var(--success); margin-top: 4px;" id="tm-quality">● GOOD</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Dual-feed reconciled</div>
+          </div>
+          <div style="background: var(--bg-surface); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+            <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Market Data Freshness</div>
+            <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-top: 4px;" id="tm-mkt-age">8 sec age</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">yfinance + NSE validated</div>
+          </div>
+          <div style="background: var(--bg-surface); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+            <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">News & Filing Freshness</div>
+            <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-top: 4px;" id="tm-news-age">3 min age</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Jaccard deduped RSS</div>
+          </div>
+          <div style="background: var(--bg-surface); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+            <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Reconciliation Status</div>
+            <div style="font-size: 14px; font-weight: 700; color: var(--primary); margin-top: 4px;" id="tm-sources">3 Sources • 0 Conflicts</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Discrepancy: ₹0.00</div>
+          </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px; border-top: 1px solid var(--border); padding-top: 14px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--text-muted);">Broker Engine:</span>
+            <strong id="tm-broker">Internal Paper Broker (Upstox Sandbox Ready)</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--text-muted);">Execution Model:</span>
+            <strong id="tm-model">Almgren-Chriss Non-Linear Slippage (√Participation)</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--text-muted);">Risk Engine Audit:</span>
+            <strong style="color: var(--success);" id="tm-risk">APPROVED (8/8 Quantitative Gates)</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: var(--text-muted);">Point-in-Time Cryptographic Hash:</span>
+            <code style="font-size: 10px; background: #EEF2F6; padding: 2px 6px; border-radius: 4px;" id="tm-hash">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</code>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Backward Compatibility Hidden Hooks -->
   <div style="display: none;">
     <span id="quant-current-nav"></span>
     <div id="baselines-list-container"></div>

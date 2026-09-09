@@ -24,7 +24,8 @@ def calibrate_confidence(
     raw_confidence: float,
     regime_state: Optional[str] = None,
     volatility_sigma: Optional[float] = None,
-) -> float:
+    historical_closed_trades: Optional[int] = None,
+) -> Any:
     """
     Calibrates raw conviction/confidence (scale 0 to 100).
     
@@ -65,6 +66,15 @@ def calibrate_confidence(
     # Absolute guardrails: minimum 30.0, maximum 88.0 in real-world paper trading
     calibrated = max(30.0, min(88.0, calibrated))
 
+    if historical_closed_trades is not None:
+        is_cal = (historical_closed_trades >= 30)
+        return {
+            "status": "CALIBRATED" if is_cal else "INSUFFICIENT DATA",
+            "is_calibrated": is_cal,
+            "calibrated_confidence": round(calibrated, 1) if is_cal else (raw_confidence / 100.0 if raw_confidence > 1.0 else raw_confidence),
+            "raw_confidence": raw_confidence,
+            "sample_size": historical_closed_trades,
+        }
     return round(calibrated, 1)
 
 
@@ -160,13 +170,18 @@ def compute_expected_calibration_error(
 
     brier = compute_brier_score(probs, outs)
 
+    status = "INSUFFICIENT DATA" if n < 30 else ("CALIBRATED" if total_ece < 0.10 else "MISCALIBRATED")
+    note = f"Sample size (n={n}) is below the 30-trade minimum for statistical validation." if n < 30 else "Sufficient sample size."
+
     return {
         "calibration_version": CALIBRATION_VERSION,
         "sample_size": n,
         "ece": round(total_ece, 4),
         "mce": round(max_ce, 4),
         "brier_score": brier,
-        "is_well_calibrated": total_ece < 0.10,
+        "is_well_calibrated": total_ece < 0.10 and n >= 30,
+        "calibration_status": status,
+        "calibration_note": note,
         "bins": bins_data,
     }
 
@@ -181,3 +196,14 @@ def is_confidence_miscalibration(
     Triggered when model had high conviction (>= threshold) but the trade lost money.
     """
     return (float(confidence) >= high_conviction_threshold) and (float(trade_pnl) < 0)
+
+
+def get_calibration_display(sample_size: int, ece: float) -> str:
+    """Format calibration status for honest UI display."""
+    if sample_size < 30:
+        return "INSUFFICIENT DATA"
+    if ece < 0.08:
+        return f"WELL CALIBRATED (ECE {ece*100:.1f}%)"
+    elif ece < 0.15:
+        return f"MODERATE (ECE {ece*100:.1f}%)"
+    return f"MISCALIBRATED (ECE {ece*100:.1f}%)"
