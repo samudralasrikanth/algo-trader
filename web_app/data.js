@@ -20530,7 +20530,7 @@ window.DATA = {
       "Baseline 6: NIFTY Direction": 54.2,
       "Baseline 7: Simple RSI-14": 52.1
     },
-    "generated_at": "2026-09-09T16:17:19.767904+00:00"
+    "generated_at": "2026-09-09T16:27:31.574688+00:00"
   },
   "certification_v36": {
     "is_certified": true,
@@ -20607,7 +20607,7 @@ window.DATA = {
       "is_converged": false,
       "status": "ACCEPTABLE"
     },
-    "timestamp": "2026-09-09T16:17:38.226155+00:00"
+    "timestamp": "2026-09-09T16:27:48.459775+00:00"
   },
   "job_runs_ledger": [
     {

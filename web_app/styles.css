@@ -52,7 +52,7 @@
   
   /* Dimensions & Spacing */
   --sidebar-width: 56px;
-  --header-height: 52px;
+  --header-height: 0px;
   --ribbon-height: 38px;
   --subnav-height: 40px;
   --radius-sm: 4px;
@@ -102,19 +102,9 @@ body {
   }
 }
 
-/* 1. Global Sticky Header */
+/* 1. Global Sticky Header (Deprecated in favor of Left Sidebar Terminal Rail) */
 .global-header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  height: var(--header-height);
-  background-color: var(--bg-surface);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
-  box-shadow: var(--shadow-sm);
+  display: none !important;
 }
 
 .header-left {
@@ -309,7 +299,7 @@ body {
 /* 2. Contextual Secondary Horizontal Navigation Bar */
 .secondary-navbar {
   position: sticky;
-  top: var(--header-height);
+  top: var(--ribbon-height);
   z-index: 90;
   height: var(--subnav-height);
   background-color: var(--bg-surface);
@@ -1974,6 +1964,8 @@ input:focus-visible {
 
 /* 1. Persistent Global Market Ribbon */
 .terminal-ribbon {
+  position: sticky;
+  top: 0;
   background-color: var(--bg-surface-secondary);
   border-bottom: 1px solid var(--border);
   height: var(--ribbon-height);
