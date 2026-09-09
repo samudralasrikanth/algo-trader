@@ -18,7 +18,14 @@ import os
 import urllib.request
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+except ImportError:
+    pass
 
 logger = logging.getLogger(__name__)
 
@@ -202,3 +209,88 @@ class OpenAIProvider(LLMProvider):
             res = self.fallback.interpret_event(headline, description, source)
             res["provider"] = "openai_fallback_heuristic"
             return res
+
+
+class OpenRouterProvider(LLMProvider):
+    """
+    OpenRouter-backed structured event reasoner.
+    Works with any OpenRouter model (e.g. openai/gpt-4o-mini, meta-llama/llama-3.3-70b-instruct, etc.)
+    Falls back gracefully to HeuristicEventParser if API key is not configured, rate-limited, or network fails.
+    """
+
+    def __init__(self, api_key: Optional[str] = None, model: str = "openai/gpt-4o-mini"):
+        self.api_key = api_key or os.environ.get("OPENROUTER_API_KEY") or os.environ.get("OPENAI_API_KEY")
+        self.model = os.environ.get("OPENROUTER_MODEL", model)
+        self.fallback = HeuristicEventParser()
+
+    def interpret_event(
+        self,
+        headline: str,
+        description: str = "",
+        source: str = "news",
+    ) -> Dict[str, Any]:
+        if not self.api_key:
+            return self.fallback.interpret_event(headline, description, source)
+
+        prompt = (
+            f"You are a quantitative research analyst evaluating an Indian market headline.\n"
+            f"Headline: {headline}\n"
+            f"Context: {description}\n"
+            f"Respond with JSON containing:\n"
+            f"- event_category (EARNINGS_SURPRISE, ORDER_WIN, REGULATORY_ACTION, MACRO_POLICY, GENERAL_UPDATE)\n"
+            f"- impact_direction (POSITIVE, NEGATIVE, NEUTRAL)\n"
+            f"- catalyst_vs_noise (CATALYST, NOISE)\n"
+            f"- surprise_vs_priced_in (SURPRISE, PRICED_IN)\n"
+            f"- expected_duration (INTRADAY, 1_3_DAYS, 1_2_WEEKS, MULTI_MONTH)\n"
+            f"- confidence (0 to 100)\n"
+            f"- investment_thesis (2 sentences maximum)"
+        )
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
+            "HTTP-Referer": "https://github.com/samudralasrikanth/algo-trader",
+            "X-Title": "NEXUS Nifty 50 Event Agent",
+        }
+        body = json.dumps({
+            "model": self.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "response_format": {"type": "json_object"},
+            "temperature": 0.1,
+        }).encode("utf-8")
+
+        try:
+            req = urllib.request.Request("https://openrouter.ai/api/v1/chat/completions", data=body, headers=headers)
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                content_str = data["choices"][0]["message"]["content"]
+                parsed = json.loads(content_str)
+                parsed["provider"] = f"openrouter_{self.model}"
+                parsed["source"] = source
+                parsed["timestamp"] = datetime.now(timezone.utc).isoformat()
+                return parsed
+        except Exception as exc:
+            logger.warning(f"OpenRouter event interpretation failed ({exc}). Falling back to heuristic.")
+            res = self.fallback.interpret_event(headline, description, source)
+            res["provider"] = "openrouter_fallback_heuristic"
+            return res
+
+
+def get_default_llm_provider() -> LLMProvider:
+    """
+    Returns the best available LLM provider based on environment configuration:
+    1. OpenRouter if OPENROUTER_API_KEY is configured (or key starts with sk-or-)
+    2. OpenAI if OPENAI_API_KEY is configured
+    3. HeuristicEventParser (deterministic offline baseline) as default
+    """
+    openrouter_key = os.environ.get("OPENROUTER_API_KEY")
+    openai_key = os.environ.get("OPENAI_API_KEY")
+
+    if openrouter_key:
+        return OpenRouterProvider(api_key=openrouter_key)
+    elif openai_key:
+        if openai_key.startswith("sk-or-"):
+            return OpenRouterProvider(api_key=openai_key)
+        return OpenAIProvider(api_key=openai_key)
+    else:
+        return HeuristicEventParser()
