@@ -1,0 +1,27 @@
+{
+  "US_CPI:2026-09-10": {
+    "indicator": "US_CPI",
+    "consensus_value": 315.0,
+    "source": "manual",
+    "source_timestamp": "2026-09-09T07:13:21.356821+00:00",
+    "entered_at": "2026-09-09T07:13:21.356821+00:00",
+    "release_date": "2026-09-10T07:13:21.356701+00:00",
+    "locked": true,
+    "actual_value": null,
+    "surprise_raw": null,
+    "surprise_direction": null
+  },
+  "US_NFP:2026-09-01": {
+    "indicator": "US_NFP",
+    "consensus_value": 180.0,
+    "locked": true,
+    "release_date": "2026-09-01T00:00:00+00:00",
+    "source": "manual",
+    "entered_at": "2026-08-31T20:00:00+00:00",
+    "actual_value": 195.0,
+    "actual_recorded_at": "2026-09-09T07:13:21.357212+00:00",
+    "actual_source": "official",
+    "surprise_raw": 15.0,
+    "surprise_direction": "UPSIDE"
+  }
+}

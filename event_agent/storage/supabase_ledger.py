@@ -192,3 +192,37 @@ def get_job_logs_supabase(limit: int = 50) -> List[Dict[str, Any]]:
     except Exception as e:
         print(f"[!] Supabase get_job_logs error: {e}")
     return []
+
+
+# -----------------------------------------------------------------------------
+# Prediction Snapshots (Point-in-Time Frozen Inputs + Baselines)
+# -----------------------------------------------------------------------------
+def save_prediction_snapshot_supabase(snapshot: Dict[str, Any]) -> bool:
+    if not is_supabase_configured():
+        return False
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/prediction_snapshots"
+        payload = {
+            "prediction_id": snapshot.get("prediction_id"),
+            "model_version": snapshot.get("model_version", "3.0.0"),
+            "feature_version": snapshot.get("feature_version", "F1"),
+            "regime_version": snapshot.get("regime_version", "R1"),
+            "calibration_version": snapshot.get("calibration_version", "C1"),
+            "weights_version": snapshot.get("weights_version", "W1.0"),
+            "data_snapshot_id": snapshot.get("data_snapshot_id"),
+            "market_state_json": snapshot.get("market_state_json", {}),
+            "regime_json": snapshot.get("regime_json", {}),
+            "features_json": snapshot.get("features_json", {}),
+            "surprises_json": snapshot.get("surprises_json", []),
+            "news_articles_json": snapshot.get("news_articles_json", []),
+            "events_json": snapshot.get("events_json", []),
+            "factor_weights_json": snapshot.get("factor_weights_json", {}),
+            "prediction_json": snapshot.get("prediction_json", {}),
+            "baselines_json": snapshot.get("baselines_json", {}),
+            "snapshot_hash": snapshot.get("snapshot_hash"),
+            "locked_at": snapshot.get("locked_at"),
+        }
+        res = requests.post(url, headers=get_headers(True), json=payload, timeout=10)
+        return res.status_code in [200, 201]
+    except Exception as e:
+        return False

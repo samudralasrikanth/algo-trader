@@ -101,3 +101,13 @@ def diagnose_prediction_outcome(
         "factors_active": primary_factors_identified,
         "timestamp": datetime.now().isoformat()
     }
+
+# Frozen Factor Weights V1
+FACTOR_WEIGHTS_V1: Dict[str, float] = {
+    "stock_sentiment": 0.30,
+    "macro_sentiment": 0.15,
+    "events": 0.20,
+    "macro_surprise": 0.15,
+    "regime_tilt": 0.10,
+    "momentum": 0.10,
+}

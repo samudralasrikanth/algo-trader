@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 # =============================================================================
-# run_night_forecast.py — Pre-Market / Night Forecast Runner for Tomorrow
+# run_night_forecast.py — Pre-Market / Night Forecast Runner for Tomorrow (v3.0)
 # =============================================================================
 
 import sys
 from datetime import datetime, date, timedelta
 from typing import Optional
 from event_agent.config import NIFTY50_UNIVERSE
-from event_agent.engine.prediction_algo import generate_all_predictions
+from event_agent.engine.prediction_algo import generate_all_predictions, MODEL_VERSION
 from event_agent.storage.ledger import init_db, save_night_prediction, get_active_night_predictions, log_job_execution
+from event_agent.research.model_versioning import get_current_version_record
 
 
 def get_next_trading_day(ref_date: Optional[date] = None) -> str:
@@ -17,7 +18,6 @@ def get_next_trading_day(ref_date: Optional[date] = None) -> str:
         ref_date = datetime.now().date()
         
     next_day = ref_date + timedelta(days=1)
-    # If next_day is Saturday (5), shift to Monday (0)
     if next_day.weekday() == 5:
         next_day += timedelta(days=2)
     elif next_day.weekday() == 6:
@@ -31,20 +31,22 @@ def run_night_forecast_cycle():
     init_db()
     today_str = datetime.now().strftime("%Y-%m-%d")
     tomorrow_trade_date = get_next_trading_day()
+    version_rec = get_current_version_record()
     
     print("""
 ╔═══════════════════════════════════════════════════════════════════════════════════╗
-║       🌙 NIFTY 50 PRE-MARKET / NIGHT PREDICTION AGENT (TOMORROW'S DECK)          ║
-║   Ingesting Tonight's Catalysts & Locking Forecasts for Next Trading Session     ║
+║       🌙 NIFTY 50 QUANTITATIVE PREDICTION AGENT (V3.0 EXPERIMENTAL DECK)         ║
+║   Point-in-Time Conditioning, 8-Dim Regime, 5 Baselines, Risk-Based Sizing        ║
 ╚═══════════════════════════════════════════════════════════════════════════════════╝
     """)
-    print(f"[*] Forecast Generated On : {today_str} (Evening / Pre-Market)")
-    print(f"[*] Target Trading Session : {tomorrow_trade_date} (Next Market Open)\n")
+    print(f"[*] Forecast Generated On : {today_str} (Pre-Market / Evening Lock)")
+    print(f"[*] Target Trading Session : {tomorrow_trade_date} (Next Market Open)")
+    print(f"[*] Model Version          : {version_rec['model_version']} (Regime: {version_rec['regime_version']}, Weights: {version_rec['weights_version']})\n")
     
-    print("[1/2] Scraping tonight's news, corporate announcements & macroeconomic catalysts...")
-    predictions = generate_all_predictions()
+    print("[1/2] Processing news, macro catalysts, 8-dimension regime, and 5 benchmark baselines...")
+    predictions = generate_all_predictions(target_trade_date=tomorrow_trade_date)
     
-    print(f"[2/2] Locking predictions and active factor vectors for {len(predictions)} stocks into DB...")
+    print(f"[2/2] Freezing cryptographic prediction snapshots for {len(predictions)} stocks into immutable ledger...")
     for p in predictions:
         save_night_prediction(p, target_trade_date=tomorrow_trade_date)
         
@@ -55,22 +57,27 @@ def run_night_forecast_cycle():
         status="SUCCESS",
         target_date=tomorrow_trade_date,
         records_stored=len(predictions),
-        log_summary=f"Successfully generated and locked {len(predictions)} stock predictions for session {tomorrow_trade_date}."
+        log_summary=f"Successfully generated and locked {len(predictions)} v3 stock prediction snapshots for session {tomorrow_trade_date}."
     )
         
-    print("\n" + "=" * 94)
-    print(f"{'SYMBOL':<14} | {'SECTOR':<22} | {'BASE (₹)':<9} | {'ACTION':<11} | {'TOMORROW TARGET':<16} | {'CONV %':<6}")
-    print("=" * 94)
+    print("\n" + "=" * 115)
+    print(f"{'SYMBOL':<14} | {'ACTION':<10} | {'ENTRY (₹)':<10} | {'TARGET (₹)':<16} | {'STOP (₹)':<10} | {'QTY':<5} | {'CONV %':<6} | {'BASELINES':<10}")
+    print("=" * 115)
     
     for p in predictions:
         exp_pct = p.get('expected_1d_pct', 0.0)
-        target_str = f"₹{p['target_1d']:<7.1f} ({exp_pct:+.1f}%)"
-        print(f"{p['short_name']:<14} | {p['sector'][:20]:<22} | ₹{p['base_price']:<8.1f} | {p['action']:<11} | {target_str:<16} | {p['conviction']}%")
+        target_str = f"₹{p['target_price']:<7.1f} ({exp_pct:+.1f}%)"
+        summary = p.get('baselines', {}).get('summary', {})
+        base_summary = f"{summary.get('bullish_count', 0)}U / {summary.get('bearish_count', 0)}D"
+        print(
+            f"{p['short_name']:<14} | {p['action']:<10} | ₹{p['entry_price']:<9.1f} | {target_str:<16} | "
+            f"₹{p['stop_loss']:<9.1f} | {p.get('suggested_quantity', 0):<5} | {p['conviction']:<6.1f} | {base_summary:<10}"
+        )
         
-    print("=" * 94)
-    print(f"\n[✓] All forecasts locked for {tomorrow_trade_date}. Run 'python3 run_postmarket_audit.py' tomorrow post-market (15:45 IST) to audit accuracy & diagnose factors.\n")
+    print("=" * 115)
+    print(f"\n[✓] All {len(predictions)} prediction snapshots locked with SHA-256 provenance hashes.")
+    print(f"[✓] Run 'python3 run_postmarket_audit.py' post-market (15:45 IST) to audit 5-min candle execution against all 5 baselines.\n")
 
 
 if __name__ == "__main__":
-    from typing import Optional
     run_night_forecast_cycle()

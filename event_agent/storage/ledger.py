@@ -169,6 +169,164 @@ def init_db() -> None:
         )
         """)
         
+        # 7. Prediction Snapshots Table (Point-in-Time Frozen Inputs)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS prediction_snapshots (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            prediction_id TEXT NOT NULL UNIQUE,
+            model_version TEXT NOT NULL,
+            feature_version TEXT,
+            regime_version TEXT,
+            calibration_version TEXT,
+            weights_version TEXT,
+            data_snapshot_id TEXT,
+            market_state_json TEXT NOT NULL,
+            regime_json TEXT NOT NULL,
+            features_json TEXT NOT NULL,
+            surprises_json TEXT,
+            news_articles_json TEXT,
+            events_json TEXT,
+            factor_weights_json TEXT NOT NULL,
+            prediction_json TEXT NOT NULL,
+            baselines_json TEXT NOT NULL,
+            snapshot_hash TEXT NOT NULL,
+            locked_at TEXT NOT NULL,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+        """)
+        
+        # 8. Arena Agent Portfolios Table (V3.2 Multi-Agent Virtual Capital)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS agent_portfolios (
+            agent_id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            title TEXT,
+            personality_quote TEXT,
+            strategy_version TEXT NOT NULL,
+            starting_capital REAL NOT NULL,
+            cash REAL NOT NULL,
+            invested REAL NOT NULL,
+            portfolio_value REAL NOT NULL,
+            realized_pnl REAL NOT NULL,
+            unrealized_pnl REAL NOT NULL,
+            win_rate REAL NOT NULL,
+            profit_factor REAL NOT NULL,
+            max_drawdown REAL NOT NULL,
+            sharpe_ratio REAL NOT NULL,
+            active_positions_count INTEGER NOT NULL,
+            status TEXT DEFAULT 'ACTIVE',
+            updated_at TEXT NOT NULL
+        )
+        """)
+
+        # 9. Arena Open/Closed Positions Table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS agent_positions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            position_id TEXT UNIQUE NOT NULL,
+            agent_id TEXT NOT NULL,
+            strategy_version TEXT NOT NULL,
+            symbol TEXT NOT NULL,
+            short_name TEXT,
+            sector TEXT,
+            instrument_type TEXT NOT NULL,
+            direction TEXT NOT NULL,
+            quantity INTEGER NOT NULL,
+            entry_price REAL NOT NULL,
+            current_price REAL NOT NULL,
+            cost_basis REAL NOT NULL,
+            market_value REAL NOT NULL,
+            stop_loss REAL,
+            target REAL,
+            unrealized_pnl REAL NOT NULL,
+            unrealized_pnl_pct REAL NOT NULL,
+            is_hedged INTEGER DEFAULT 0,
+            hedge_details_json TEXT,
+            contract_expiry TEXT,
+            option_strike REAL,
+            option_type TEXT,
+            status TEXT DEFAULT 'OPEN',
+            opened_at TEXT NOT NULL,
+            closed_at TEXT
+        )
+        """)
+
+        # 10. Arena Executed Trades Table (Idempotent replay protected by trade_id)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS agent_trades (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            trade_id TEXT UNIQUE NOT NULL,
+            market_date TEXT NOT NULL,
+            cycle_id TEXT,
+            snapshot_id TEXT NOT NULL,
+            agent_id TEXT NOT NULL,
+            strategy_version TEXT NOT NULL,
+            symbol TEXT NOT NULL,
+            instrument_type TEXT NOT NULL,
+            action TEXT NOT NULL,
+            direction TEXT NOT NULL,
+            quantity INTEGER NOT NULL,
+            price REAL NOT NULL,
+            stop_loss REAL,
+            target REAL,
+            transaction_costs REAL NOT NULL,
+            net_amount REAL NOT NULL,
+            risk_amount REAL NOT NULL,
+            confidence REAL NOT NULL,
+            decision_reason TEXT,
+            hedge_decision TEXT,
+            executed_at TEXT NOT NULL
+        )
+        """)
+
+        # 11. Arena Decisions Log (Approved and Rejected)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS agent_decisions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            decision_id TEXT UNIQUE NOT NULL,
+            market_date TEXT NOT NULL,
+            snapshot_id TEXT NOT NULL,
+            agent_id TEXT NOT NULL,
+            strategy_version TEXT NOT NULL,
+            symbol TEXT NOT NULL,
+            action TEXT NOT NULL,
+            instrument_type TEXT NOT NULL,
+            confidence REAL NOT NULL,
+            proposed_quantity INTEGER NOT NULL,
+            proposed_price REAL NOT NULL,
+            stop_loss REAL,
+            target REAL,
+            planned_risk REAL NOT NULL,
+            risk_approved INTEGER NOT NULL,
+            rejection_reasons_json TEXT,
+            decision_reason TEXT,
+            created_at TEXT NOT NULL
+        )
+        """)
+
+        # 12. Arena Daily Frozen Snapshots (Leaderboard freeze)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS agent_daily_snapshots (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            market_date TEXT NOT NULL,
+            agent_id TEXT NOT NULL,
+            portfolio_value REAL NOT NULL,
+            cash REAL NOT NULL,
+            invested REAL NOT NULL,
+            day_return_pct REAL NOT NULL,
+            total_return_pct REAL NOT NULL,
+            realized_pnl REAL NOT NULL,
+            unrealized_pnl REAL NOT NULL,
+            win_rate REAL NOT NULL,
+            profit_factor REAL NOT NULL,
+            max_drawdown REAL NOT NULL,
+            sharpe_ratio REAL NOT NULL,
+            positions_count INTEGER NOT NULL,
+            frozen_at TEXT NOT NULL,
+            UNIQUE(market_date, agent_id)
+        )
+        """)
+
         # Add missing provenance columns dynamically if upgrading existing DB
         for col, col_type in [
             ("prediction_id", "TEXT"),
@@ -192,6 +350,13 @@ def init_db() -> None:
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_audit_date ON daily_audits(trade_date)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_audit_sym ON daily_audits(symbol)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_job_date ON job_execution_logs(started_at)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_agent_trades_date ON agent_trades(market_date)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_agent_trades_agent ON agent_trades(agent_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_agent_decisions_date ON agent_decisions(market_date)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_agent_pos_agent ON agent_positions(agent_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_agent_snap_date ON agent_daily_snapshots(market_date)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_snap_pred_id ON prediction_snapshots(prediction_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_snap_hash ON prediction_snapshots(snapshot_hash)")
         
         conn.commit()
 
@@ -656,6 +821,13 @@ def save_night_prediction(pred: Dict[str, Any], target_trade_date: str) -> int:
             save_night_prediction_supabase(pred, target_trade_date)
         except Exception:
             pass
+
+        # Dual-sync snapshot if available
+        if 'prediction_snapshot' in pred:
+            try:
+                save_prediction_snapshot(pred['prediction_snapshot'])
+            except Exception:
+                pass
             
         return last_id
 
@@ -878,3 +1050,263 @@ def get_job_execution_logs(limit: int = 50) -> List[Dict[str, Any]]:
         cursor.execute("SELECT * FROM job_execution_logs ORDER BY started_at DESC, id DESC LIMIT ?", (limit,))
         return [dict(r) for r in cursor.fetchall()]
 
+
+
+def save_prediction_snapshot(snapshot: Dict[str, Any]) -> int:
+    """Persist an immutable prediction snapshot into SQLite and dual-sync to Supabase."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        INSERT OR REPLACE INTO prediction_snapshots (
+            prediction_id, model_version, feature_version, regime_version,
+            calibration_version, weights_version, data_snapshot_id,
+            market_state_json, regime_json, features_json, surprises_json,
+            news_articles_json, events_json, factor_weights_json,
+            prediction_json, baselines_json, snapshot_hash, locked_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            snapshot.get("prediction_id"),
+            snapshot.get("model_version", "3.0.0"),
+            snapshot.get("feature_version", "F1"),
+            snapshot.get("regime_version", "R1"),
+            snapshot.get("calibration_version", "C1"),
+            snapshot.get("weights_version", "W1.0"),
+            snapshot.get("data_snapshot_id"),
+            json.dumps(snapshot.get("market_state_json", {})),
+            json.dumps(snapshot.get("regime_json", {})),
+            json.dumps(snapshot.get("features_json", {})),
+            json.dumps(snapshot.get("surprises_json", [])),
+            json.dumps(snapshot.get("news_articles_json", [])),
+            json.dumps(snapshot.get("events_json", [])),
+            json.dumps(snapshot.get("factor_weights_json", {})),
+            json.dumps(snapshot.get("prediction_json", {})),
+            json.dumps(snapshot.get("baselines_json", {})),
+            snapshot.get("snapshot_hash"),
+            snapshot.get("locked_at", datetime.now().isoformat()),
+        ))
+        conn.commit()
+        last_id = cursor.lastrowid
+
+    # Dual-sync to Supabase Cloud
+    try:
+        from event_agent.storage.supabase_ledger import save_prediction_snapshot_supabase
+        save_prediction_snapshot_supabase(snapshot)
+    except Exception:
+        pass
+
+    return last_id
+
+
+# =============================================================================
+# V3.2 Arena Persistence Helpers
+# =============================================================================
+
+def save_agent_portfolio(p: Dict[str, Any]) -> None:
+    """Upsert an agent portfolio state."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        INSERT OR REPLACE INTO agent_portfolios (
+            agent_id, name, title, personality_quote, strategy_version,
+            starting_capital, cash, invested, portfolio_value, realized_pnl,
+            unrealized_pnl, win_rate, profit_factor, max_drawdown,
+            sharpe_ratio, active_positions_count, status, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            p["agent_id"], p.get("name", p["agent_id"]), p.get("title", ""),
+            p.get("personality_quote", ""), p.get("strategy_version", "1.0"),
+            float(p.get("starting_capital", 2000000.0)), float(p.get("cash", 2000000.0)),
+            float(p.get("invested", 0.0)), float(p.get("portfolio_value", 2000000.0)),
+            float(p.get("realized_pnl", 0.0)), float(p.get("unrealized_pnl", 0.0)),
+            float(p.get("win_rate", 0.0)), float(p.get("profit_factor", 1.0)),
+            float(p.get("max_drawdown", 0.0)), float(p.get("sharpe_ratio", 0.0)),
+            int(p.get("active_positions_count", 0)), p.get("status", "ACTIVE"),
+            p.get("updated_at", datetime.now().isoformat())
+        ))
+        conn.commit()
+
+
+def save_agent_position(pos: Dict[str, Any]) -> None:
+    """Upsert an open position."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        inst = pos.get("instrument", {})
+        inst_type = pos.get("instrument_type") or (inst.get("instrument_type") if isinstance(inst, dict) else "EQUITY")
+        pos_id = pos.get("position_id") or pos.get("trade_id") or f"POS-{pos['agent_id']}-{pos['symbol']}"
+        cost_basis = float(pos.get("cost_basis") or pos.get("invested_capital", 0.0))
+        qty = int(pos.get("quantity", 0))
+        cur_price = float(pos.get("current_price", 0.0))
+        mkt_val = float(pos.get("market_value") or (cur_price * qty))
+        pnl_pct = float(pos.get("unrealized_pnl_pct") or pos.get("pnl_pct", 0.0))
+        opened = pos.get("opened_at") or pos.get("entry_time", datetime.now().isoformat())
+
+        cursor.execute("""
+        INSERT OR REPLACE INTO agent_positions (
+            position_id, agent_id, strategy_version, symbol, short_name, sector,
+            instrument_type, direction, quantity, entry_price, current_price,
+            cost_basis, market_value, stop_loss, target, unrealized_pnl,
+            unrealized_pnl_pct, is_hedged, hedge_details_json, contract_expiry,
+            option_strike, option_type, status, opened_at, closed_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            pos_id, pos["agent_id"], pos.get("strategy_version", "1.0"),
+            pos["symbol"], pos.get("short_name", pos["symbol"]), pos.get("sector", "Diversified"),
+            inst_type, pos.get("direction", "BUY"),
+            qty, float(pos.get("entry_price", 0.0)),
+            cur_price, cost_basis, mkt_val,
+            float(pos.get("stop_loss", 0.0)), float(pos.get("target", 0.0)),
+            float(pos.get("unrealized_pnl", 0.0)), pnl_pct,
+            int(pos.get("is_hedged", 0)), json.dumps(pos.get("hedge_details", {})),
+            pos.get("contract_expiry") or (inst.get("expiry") if isinstance(inst, dict) else None),
+            pos.get("option_strike") or (inst.get("strike") if isinstance(inst, dict) else None),
+            pos.get("option_type") or (inst.get("option_type") if isinstance(inst, dict) else None),
+            pos.get("status", "OPEN"), opened,
+            pos.get("closed_at")
+        ))
+        conn.commit()
+
+
+def save_agent_trade(trade: Dict[str, Any]) -> bool:
+    """Record an executed trade idempotently. Returns True if inserted, False if already existed."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute("""
+            INSERT INTO agent_trades (
+                trade_id, market_date, cycle_id, snapshot_id, agent_id,
+                strategy_version, symbol, instrument_type, action, direction,
+                quantity, price, stop_loss, target, transaction_costs,
+                net_amount, risk_amount, confidence, decision_reason,
+                hedge_decision, executed_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                trade["trade_id"], trade["market_date"], trade.get("cycle_id", "CYCLE-1"),
+                trade.get("snapshot_id", ""), trade["agent_id"],
+                trade.get("strategy_version", "1.0"), trade["symbol"],
+                trade.get("instrument_type", "EQUITY"), trade["action"],
+                trade.get("direction", "BUY"), int(trade["quantity"]),
+                float(trade["price"]), float(trade.get("stop_loss", 0.0)),
+                float(trade.get("target", 0.0)), float(trade.get("transaction_costs", 0.0)),
+                float(trade.get("net_amount", 0.0)), float(trade.get("risk_amount", 0.0)),
+                float(trade.get("confidence", 50.0)), trade.get("decision_reason", ""),
+                trade.get("hedge_decision", "NO"), trade.get("executed_at", datetime.now().isoformat())
+            ))
+            conn.commit()
+            return True
+        except sqlite3.IntegrityError:
+            return False
+
+
+def save_agent_decision(decision: Dict[str, Any]) -> bool:
+    """Record an agent decision (approved or rejected)."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        decision_id = decision.get("decision_id") or f"DEC-{decision['market_date']}-{decision['agent_id']}-{decision['symbol']}-{decision.get('action', 'NO_TRADE')}"
+        try:
+            cursor.execute("""
+            INSERT OR REPLACE INTO agent_decisions (
+                decision_id, market_date, snapshot_id, agent_id, strategy_version,
+                symbol, action, instrument_type, confidence, proposed_quantity,
+                proposed_price, stop_loss, target, planned_risk, risk_approved,
+                rejection_reasons_json, decision_reason, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                decision_id, decision["market_date"], decision.get("snapshot_id", ""),
+                decision["agent_id"], decision.get("strategy_version", "1.0"),
+                decision["symbol"], decision["action"], decision.get("instrument_type", "EQUITY"),
+                float(decision.get("confidence", 50.0)), int(decision.get("proposed_quantity", 0)),
+                float(decision.get("proposed_price", 0.0)), float(decision.get("stop_loss", 0.0)),
+                float(decision.get("target", 0.0)), float(decision.get("planned_risk", 0.0)),
+                int(decision.get("risk_approved", 1)), json.dumps(decision.get("rejections", [])),
+                decision.get("reason", ""), decision.get("created_at", datetime.now().isoformat())
+            ))
+            conn.commit()
+            return True
+        except Exception:
+            return False
+
+
+def save_agent_daily_snapshot(snapshot: Dict[str, Any]) -> None:
+    """Freeze daily NAV and performance at DAY_COMPLETE."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        INSERT OR REPLACE INTO agent_daily_snapshots (
+            market_date, agent_id, portfolio_value, cash, invested,
+            day_return_pct, total_return_pct, realized_pnl, unrealized_pnl,
+            win_rate, profit_factor, max_drawdown, sharpe_ratio,
+            positions_count, frozen_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            snapshot["market_date"], snapshot["agent_id"],
+            float(snapshot["portfolio_value"]), float(snapshot["cash"]),
+            float(snapshot["invested"]), float(snapshot.get("day_return_pct", 0.0)),
+            float(snapshot.get("total_return_pct", 0.0)), float(snapshot.get("realized_pnl", 0.0)),
+            float(snapshot.get("unrealized_pnl", 0.0)), float(snapshot.get("win_rate", 0.0)),
+            float(snapshot.get("profit_factor", 1.0)), float(snapshot.get("max_drawdown", 0.0)),
+            float(snapshot.get("sharpe_ratio", 0.0)), int(snapshot.get("positions_count", 0)),
+            snapshot.get("frozen_at", datetime.now().isoformat())
+        ))
+        conn.commit()
+
+
+def get_agent_portfolios() -> List[Dict[str, Any]]:
+    """Retrieve all agent portfolio records."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM agent_portfolios ORDER BY portfolio_value DESC")
+        return [dict(r) for r in cursor.fetchall()]
+
+
+def get_agent_positions(agent_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Retrieve positions, optionally filtered by agent."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        if agent_id:
+            cursor.execute("SELECT * FROM agent_positions WHERE agent_id = ? AND status = 'OPEN' ORDER BY id DESC", (agent_id,))
+        else:
+            cursor.execute("SELECT * FROM agent_positions WHERE status = 'OPEN' ORDER BY id DESC")
+        return [dict(r) for r in cursor.fetchall()]
+
+
+def get_agent_trades(agent_id: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
+    """Retrieve executed trades."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        if agent_id:
+            cursor.execute("SELECT * FROM agent_trades WHERE agent_id = ? ORDER BY id DESC LIMIT ?", (agent_id, limit))
+        else:
+            cursor.execute("SELECT * FROM agent_trades ORDER BY id DESC LIMIT ?", (limit,))
+        return [dict(r) for r in cursor.fetchall()]
+
+
+def get_agent_decisions(agent_id: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
+    """Retrieve agent decisions."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        if agent_id:
+            cursor.execute("SELECT * FROM agent_decisions WHERE agent_id = ? ORDER BY id DESC LIMIT ?", (agent_id, limit))
+        else:
+            cursor.execute("SELECT * FROM agent_decisions ORDER BY id DESC LIMIT ?", (limit,))
+        return [dict(r) for r in cursor.fetchall()]
+
+
+def get_arena_data() -> Dict[str, Any]:
+    """Fetch all V3.2 Arena tables in a unified payload."""
+    init_db()
+    return {
+        "portfolios": get_agent_portfolios(),
+        "positions": get_agent_positions(),
+        "recent_trades": get_agent_trades(limit=50),
+        "recent_decisions": get_agent_decisions(limit=50),
+    }
