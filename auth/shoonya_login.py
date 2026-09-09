@@ -44,16 +44,42 @@ def _try_login(api, pwd_hash: str, twofa: str) -> dict:
 
 
 def main():
+    global user_id, vendor_code, api_secret, imei
+
     print("=" * 55)
-    print("  Shoonya Login  |  OTP Flow")
+    print("  Shoonya (Finvasia) Login  |  API Setup & OTP Flow")
     print("=" * 55)
-    print(f"\n  User ID     : {user_id}")
-    print(f"  Vendor Code : {vendor_code}")
+
+    if not user_id:
+        user_id = input("\n  Enter Shoonya User ID (Client Code, e.g. FA12345): ").strip()
+    else:
+        print(f"\n  User ID     : {user_id}")
+
+    if not vendor_code:
+        default_vc = f"{user_id}_U" if user_id else "algo_U"
+        entered_vc = input(f"  Enter Vendor Code (Press Enter for '{default_vc}'): ").strip()
+        vendor_code = entered_vc or default_vc
+    else:
+        print(f"  Vendor Code : {vendor_code}")
+
+    if not api_secret:
+        print("  (Get API Secret from: https://prism.finvasia.com -> API section)")
+        api_secret = getpass.getpass("  Enter API Secret / API Key: ").strip()
+
+    if not imei:
+        imei = "algo-trader-1.0"
     print(f"  IMEI        : {imei}\n")
 
     if not all([user_id, vendor_code, api_secret]):
-        print("  ❌  SHOONYA_USER_ID / VENDOR_CODE / API_SECRET missing in .env")
+        print("  ❌  User ID, Vendor Code, and API Secret are required to proceed.")
+        print("      Please check https://prism.finvasia.com for your API credentials.")
         sys.exit(1)
+
+    # Save configuration to .env immediately
+    set_key(str(ENV_FILE), "SHOONYA_USER_ID",     user_id)
+    set_key(str(ENV_FILE), "SHOONYA_VENDOR_CODE", vendor_code)
+    set_key(str(ENV_FILE), "SHOONYA_API_SECRET",  api_secret)
+    set_key(str(ENV_FILE), "SHOONYA_IMEI",        imei)
 
     # Build API client
     try:
@@ -71,17 +97,32 @@ def main():
 
     api = _Api()
 
-    # --- Get OTP first ---
-    print("  ⚡  Open your Shoonya app — an OTP will be sent to your")
-    print("      registered mobile number.\n")
-    otp = getpass.getpass("  Enter OTP from phone : ").strip()
-    if not otp:
-        print("  ❌  OTP required.")
-        sys.exit(1)
+    # --- Password ---
+    pwd_raw = os.getenv("SHOONYA_PASSWORD", "")
+    if not pwd_raw:
+        pwd_raw = getpass.getpass("  Enter Shoonya Login Password: ").strip()
 
-    # --- Password (optional for new accounts) ---
-    print()
-    pwd_raw = getpass.getpass("  Password (press Enter to skip if not set yet) : ").strip()
+    # --- 2FA: TOTP Secret or 6-digit OTP ---
+    totp_secret = os.getenv("SHOONYA_TOTP_SECRET", "")
+    if not totp_secret:
+        totp_secret = input("  Enter TOTP Secret Key (from Authenticator setup, or press Enter to skip): ").strip().replace(" ", "")
+
+    if totp_secret:
+        try:
+            import pyotp
+            otp = pyotp.TOTP(totp_secret).now()
+            print(f"  ⚡  Auto-generated 2FA code from TOTP Secret: {otp}\n")
+            set_key(str(ENV_FILE), "SHOONYA_TOTP_SECRET", totp_secret)
+        except Exception as e:
+            print(f"  ⚠️  Invalid TOTP Secret ({e}). Falling back to manual OTP.")
+            totp_secret = ""
+
+    if not totp_secret:
+        print("  ⚡  Open your Shoonya Authenticator app (or check phone SMS for OTP)")
+        otp = input("  Enter 6-digit OTP / TOTP code: ").strip()
+        if not otp:
+            print("  ❌  OTP required.")
+            sys.exit(1)
 
     # Try strategies in order
     strategies = []
