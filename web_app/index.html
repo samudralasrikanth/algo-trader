@@ -97,12 +97,53 @@
 
   <div class="app-shell">
     
-    <!-- Left Sidebar Institutional Navigation Active — Duplicate Top Header Removed -->
+    <!-- Stitch Screen 5bbea71045434e189ed0f2426779d132: Institutional Top Header -->
+    <header class="terminal-top-header" id="terminal-top-header">
+      <!-- Tier 1: Persistent Market Ribbon & Execution Status -->
+      <div class="terminal-header-tier-top">
+        <div class="terminal-ribbon" id="terminal-market-ribbon">
+          <!-- Injected dynamically by renderMarketRibbon() -->
+        </div>
+        <div class="terminal-header-status-group">
+          <div class="header-cutoff-pill">
+            <span class="cutoff-dot"></span>
+            <span>15:30 IST HARD CUTOFF</span>
+          </div>
+          <div class="header-paper-pill">
+            <span>PAPER TRADING ONLY • MODELLED DERIVATIVES</span>
+          </div>
+        </div>
+      </div>
 
-    <!-- Persistent Global Market Ribbon (Truthful Multi-Asset Ticker with Timestamps) -->
-    <div class="terminal-ribbon" id="terminal-market-ribbon">
-      <!-- Injected dynamically by renderMarketRibbon() -->
-    </div>
+      <!-- Tier 2: Terminal Utility Strip (Search, Clock, Diagnostics, Profile) -->
+      <div class="terminal-header-tier-bottom">
+        <div class="terminal-search-wrapper" onclick="openCommandPalette()">
+          <span class="material-symbols-outlined search-icon">search</span>
+          <input type="text" readonly placeholder="Search instrument, strike, algorithm, execution node..." class="terminal-search-input">
+          <kbd class="terminal-kbd-badge">⌘K</kbd>
+        </div>
+
+        <div class="terminal-header-actions">
+          <div class="terminal-clock-box" id="header-clock-pill">
+            <span class="clock-label">CLOCK:</span>
+            <span class="clock-value" id="header-clock-text">--:--:-- IST</span>
+          </div>
+
+          <div class="terminal-health-box" id="header-freshness-pill" onclick="navigate('jobs')" title="Data Pipeline Health • Click for Jobs Ledger">
+            <span id="header-freshness-text">🟢 12 healthy • 🟡 11 delayed</span>
+          </div>
+
+          <button class="terminal-action-btn" onclick="toggleOpsDrawer()" title="Capture System Telemetry Snapshot">Snapshot</button>
+          <button class="terminal-action-btn" onclick="openRiskDetail('invariants')" title="Recalculate 8 Quantitative Invariants">Re-calc Risk</button>
+
+          <div class="terminal-header-divider"></div>
+
+          <button class="terminal-user-avatar" onclick="toggleOpsDrawer()" title="INST-DESK #409 (T1)">
+            <span class="material-symbols-outlined">person</span>
+          </button>
+        </div>
+      </div>
+    </header>
 
     <!-- 2. Sticky Contextual Secondary Horizontal Navigation Bar -->
     <div class="secondary-navbar" id="secondary-navbar">
@@ -1809,13 +1850,6 @@
     </div>
     <div class="bottom-bar-right">
       <span class="hidden md:inline">NEXT COLLECTION: <strong style="color: var(--warning);" id="sb-next-run">21:00 IST OVERNIGHT</strong></span>
-      <span class="clock-pill hidden lg:inline-flex" id="header-freshness-pill" onclick="navigate('jobs')" style="cursor: pointer; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); font-size: 10px; padding: 2px 8px; border-radius: 3px;" title="Global Pipeline Health">
-        <span id="header-freshness-text">🟢 12 healthy • 🟡 11 delayed</span>
-      </span>
-      <span class="clock-pill" id="header-clock-pill" style="font-size: 10px; padding: 2px 8px; border: 1px solid var(--border); border-radius: 3px; background: var(--bg-surface); cursor: pointer;" onclick="navigate('jobs')" title="Market Cutoff Time">
-        <span class="pulse-dot"></span>
-        <span id="header-clock-text">15:30 IST CUTOFF</span>
-      </span>
       <button class="ops-drawer-trigger" onclick="toggleOpsDrawer()">⚡ [OPS DRAWER]</button>
     </div>
   </div>

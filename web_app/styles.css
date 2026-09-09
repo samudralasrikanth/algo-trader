@@ -52,8 +52,9 @@
   
   /* Dimensions & Spacing */
   --sidebar-width: 56px;
+  --terminal-header-height: 84px;
   --header-height: 0px;
-  --ribbon-height: 38px;
+  --ribbon-height: 36px;
   --subnav-height: 40px;
   --radius-sm: 4px;
   --radius-md: 6px;
@@ -102,7 +103,237 @@ body {
   }
 }
 
-/* 1. Global Sticky Header (Deprecated in favor of Left Sidebar Terminal Rail) */
+/* 1. Stitch Institutional Top Header (Screen 5bbea71045434e189ed0f2426779d132) */
+.terminal-top-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+}
+
+.terminal-header-tier-top {
+  height: 36px;
+  background-color: var(--bg-surface-secondary);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  overflow: hidden;
+}
+
+.terminal-header-tier-top .terminal-ribbon {
+  position: static;
+  background: transparent;
+  border: none;
+  height: 100%;
+  padding: 0;
+  flex: 1;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.terminal-header-status-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  padding-left: 12px;
+}
+
+.header-cutoff-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+}
+
+.cutoff-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: var(--danger);
+}
+
+.header-paper-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  background-color: var(--bg-surface-high);
+  border: 1px solid var(--border);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Tier 2: Search + Actions */
+.terminal-header-tier-bottom {
+  height: 48px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background-color: var(--bg-surface);
+}
+
+.terminal-search-wrapper {
+  position: relative;
+  flex: 1;
+  max-width: 540px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.terminal-search-wrapper .search-icon {
+  position: absolute;
+  left: 10px;
+  font-size: 18px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.terminal-search-input {
+  width: 100%;
+  padding: 6px 40px 6px 34px;
+  background-color: var(--bg-surface-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: 'Hanken Grotesk', 'Inter', sans-serif;
+  font-size: 12px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.terminal-search-input:hover {
+  border-color: var(--border-dark);
+  background-color: var(--bg-surface);
+}
+
+.terminal-kbd-badge {
+  position: absolute;
+  right: 8px;
+  padding: 2px 6px;
+  background-color: var(--bg-surface-tertiary);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.terminal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.terminal-clock-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background-color: var(--bg-surface-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+
+.terminal-clock-box .clock-label {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 10px;
+}
+
+.terminal-clock-box .clock-value {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.terminal-health-box {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background-color: rgba(6, 150, 105, 0.08);
+  border: 1px solid rgba(6, 150, 105, 0.3);
+  border-radius: var(--radius-sm);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.terminal-health-box:hover {
+  background-color: rgba(6, 150, 105, 0.15);
+}
+
+.terminal-action-btn {
+  padding: 5px 12px;
+  background-color: var(--bg-surface-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.terminal-action-btn:hover {
+  background-color: var(--primary);
+  color: var(--bg-surface);
+  border-color: var(--primary);
+}
+
+.terminal-header-divider {
+  width: 1px;
+  height: 20px;
+  background-color: var(--border);
+  margin: 0 4px;
+}
+
+.terminal-user-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  color: var(--bg-surface);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+.terminal-user-avatar:hover {
+  transform: scale(1.05);
+}
+
+.terminal-user-avatar .material-symbols-outlined {
+  font-size: 18px;
+}
+
 .global-header {
   display: none !important;
 }
@@ -299,7 +530,7 @@ body {
 /* 2. Contextual Secondary Horizontal Navigation Bar */
 .secondary-navbar {
   position: sticky;
-  top: var(--ribbon-height);
+  top: var(--terminal-header-height);
   z-index: 90;
   height: var(--subnav-height);
   background-color: var(--bg-surface);
