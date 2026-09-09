@@ -24,6 +24,8 @@ import urllib.request
 import xml.etree.ElementTree as ET
 from typing import Any, Dict, List, Optional, Set
 
+from event_agent.engine.llm_provider import get_default_llm_provider, LLMProvider
+
 logger = logging.getLogger(__name__)
 
 NEWS_FEEDS = [
@@ -62,6 +64,8 @@ class NewsArticleRecord:
     why_it_matters_text: str           # Formatted arrow transmission string
     nexus_impact: str                  # "HIGH" | "MEDIUM" | "LOW"
     transmission_horizon: str          # "1–3 DAYS" | "INTRADAY" | "1 WEEK"
+    inference_mode: str = "HEURISTIC_FALLBACK"  # "OPENROUTER_LIVE" | "HEURISTIC_FALLBACK"
+    ai: Optional[Dict[str, Any]] = None         # Full OpenRouter execution audit telemetry
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -71,7 +75,10 @@ class NewsIntelligenceCollector:
     """
     Collects, deduplicates, and analyzes news articles into structured intelligence
     with human-auditable causal transmission chains.
+    Integrates OpenRouter for real LLM event reasoning when configured, tracking full telemetry.
     """
+
+    _last_telemetry: Dict[str, Any] = {}
 
     HEADERS = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -284,10 +291,19 @@ class NewsIntelligenceCollector:
         }
 
     @classmethod
-    def collect_and_analyze(cls, max_articles_per_category: int = 5) -> List[NewsArticleRecord]:
+    def collect_and_analyze(
+        cls,
+        max_articles_per_category: int = 5,
+        llm_provider: Optional[LLMProvider] = None,
+        enable_llm: bool = True,
+    ) -> List[NewsArticleRecord]:
         """
         Gathers news from RSS feeds, deduplicates, and analyzes each into a NewsArticleRecord.
+        Supports real OpenRouter LLM interpretation with fallback and audit telemetry.
         """
+        if llm_provider is None and enable_llm:
+            llm_provider = get_default_llm_provider()
+
         articles: List[NewsArticleRecord] = []
         seen_hashes: Set[str] = set()
         seen_norm_titles: List[str] = []
@@ -353,6 +369,51 @@ class NewsIntelligenceCollector:
 
                     # Run causal event attribution
                     analysis = cls.analyze_article_causality(clean_title, category)
+                    now_utc = datetime.now(timezone.utc)
+
+                    # Execute LLM reasoning (OpenRouter live when configured, with audit telemetry)
+                    llm_parsed = {}
+                    if enable_llm and llm_provider is not None:
+                        try:
+                            llm_parsed = llm_provider.interpret_event(clean_title, category)
+                        except Exception as exc:
+                            logger.warning("LLM interpret_event call failed: %s", exc)
+                            llm_parsed = {
+                                "inference_mode": "HEURISTIC_FALLBACK",
+                                "ai": {
+                                    "provider": "openrouter",
+                                    "model": getattr(llm_provider, "model", "unknown"),
+                                    "request_id": None,
+                                    "latency_ms": 0,
+                                    "input_tokens": 0,
+                                    "output_tokens": 0,
+                                    "total_tokens": 0,
+                                    "status": "FAILED",
+                                    "inference_mode": "HEURISTIC_FALLBACK",
+                                    "error_reason": str(exc),
+                                    "timestamp": now_utc.isoformat(),
+                                }
+                            }
+
+                    ai_meta = llm_parsed.get("ai") if llm_parsed else None
+                    inf_mode = llm_parsed.get("inference_mode", "HEURISTIC_FALLBACK")
+                    if ai_meta:
+                        ai_meta["ingested_at"] = ingest_time.isoformat()
+                        ai_meta["analyzed_at"] = now_utc.isoformat()
+                        ai_meta["article_id"] = f"ART-{content_hash}"
+                        cls._last_telemetry = dict(ai_meta)
+
+                    ai_reason = analysis["ai_reasoning"]
+                    ai_conf = analysis["confidence"]
+                    if inf_mode == "OPENROUTER_LIVE" and llm_parsed.get("investment_thesis"):
+                        ai_reason = f"[OpenRouter AI] {llm_parsed['investment_thesis']} Transmission: {analysis['why_it_matters_text']}"
+                        if llm_parsed.get("confidence"):
+                            try:
+                                ai_conf = float(llm_parsed["confidence"])
+                            except Exception:
+                                pass
+                    elif inf_mode == "HEURISTIC_FALLBACK":
+                        ai_reason = f"[Heuristic Baseline - OpenRouter Unavailable] {analysis['ai_reasoning']}"
 
                     article_record = NewsArticleRecord(
                         article_id=f"ART-{content_hash}",
@@ -363,7 +424,7 @@ class NewsIntelligenceCollector:
                         region=region,
                         published_at=pub_dt.isoformat(),
                         ingested_at=ingest_time.isoformat(),
-                        analyzed_at=datetime.now(timezone.utc).isoformat(),
+                        analyzed_at=now_utc.isoformat(),
                         content_hash=content_hash,
                         event_type=analysis["event_type"],
                         sentiment=analysis["sentiment"],
@@ -373,12 +434,14 @@ class NewsIntelligenceCollector:
                         affected_sectors=analysis["affected_sectors"],
                         horizon=analysis["horizon"],
                         ai_summary=analysis["ai_summary"],
-                        ai_reasoning=analysis["ai_reasoning"],
-                        confidence=analysis["confidence"],
+                        ai_reasoning=ai_reason,
+                        confidence=ai_conf,
                         why_it_matters_chain=analysis["why_it_matters_chain"],
                         why_it_matters_text=analysis["why_it_matters_text"],
                         nexus_impact=analysis["nexus_impact"],
                         transmission_horizon=analysis["transmission_horizon"],
+                        inference_mode=inf_mode,
+                        ai=ai_meta,
                     )
 
                     articles.append(article_record)
@@ -390,4 +453,23 @@ class NewsIntelligenceCollector:
             except Exception as e:
                 logger.debug("Failed querying news feed for '%s': %s", query, e)
 
+        # If no articles were processed, still record default telemetry
+        if not cls._last_telemetry and llm_provider is not None:
+            cls._last_telemetry = {
+                "provider": "openrouter" if isinstance(llm_provider, OpenRouterProvider) else "heuristic",
+                "model": getattr(llm_provider, "model", "none"),
+                "status": "NOT_CONFIGURED" if not getattr(llm_provider, "api_key", None) else "NOT_TESTED",
+                "inference_mode": "HEURISTIC_FALLBACK",
+                "request_id": None,
+                "latency_ms": None,
+                "tokens": 0,
+                "error_reason": None,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+
         return articles
+
+    @classmethod
+    def get_last_telemetry(cls) -> Dict[str, Any]:
+        """Returns the most recent runtime API telemetry for OpenRouter / LLM analysis."""
+        return dict(cls._last_telemetry)

@@ -1446,7 +1446,60 @@
 
         </div>
 
-        <!-- 3. Recent Runs Table -->
+        <!-- 3. API Connectivity Proof & OpenRouter Diagnostic Grid -->
+        <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 20px; margin-bottom: 20px;">
+          
+          <!-- API Connectivity Proof Table -->
+          <section class="section-panel" style="margin-bottom: 0;">
+            <div class="section-header">
+              <div class="section-title-group">
+                <h3>API CONNECTIVITY &amp; DATA PROVENANCE PROOF</h3>
+                <p>Real-time endpoint telemetry distinguishing HTTP calls from ingested and persisted records.</p>
+              </div>
+              <span class="badge badge-green" id="api-telemetry-status-badge">🟢 VERIFIED</span>
+            </div>
+
+            <div class="table-responsive">
+              <table class="data-table" id="api-connectivity-table">
+                <thead>
+                  <tr>
+                    <th>FEED / PROVIDER</th>
+                    <th>HTTP</th>
+                    <th>SCHEMA</th>
+                    <th class="numeric">INGESTED</th>
+                    <th class="numeric">PERSISTED</th>
+                    <th>FRESHNESS</th>
+                    <th>FALLBACK</th>
+                    <th>STATUS / ERROR</th>
+                  </tr>
+                </thead>
+                <tbody id="api-connectivity-tbody">
+                  <!-- Injected via app.js -->
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- OpenRouter AI Diagnostic Card -->
+          <section class="section-panel" style="margin-bottom: 0;">
+            <div class="section-header">
+              <div class="section-title-group">
+                <h3>OPENROUTER AI DIAGNOSTIC</h3>
+                <p>Server-side isolated execution test &amp; token telemetry</p>
+              </div>
+              <button class="btn-action primary" id="test-openrouter-btn" onclick="triggerOpenRouterDiagnostic()">⚡ Test Connectivity</button>
+            </div>
+
+            <div id="ai-diagnostic-content" style="padding: 10px 0;">
+              <!-- Injected via app.js -->
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 8px; margin-top: 8px;">
+              🔒 <strong>Security Invariant:</strong> Server-side proxy execution only. OPENROUTER_API_KEY is isolated server-side and never reaches browser.
+            </div>
+          </section>
+        </div>
+
+        <!-- 4. Recent Runs Table -->
         <section class="section-panel">
           <div class="section-header">
             <div class="section-title-group">
@@ -1570,7 +1623,7 @@
         <div class="drawer-section" style="border-bottom: none;">
           <h4>Audit & Provenance (SHA-256)</h4>
           <div style="font-family: monospace; font-size: 10px; color: var(--text-muted); word-break: break-all; background: var(--bg-surface-secondary); padding: 8px; border-radius: var(--radius-sm);" id="dr-provenance-hash">
-            SHA256: 4f9e8a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f
+            SHA256: AWAITING RECORD SELECTION
           </div>
         </div>
       </div>
