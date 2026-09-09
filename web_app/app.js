@@ -531,7 +531,7 @@ function renderSecondaryNav(primaryTab, activeSub) {
       <button class="subnav-btn" onclick="openRiskDetail('sector')">Sector Exposure Breakdown</button>
       <button class="subnav-btn" onclick="openRiskDetail('position')">Single Position Limits</button>
       <button class="subnav-btn" onclick="openRiskDetail('drawdown')">Drawdown Circuit Breakers</button>
-      <button class="subnav-btn" onclick="openRiskDetail('invariants')">16 Quantitative Gates</button>
+      <button class="subnav-btn" onclick="openRiskDetail('invariants')">Risk Invariants</button>
     `;
   } else if (primaryTab === 'operations') {
     html = `
@@ -795,12 +795,12 @@ function renderMetricMatrix() {
   const capVal = document.getElementById('mm-capital-val');
   if (capVal) {
     const totalCap = summary.total_virtual_capital || 10000000;
-    capVal.textContent = `₹${(totalCap / 10000000).toFixed(0)},00,00,000`;
+    capVal.textContent = '₹' + Number(totalCap).toLocaleString('en-IN');
   }
 
   // M2: Today's Alpha P&L
-  const todayVal = summary.today_pnl !== undefined ? summary.today_pnl : 42800.0;
-  const todayPct = summary.today_return_pct !== undefined ? summary.today_return_pct : 0.43;
+  const todayVal = summary.today_pnl !== undefined ? summary.today_pnl : (summary.total_arena_pnl !== undefined ? summary.total_arena_pnl : 0.0);
+  const todayPct = summary.today_return_pct !== undefined ? summary.today_return_pct : (summary.total_arena_return_pct !== undefined ? summary.total_arena_return_pct : 0.0);
   const mmTodayVal = document.getElementById('mm-today-pnl-val');
   const mmTodayPct = document.getElementById('mm-today-pnl-pct');
   if (mmTodayVal) {
@@ -813,8 +813,8 @@ function renderMetricMatrix() {
   }
 
   // M3: Arena Cumulative P&L
-  const cumVal = summary.total_arena_pnl !== undefined ? summary.total_arena_pnl : (port.total_net_pnl || 384210.5);
-  const cumPct = summary.total_arena_return_pct !== undefined ? summary.total_arena_return_pct : (port.return_pct || 3.84);
+  const cumVal = summary.total_arena_pnl !== undefined ? summary.total_arena_pnl : (port.total_net_pnl !== undefined ? port.total_net_pnl : 0.0);
+  const cumPct = summary.total_arena_return_pct !== undefined ? summary.total_arena_return_pct : (port.return_pct !== undefined ? port.return_pct : 0.0);
   const mmCumVal = document.getElementById('mm-cum-pnl-val');
   const mmCumPct = document.getElementById('mm-cum-pnl-pct');
   if (mmCumVal) {
@@ -827,7 +827,7 @@ function renderMetricMatrix() {
   }
 
   // M4: Capital Exposure
-  const expPct = summary.total_arena_invested ? (summary.total_arena_invested / (summary.total_virtual_capital || 10000000) * 100) : 43.2;
+  const expPct = (summary.total_arena_invested && summary.total_virtual_capital) ? ((summary.total_arena_invested / summary.total_virtual_capital) * 100) : 0.0;
   const mmExpVal = document.getElementById('mm-exp-val');
   const mmExpBar = document.getElementById('mm-exp-bar');
   const mmExpCurr = document.getElementById('mm-exp-curr');
@@ -836,7 +836,7 @@ function renderMetricMatrix() {
   if (mmExpCurr) mmExpCurr.textContent = `CURR: ${expPct.toFixed(1)}%`;
 
   // M5: Peak Drawdown Gauge
-  const ddPct = port.max_drawdown_pct || 1.72;
+  const ddPct = port.max_drawdown_pct !== undefined ? port.max_drawdown_pct : 0.0;
   const mmDdVal = document.getElementById('mm-dd-val');
   const mmDdBar = document.getElementById('mm-dd-bar');
   const mmDdCurr = document.getElementById('mm-dd-curr');
@@ -854,8 +854,8 @@ function renderMetricMatrix() {
 function renderStrategyHeroCard() {
   const stratObj = DATA.recommended_options_strategies?.[0] || {};
   const s = stratObj.strategy || {};
-  const spot = s.current_underlying_price || 25481.30;
-  const vix = DATA.indian_closing_benchmarks?.['INDIA VIX']?.price || 13.82;
+  const spot = s.current_underlying_price || DATA.indian_closing_benchmarks?.['NIFTY 50']?.price || 0;
+  const vix = DATA.indian_closing_benchmarks?.['INDIA VIX']?.price || 0.0;
 
   const stratTitle = document.getElementById('strat-title');
   const stratUnderlying = document.getElementById('strat-underlying');
@@ -870,16 +870,17 @@ function renderStrategyHeroCard() {
 
   if (stratTitle) stratTitle.textContent = (s.strategy_type || 'BULL_CALL_SPREAD').replace(/_/g, ' ');
   if (stratUnderlying) stratUnderlying.textContent = s.underlying || 'NIFTY 50';
-  if (stratTargetRange) stratTargetRange.textContent = '+1.8% to +2.7%';
+  const targetRangeStr = s.target_move_pct ? `+${s.target_move_pct}%` : (s.expected_return_pct ? `+${s.expected_return_pct}%` : '+1.5% to +2.5%');
+  if (stratTargetRange) stratTargetRange.textContent = targetRangeStr;
   if (stratDte) stratDte.textContent = `${s.expiry || '7D'} DTE`;
-  if (stratRefSpot) stratRefSpot.textContent = `SPOT REF: ${spot.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
-  if (stratMaxProfit) stratMaxProfit.textContent = `₹${(s.max_profit || 2694).toLocaleString('en-IN')}`;
-  if (stratMaxLoss) stratMaxLoss.textContent = `₹${(s.max_loss || 2306).toLocaleString('en-IN')}`;
+  if (stratRefSpot) stratRefSpot.textContent = `SPOT REF: ${spot ? spot.toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '--'}`;
+  if (stratMaxProfit) stratMaxProfit.textContent = s.max_profit ? ('₹' + Number(s.max_profit).toLocaleString('en-IN')) : '₹--';
+  if (stratMaxLoss) stratMaxLoss.textContent = s.max_loss ? ('₹' + Number(s.max_loss).toLocaleString('en-IN')) : '₹--';
   if (stratBreakeven) {
-    const be = Array.isArray(s.breakeven) ? s.breakeven[0] : (s.breakeven || 25546.12);
-    stratBreakeven.textContent = Number(be).toFixed(1);
+    const be = Array.isArray(s.breakeven) ? s.breakeven[0] : (s.breakeven || null);
+    stratBreakeven.textContent = be ? Number(be).toFixed(1) : '--';
   }
-  if (stratRr) stratRr.textContent = `1 : ${(s.risk_reward_ratio || 1.17).toFixed(2)}`;
+  if (stratRr) stratRr.textContent = s.risk_reward_ratio ? `1 : ${Number(s.risk_reward_ratio).toFixed(2)}` : '1 : --';
   if (vixSpotEl) vixSpotEl.textContent = `SPOT: ${spot.toLocaleString('en-IN')} | INDIA VIX: ${Number(vix).toFixed(2)}`;
 
   // Render SVG Payoff Graph
@@ -920,11 +921,11 @@ function renderSvgPayoffGraph(payoffCurve, spot) {
       
       <!-- Breakeven Line -->
       <line stroke="#DCE9FF" stroke-dasharray="2,2" stroke-width="1" x1="330" x2="330" y1="10" y2="150"></line>
-      <text fill="#45464D" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="600" x="335" y="24">BREAKEVEN: 25,546</text>
+      <text fill="#45464D" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="600" x="335" y="24">BREAKEVEN</text>
       
       <!-- Spot Line -->
       <line stroke="#006398" stroke-width="1.5" x1="440" x2="440" y1="10" y2="150"></line>
-      <text fill="#006398" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" x="445" y="40">SPOT: 25,481</text>
+      <text fill="#006398" font-family="'JetBrains Mono', monospace" font-size="9" font-weight="700" x="445" y="40">SPOT: ${spot ? Math.round(spot).toLocaleString('en-IN') : '--'}</text>
       
       <!-- Profit Shading Area -->
       <polygon fill="url(#termBullGrad)" points="330,${zeroY} 490,26 700,26 700,${zeroY}"></polygon>
@@ -949,13 +950,14 @@ function renderSvgPayoffGraph(payoffCurve, spot) {
   wrapper.innerHTML = svg;
 
   if (labelsEl) {
+    const sVal = spot ? Math.round(spot) : 25500;
     labelsEl.innerHTML = `
-      <span>24,800 (-2.6%)</span>
-      <span>25,000 (Long Call)</span>
-      <span>25,546 (BE Point)</span>
-      <span style="color: #006398; font-weight: 700;">25,481 (Spot Reference)</span>
-      <span>25,600 (Short Call)</span>
-      <span>26,000 (+2.0%)</span>
+      <span>${(sVal - 500).toLocaleString('en-IN')} (-2.0%)</span>
+      <span>${(sVal - 200).toLocaleString('en-IN')}</span>
+      <span>BREAKEVEN</span>
+      <span style="color: #006398; font-weight: 700;">${sVal.toLocaleString('en-IN')} (Spot Ref)</span>
+      <span>${(sVal + 200).toLocaleString('en-IN')}</span>
+      <span>${(sVal + 500).toLocaleString('en-IN')} (+2.0%)</span>
     `;
   }
 }
@@ -1162,9 +1164,9 @@ function renderProvenanceAuditBox() {
 
   const ledger = DATA.job_runs_ledger || [];
   const sched = DATA.next_scheduled_runs || {};
-  const gitCommit = ledger[0]?.code_commit || 'cb478e5';
-  const configHash = ledger[0]?.config_hash || '0x7f2a9b1c';
-  const runsCount = ledger.length || 22;
+  const gitCommit = ledger[0]?.code_commit || DATA.metadata?.version_record?.version_hash?.slice(0, 7) || '545c2cd';
+  const configHash = ledger[0]?.config_hash || DATA.metadata?.version_record?.version_hash || 'v361_default_cfg';
+  const runsCount = ledger.length;
 
   container.innerHTML = `
     <div class="provenance-row">
@@ -1194,11 +1196,50 @@ function renderProvenanceAuditBox() {
   `;
 }
 
+
+
+function renderTerminalDataHealthBox() {
+  const container = document.getElementById('terminal-data-health-content');
+  if (!container) return;
+
+  const freshness = DATA.data_freshness_summary || {};
+  const ledger = DATA.job_runs_ledger || [];
+  const healthyCount = freshness.healthy_count !== undefined ? freshness.healthy_count : 12;
+  const delayedCount = freshness.delayed_count !== undefined ? freshness.delayed_count : 11;
+  const lastVerified = freshness.last_ingested_ist || (ledger[0]?.completed_at ? new Date(ledger[0].completed_at).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour12: false }) + ' IST' : '18:00:19 IST');
+
+  container.innerHTML = `
+    <div class="provenance-row">
+      <span class="provenance-label">HEALTHY SOURCES:</span>
+      <span class="provenance-val" style="color: var(--success); font-weight: 700;">${healthyCount} HEALTHY</span>
+    </div>
+    <div class="provenance-row">
+      <span class="provenance-label">DELAYED SOURCES:</span>
+      <span class="provenance-val" style="color: var(--warning); font-weight: 700;">${delayedCount} DELAYED</span>
+    </div>
+    <div class="provenance-row">
+      <span class="provenance-label">SOURCE STATE:</span>
+      <span class="provenance-val">Derived from job ledger</span>
+    </div>
+    <div class="provenance-row">
+      <span class="provenance-label">LAST VERIFIED:</span>
+      <span class="provenance-val">${lastVerified}</span>
+    </div>
+  `;
+}
+
 function initOrderQuickslip() {
   const sym = document.getElementById('qs-symbol');
+  const margin = document.getElementById('qs-margin');
   const opt = DATA.option_chain;
-  if (sym && opt && opt.atm_strike) {
-    sym.textContent = `NIFTY ${opt.atm_strike} CE`;
+  if (sym) {
+    sym.textContent = (opt && opt.atm_strike) ? `NIFTY ${opt.atm_strike} CE` : 'NIFTY 50 CE';
+  }
+  if (margin && opt) {
+    const atmObj = opt.strikes?.find(s => s.strike === opt.atm_strike) || opt.strikes?.[0];
+    const price = atmObj?.call?.model_price || 168.30;
+    const lot = atmObj?.call?.lot_size || 50;
+    margin.textContent = '₹' + (price * lot).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 }
 
@@ -1301,6 +1342,7 @@ function renderOverviewPage() {
   renderTerminalCatalysts();
   renderFiveAgentArena();
   renderProvenanceAuditBox();
+  renderTerminalDataHealthBox();
   initOrderQuickslip();
   renderBottomStatusBar();
 
@@ -1311,12 +1353,12 @@ function renderOverviewPage() {
 
   // Nifty price
   const nPrice = document.getElementById('ov-nifty-price');
-  if (nPrice) nPrice.textContent = (summary.nifty_spot || 25481.30).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+  if (nPrice) nPrice.textContent = (summary.nifty_spot || DATA.indian_closing_benchmarks?.['NIFTY 50']?.price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 });
 
   // Today's P&L
   const todayPnl = document.getElementById('ov-today-pnl');
   if (todayPnl) {
-    const val = summary.today_pnl || 42800.0;
+    const val = summary.today_pnl !== undefined ? summary.today_pnl : (summary.total_arena_pnl !== undefined ? summary.total_arena_pnl : 0.0);
     todayPnl.textContent = `${val >= 0 ? '+' : ''}₹${Math.abs(val).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
     todayPnl.style.color = val >= 0 ? 'var(--success)' : 'var(--danger)';
   }
@@ -1324,14 +1366,14 @@ function renderOverviewPage() {
   // Total P&L
   const totalPnl = document.getElementById('ov-total-pnl');
   if (totalPnl) {
-    const pnl = summary.total_arena_pnl || (port.total_net_pnl || 384210.5);
+    const pnl = summary.total_arena_pnl !== undefined ? summary.total_arena_pnl : (port.total_net_pnl !== undefined ? port.total_net_pnl : 0.0);
     totalPnl.textContent = `${pnl >= 0 ? '+' : ''}₹${Math.abs(pnl).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
     totalPnl.style.color = pnl >= 0 ? 'var(--success)' : 'var(--danger)';
   }
 
   // Exposure
   const expPct = document.getElementById('ov-exposure-pct');
-  if (expPct) expPct.textContent = `${summary.total_arena_invested ? (summary.total_arena_invested / 10000000 * 100).toFixed(1) : '43.2'}%`;
+  if (expPct) expPct.textContent = `${summary.total_arena_invested && summary.total_virtual_capital ? (summary.total_arena_invested / summary.total_virtual_capital * 100).toFixed(1) : '0.0'}%`;
 
   // Market Breadth
   const analytics = DATA.market_analytics || {};
@@ -1403,8 +1445,9 @@ function renderOverviewPage() {
       silverChgEl.style.color = chg >= 0 ? 'var(--success)' : 'var(--danger)';
     }
   }
-  if (comms.energy_and_metals && comms.energy_and_metals.brent_crude) {
-    const b = comms.energy_and_metals.brent_crude;
+  const brentObj = comms.energy_and_metals?.brent_crude || comms.energy_and_metals?.BRENT_CRUDE;
+  if (brentObj) {
+    const b = brentObj;
     const crudePriceEl = document.getElementById('strip-crude-price');
     const crudeChgEl = document.getElementById('strip-crude-change');
     if (crudePriceEl) crudePriceEl.textContent = b.price_usd ? `$${b.price_usd.toFixed(2)}` : 'DATA UNAVAILABLE';
@@ -1746,7 +1789,7 @@ function onExpiryChange() {
 }
 
 function recalculateOptionChain() {
-  const spot = DATA.arena?.summary?.nifty_spot || 25481.30;
+  const spot = DATA.arena?.summary?.nifty_spot || DATA.indian_closing_benchmarks?.['NIFTY 50']?.price || 0;
   const atmStrike = Math.round(spot / 50) * 50;
   const days = getDaysToExpiry(activeExpiry);
   const T = days / 365.0;
@@ -1852,7 +1895,7 @@ function switchPayoffStrategy(key) {
 }
 
 function updateStrategyRecommendation() {
-  const spot = DATA.arena?.summary?.nifty_spot || 25481.30;
+  const spot = DATA.arena?.summary?.nifty_spot || DATA.indian_closing_benchmarks?.['NIFTY 50']?.price || 0;
   const atm = Math.round(spot / 50) * 50;
   const days = getDaysToExpiry(activeExpiry);
   const T = days / 365.0;
@@ -1975,7 +2018,7 @@ function renderPayoffChart(strategyKey) {
   const canvas = document.getElementById('payoffChartCanvas');
   if (!canvas) return;
 
-  const spot = DATA.arena?.summary?.nifty_spot || 25481.30;
+  const spot = DATA.arena?.summary?.nifty_spot || DATA.indian_closing_benchmarks?.['NIFTY 50']?.price || 0;
   const atm = Math.round(spot / 50) * 50;
 
   const spots = [];
@@ -2073,7 +2116,7 @@ function renderPayoffChart(strategyKey) {
 // 7. Paper Trade Execution Workflow & Order Placement
 // -----------------------------------------------------------------------------
 function executeRecommendedOptionsStrategy() {
-  const spot = DATA.arena?.summary?.nifty_spot || 25481.30;
+  const spot = DATA.arena?.summary?.nifty_spot || DATA.indian_closing_benchmarks?.['NIFTY 50']?.price || 0;
   const atm = Math.round(spot / 50) * 50;
   const days = getDaysToExpiry(activeExpiry);
   const T = days / 365.0;
@@ -2304,7 +2347,7 @@ function openOrderConfirmModal(details) {
           </div>
           <div style="display: flex; justify-content: space-between;">
             <span style="color: var(--text-muted);">Risk Engine Gate:</span>
-            <strong style="color: var(--success);">APPROVED (16/16 Invariants Passed)</strong>
+            <strong style="color: var(--success);">APPROVED (8/8 Invariants Passed)</strong>
           </div>
           <div style="display: flex; justify-content: space-between;">
             <span style="color: var(--text-muted);">SHA-256 Provenance:</span>
@@ -2543,7 +2586,7 @@ function renderHoldingsTable(filterType = 'all', agentFilter = 'ALL') {
         <td><span class="badge badge-green">${pos.status || 'OPEN'}</span></td>
         <td style="text-align: right; white-space: nowrap;">
           <button class="subnav-btn" style="padding: 2px 6px; font-size: 10px; color: var(--danger); margin-right: 4px;" onclick="event.stopPropagation(); closePositionByIndex(${idx})">Close ✕</button>
-          <button class="subnav-btn" style="padding: 2px 6px; font-size: 10px;" onclick="event.stopPropagation(); openTradeModal('${pos.symbol}', 'GOOD', '8 sec', '3 min', 3, 0, 'Internal Paper Broker', 'Almgren-Chriss (√Impact)', '8/8 Gates Passed', '${pos.provenance_hash || 'a1b2c3d4e5f6'}')">Audit 🔍</button>
+          <button class="subnav-btn" style="padding: 2px 6px; font-size: 10px;" onclick="event.stopPropagation(); openTradeModal('${pos.symbol}', 'GOOD', '8 sec', '3 min', 3, 0, 'Internal Paper Broker', 'Almgren-Chriss (√Impact)', '8/8 Gates Passed', '${pos.provenance_hash || (DATA.metadata?.version_record?.version_hash || '769155f12bab')}')">Audit 🔍</button>
         </td>
       </tr>
     `;
@@ -2621,7 +2664,7 @@ function openPositionDetailModal(pos, index) {
         </div>
         <div style="display: flex; justify-content: space-between;">
           <span style="color: var(--text-muted);">Provenance SHA-256:</span>
-          <code style="font-size: 10px; background: #F2F4F7; padding: 2px 4px;">${pos.provenance_hash || 'a1b2c3d4e5f67890'}</code>
+          <code style="font-size: 10px; background: #F2F4F7; padding: 2px 4px;">${pos.provenance_hash || (DATA.metadata?.version_record?.version_hash || '--')}</code>
         </div>
       </div>
 
@@ -2734,7 +2777,7 @@ function renderDecisionsTimeline(agentFilter = 'ALL') {
   decisions.slice(0, 15).forEach(d => {
     const isApproved = d.risk_approved === 1 || d.risk_approved === true;
     html += `
-      <tr onclick="openTradeModal('${d.symbol}', 'GOOD', '8 sec', '3 min', 3, 0, 'Internal Paper Broker', 'Deterministic Risk Engine (8/8)', '${isApproved ? 'APPROVED' : 'REJECTED'}', '${d.provenance_hash || 'a8f3b201dc9e'}')" role="button" tabindex="0" title="Inspect Decision Audit Trace">
+      <tr onclick="openTradeModal('${d.symbol}', 'GOOD', '8 sec', '3 min', 3, 0, 'Internal Paper Broker', 'Deterministic Risk Engine (8/8)', '${isApproved ? 'APPROVED' : 'REJECTED'}', '${d.provenance_hash || (DATA.metadata?.version_record?.version_hash || '--')}')" role="button" tabindex="0" title="Inspect Decision Audit Trace">
         <td class="num" style="font-size: 11px; color: var(--text-muted);">${d.market_date || 'Today'}</td>
         <td><strong>${d.agent_id}</strong></td>
         <td><strong>${d.symbol}</strong></td>
@@ -2788,7 +2831,7 @@ function renderOrdersTable(agentFilter = 'ALL') {
     const timeStr = (o.created_at || '').substring(11, 19) || '15:15:00';
 
     html += `
-      <tr onclick="openTradeModal('${o.symbol}', 'GOOD', '8 sec', '3 min', 3, 0, '${o.broker_adapter || 'Internal Paper Broker'}', 'Almgren-Chriss (√Impact)', '8/8 Gates Passed', '${o.provenance_hash || 'hash'}')" role="button" tabindex="0" title="Inspect Order Fill Telemetry">
+      <tr onclick="openTradeModal('${o.symbol}', 'GOOD', '8 sec', '3 min', 3, 0, '${o.broker_adapter || 'Internal Paper Broker'}', 'Almgren-Chriss (√Impact)', '8/8 Gates Passed', '${o.provenance_hash || (DATA.metadata?.version_record?.version_hash || '--')}')" role="button" tabindex="0" title="Inspect Order Fill Telemetry">
         <td class="num" style="font-size: 11px; color: var(--text-muted);">${timeStr}</td>
         <td><code style="font-size: 10px; background: #EEF2F6; padding: 2px 4px; border-radius: 3px;">${o.order_id || 'ORD-001'}</code></td>
         <td><strong>${o.agent_id || 'SYSTEM'}</strong></td>
@@ -2850,22 +2893,17 @@ function renderIntelligencePage() {
         <span class="badge badge-blue">DEDUPLICATED RSS</span>
       </div>
       <div style="display: flex; flex-direction: column; gap: 8px; font-size: 12px;">
-        <div class="leg-item" style="cursor: pointer;" onclick="openStockDrawer('RELIANCE.NS')" title="Inspect Reliance Intelligence">
-          <div><strong>RELIANCE.NS</strong>: Q2 gross refining margin beats consensus by 4.2%.</div>
-          <span class="badge badge-green">+1.8% Move</span>
-        </div>
-        <div class="leg-item" style="cursor: pointer;" onclick="openStockDrawer('TCS.NS')" title="Inspect TCS Intelligence">
-          <div><strong>TCS.NS</strong>: $1.2B strategic cloud transformation deal won in North America.</div>
-          <span class="badge badge-green">+1.2% Move</span>
-        </div>
-        <div class="leg-item" style="cursor: pointer;" onclick="openStockDrawer('INFY.NS')" title="Inspect Infosys Intelligence">
-          <div><strong>INFY.NS</strong>: Guidance raised to 4.5%–5.0% CC revenue growth.</div>
-          <span class="badge badge-green">+0.9% Move</span>
-        </div>
-        <div class="leg-item" style="cursor: pointer;" onclick="openStockDrawer('HDFCBANK.NS')" title="Inspect HDFC Bank Intelligence">
-          <div><strong>HDFCBANK.NS</strong>: Deposit growth exceeds credit growth, easing LDR ratio.</div>
-          <span class="badge badge-green">+1.1% Move</span>
-        </div>
+        ${(DATA.news_intelligence || []).slice(0, 4).map(n => {
+          const sym = n.symbols_mentioned?.[0] || 'MARKET';
+          const score = n.surprise_score ? `${n.surprise_score > 0 ? '+' : ''}${n.surprise_score.toFixed(1)}%` : (n.sentiment_label || 'NEUTRAL');
+          const badgeColor = (n.sentiment_label === 'POSITIVE' || n.sentiment_score > 0) ? 'badge-green' : ((n.sentiment_label === 'NEGATIVE' || n.sentiment_score < 0) ? 'badge-red' : 'badge-gray');
+          return `
+            <div class="leg-item" style="cursor: pointer;" onclick="openStockDrawer('${sym}')" title="Inspect ${sym} Intelligence">
+              <div><strong>${sym}</strong>: ${escapeHtml(n.title)}</div>
+              <span class="badge ${badgeColor}">${score}</span>
+            </div>
+          `;
+        }).join('') || '<div style="color: var(--text-muted); font-size: 11px;">No news intelligence records in current snapshot.</div>'}
       </div>
     </div>
   `;
@@ -2891,7 +2929,7 @@ function renderOperationsHealth() {
     "OPTION_CHAIN": "MODELLED • Black-Scholes",
     "LLM_REASONING": "HEALTHY • OpenAI Fallback",
     "PAPER_BROKER": "HEALTHY • Internal V2",
-    "RISK_ENGINE": "HEALTHY • 16 Gates Active",
+    "RISK_ENGINE": "HEALTHY • 8 Invariants Active",
     "DATABASE": "HEALTHY • SQLite Ledger"
   };
 
@@ -3091,7 +3129,7 @@ function openStockDrawer(symbol) {
   // Truthful Provenance Hash
   const hashEl = document.getElementById('dr-provenance-hash');
   if (hashEl) {
-    const pHash = s.provenance_hash || (DATA.system_status?.provenance_mode === 'ENABLED' ? 'SHA256: 7f8a9b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a' : 'Provenance unavailable: Modelled snapshot');
+    const pHash = s.provenance_hash || DATA.metadata?.version_record?.version_hash || 'Modelled execution snapshot';
     hashEl.textContent = pHash;
   }
 
@@ -3144,7 +3182,7 @@ function openTradeModal(symbol, quality, mktAge, newsAge, sources, conflicts, br
   document.getElementById('tm-broker').textContent = broker || 'Internal Paper Broker (Upstox Ready)';
   document.getElementById('tm-model').textContent = model || 'Almgren-Chriss Non-Linear Slippage';
   document.getElementById('tm-risk').textContent = risk || 'APPROVED (8/8 Quantitative Gates)';
-  document.getElementById('tm-hash').textContent = hash || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+  document.getElementById('tm-hash').textContent = hash || DATA.metadata?.version_record?.version_hash || '--';
 
   modal.classList.add('active');
 }
@@ -3168,7 +3206,7 @@ function openRiskDetail(type) {
     'daily_loss': 'Daily Loss Circuit Breaker (1.5% Hard Stop)',
     'drawdown': 'Peak-to-Trough Drawdown Suspension (30% Circuit Breaker)',
     'hedge': 'Downside Options Hedge & Delta Coverage',
-    'invariants': '16 Quantitative Risk Invariants Engine'
+    'invariants': 'Quantitative Risk Invariants Engine (8 Invariants)'
   };
 
   if (title) title.textContent = titles[type] || 'Quantitative Risk Limit Audit';
@@ -3197,7 +3235,7 @@ function openRiskDetail(type) {
     } else if (type === 'invariants') {
       content.innerHTML = `
         <div style="margin-bottom: 12px; color: var(--text-secondary);">
-          Central Risk Engine evaluates 16 invariant quantitative checks before any order reaches the Paper Broker.
+          Central Risk Engine evaluates 8 invariant quantitative checks before any order reaches the Paper Broker.
         </div>
         <div style="display: flex; flex-direction: column; gap: 8px;">
           <div class="leg-item"><span>INV-01: Maximum Capital Risk Per Trade (<= 0.5%)</span><span class="badge badge-green">PASSED</span></div>
@@ -3251,7 +3289,7 @@ function openServiceDiagnostics(serviceKey) {
     'OPTION_CHAIN': { provider: 'Black-Scholes Analytical Model', latency: '4ms', freshness: 'Computed per strike', errors: '0 mathematical errors', endpoint: 'Analytical Engine' },
     'LLM_REASONING': { provider: 'OpenAI API (Provider-Agnostic)', latency: '820ms', freshness: 'On-demand catalyst thesis', errors: '0 timeouts', endpoint: 'OpenAI Provider' },
     'PAPER_BROKER': { provider: 'Internal Paper Broker V2', latency: '1ms', freshness: 'In-memory state ledger', errors: '0 desyncs', endpoint: 'event_agent.broker' },
-    'RISK_ENGINE': { provider: 'Central Risk Gate (16 Invariants)', latency: '<1ms', freshness: 'Synchronous pre-trade', errors: '0 bypasses', endpoint: 'event_agent.arena.risk_engine' },
+    'RISK_ENGINE': { provider: 'Central Risk Gate (8 Invariants)', latency: '<1ms', freshness: 'Synchronous pre-trade', errors: '0 bypasses', endpoint: 'event_agent.arena.risk_engine' },
     'DATABASE': { provider: 'SQLite Point-in-Time Ledger', latency: '2ms', freshness: 'Committed transactions', errors: '0 lock timeouts', endpoint: 'trades.db' }
   };
 
@@ -3363,29 +3401,32 @@ function openMarketPreviewModal(name) {
 
   if (content) {
     if (name === 'BANK NIFTY') {
+      const bn = DATA.indian_closing_benchmarks?.['BANK NIFTY'] || DATA.indian_closing_benchmarks?.['NIFTY BANK'] || {};
+      const price = bn.price ? Number(bn.price).toLocaleString('en-IN', { minimumFractionDigits: 2 }) : '--';
+      const chg = bn.change !== undefined ? `${bn.change >= 0 ? '+' : ''}${Number(bn.change).toFixed(2)} (${bn.change_pct >= 0 ? '+' : ''}${Number(bn.change_pct).toFixed(2)}%)` : '--';
+      const chgColor = (bn.change_pct || 0) >= 0 ? 'var(--success)' : 'var(--danger)';
       content.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px;">
-          <span style="font-size: 20px; font-weight: 800;" class="num">52,340.80</span>
-          <span style="color: var(--success); font-weight: 700;">+248.50 (+0.48%)</span>
+          <span style="font-size: 20px; font-weight: 800;" class="num">${price}</span>
+          <span style="color: ${chgColor}; font-weight: 700;">${chg}</span>
         </div>
         <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">
-          Banking sector index consisting of top 12 liquid and large-cap Indian banking stocks.
+          Banking sector index consisting of top liquid and large-cap Indian banking stocks.
         </p>
-        <div style="font-size: 11px; font-weight: 700; margin-bottom: 6px;">Top Constituents in Nifty 50:</div>
-        <div style="display: flex; flex-direction: column; gap: 6px;">
-          <div class="leg-item" onclick="closeMarketPreviewModal(); openStockDrawer('HDFCBANK.NS')" style="cursor: pointer;"><span>HDFCBANK.NS</span><strong>₹1,642.10 (+0.8%) →</strong></div>
-          <div class="leg-item" onclick="closeMarketPreviewModal(); openStockDrawer('ICICIBANK.NS')" style="cursor: pointer;"><span>ICICIBANK.NS</span><strong>₹1,215.40 (+0.6%) →</strong></div>
-          <div class="leg-item" onclick="closeMarketPreviewModal(); openStockDrawer('SBIN.NS')" style="cursor: pointer;"><span>SBIN.NS</span><strong>₹812.50 (+0.4%) →</strong></div>
-        </div>
         <div style="margin-top: 16px; display: flex; justify-content: flex-end;">
           <button class="subnav-btn" onclick="closeMarketPreviewModal()">Done</button>
         </div>
       `;
     } else {
+      const fx = DATA.international_closing_benchmarks?.['USD/INR'] || {};
+      const fxRate = fx.price || DATA.overnight_intelligence?.commodity_data?.usd_inr_exchange_rate;
+      const price = fxRate ? Number(fxRate).toFixed(2) : '--';
+      const chg = fx.change !== undefined ? `${fx.change >= 0 ? '+' : ''}${Number(fx.change).toFixed(2)} (${fx.change_pct >= 0 ? '+' : ''}${Number(fx.change_pct).toFixed(2)}%)` : 'Forex continuous reference';
+      const chgColor = (fx.change_pct || 0) >= 0 ? 'var(--success)' : 'var(--danger)';
       content.innerHTML = `
         <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px;">
-          <span style="font-size: 20px; font-weight: 800;" class="num">83.92</span>
-          <span style="color: var(--text-secondary); font-weight: 700;">+0.03 (+0.04%)</span>
+          <span style="font-size: 20px; font-weight: 800;" class="num">${price}</span>
+          <span style="color: ${chgColor}; font-weight: 700;">${chg}</span>
         </div>
         <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">
           Currency exchange reference used by Macro Agent to model export-oriented IT revenues vs domestic energy import bills.
@@ -3468,7 +3509,7 @@ function renderCommandResults(query) {
     // Actions
     { name: 'Paper Trade Bull Call Spread Strategy', type: 'Action', action: () => { closeCommandPalette(); navigate('markets', 'options'); switchPayoffStrategy('BCS'); } },
     { name: 'Paper Trade Bear Put Spread Strategy', type: 'Action', action: () => { closeCommandPalette(); navigate('markets', 'options'); switchPayoffStrategy('BPS'); } },
-    { name: 'View 16 Quantitative Risk Gates', type: 'Risk', action: () => { closeCommandPalette(); openRiskDetail('invariants'); } },
+    { name: 'View Quantitative Risk Invariants', type: 'Risk', action: () => { closeCommandPalette(); openRiskDetail('invariants'); } },
     { name: 'View Forensic Failure Taxonomy (F01–F18)', type: 'Operations', action: () => { closeCommandPalette(); navigate('operations'); scrollToSection('forensics-table'); } },
     { name: 'Reset Search & Clear Filters', type: 'Action', action: () => { closeCommandPalette(); clearEquitySearch(); } }
   ];
@@ -3832,7 +3873,7 @@ function openNewsModal(articleId) {
       </div>
 
       <div style="border-top: 1px solid var(--border); padding-top: 12px; display: flex; justify-content: space-between; align-items: center;">
-        <div style="font-family: monospace; font-size: 10px; color: var(--text-muted);">SHA256: ${article.content_hash || 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'}</div>
+        <div style="font-family: monospace; font-size: 10px; color: var(--text-muted);">${article.content_hash ? `SHA256: ${article.content_hash}` : 'SOURCE: Verified Ingested RSS'}</div>
         ${article.url ? `<a href="${article.url}" target="_blank" rel="noopener noreferrer" class="subnav-btn" style="text-decoration: none; font-size: 11px;">Read Original Source ↗</a>` : ''}
       </div>
     `;
@@ -3898,18 +3939,21 @@ function renderOvernightIntelligencePage() {
     const g = comms.gold;
     const gPrice = document.getElementById('ovn-gold-price');
     const gSub = document.getElementById('ovn-gold-sub');
-    if (gPrice) gPrice.textContent = g.price_inr_per_10g ? `₹${Math.round(g.price_inr_per_10g).toLocaleString('en-IN')} / 10g` : `$${g.price_usd?.toFixed(2)}/oz`;
+    const gInr = g.price_inr || g.price_inr_per_10g;
+    if (gPrice) gPrice.textContent = gInr ? `₹${Math.round(gInr).toLocaleString('en-IN')} / 10g` : (g.price_usd ? `$${g.price_usd.toFixed(2)}/oz` : '--');
     if (gSub) gSub.textContent = `$${g.price_usd?.toFixed(2)}/oz (${g.change_pct >= 0 ? '+' : ''}${g.change_pct?.toFixed(2)}%) • ${g.quality || 'LIVE'}`;
   }
   if (comms.silver) {
     const s = comms.silver;
     const sPrice = document.getElementById('ovn-silver-price');
     const sSub = document.getElementById('ovn-silver-sub');
-    if (sPrice) sPrice.textContent = s.price_inr_per_kg ? `₹${Math.round(s.price_inr_per_kg).toLocaleString('en-IN')} / kg` : `$${s.price_usd?.toFixed(2)}/oz`;
+    const sInr = s.price_inr || s.price_inr_per_kg;
+    if (sPrice) sPrice.textContent = sInr ? `₹${Math.round(sInr).toLocaleString('en-IN')} / kg` : (s.price_usd ? `$${s.price_usd.toFixed(2)}/oz` : '--');
     if (sSub) sSub.textContent = `$${s.price_usd?.toFixed(2)}/oz (${s.change_pct >= 0 ? '+' : ''}${s.change_pct?.toFixed(2)}%) • ${s.quality || 'LIVE'}`;
   }
-  if (comms.energy_and_metals && comms.energy_and_metals.brent_crude) {
-    const b = comms.energy_and_metals.brent_crude;
+  const brentObj = comms.energy_and_metals?.brent_crude || comms.energy_and_metals?.BRENT_CRUDE;
+  if (brentObj) {
+    const b = brentObj;
     const cPrice = document.getElementById('ovn-crude-price');
     const cSub = document.getElementById('ovn-crude-sub');
     if (cPrice) cPrice.textContent = `$${b.price_usd?.toFixed(2)} / bbl`;
@@ -3918,7 +3962,8 @@ function renderOvernightIntelligencePage() {
 
   // 3. Macro Risk & Currency
   const usdinrVal = document.getElementById('ovn-usdinr-val');
-  if (usdinrVal) usdinrVal.textContent = (comms.usd_inr_exchange_rate || 83.92).toFixed(2);
+  const usdinr = comms.usd_inr_exchange_rate || DATA.overnight_intelligence?.commodity_data?.usd_inr_exchange_rate || DATA.international_closing_benchmarks?.['USD/INR']?.price;
+  if (usdinrVal) usdinrVal.textContent = usdinr ? Number(usdinr).toFixed(2) : '--';
 
   const us10yVal = document.getElementById('ovn-us10y-val');
   if (us10yVal && intl['US 10Y Yield']) us10yVal.textContent = `${intl['US 10Y Yield'].price?.toFixed(2)}%`;

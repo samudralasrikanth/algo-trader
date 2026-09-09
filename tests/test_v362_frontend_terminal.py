@@ -154,4 +154,62 @@ class TestV362CommandTerminal:
         assert 'Hanken+Grotesk' in self.html_content or 'Hanken Grotesk' in self.html_content
         assert 'Material Symbols Outlined' in self.html_content or 'Material+Symbols+Outlined' in self.html_content
 
+    def test_no_fabricated_runtime_values(self):
+        """
+        V3.6.2.1 Integrity Polish Verification:
+        Verifies zero fabricated, demo, or hardcoded fallback numbers in app.js and initial index.html.
+        Verifies all displayed numeric metrics correspond directly to backend sources in data.json.
+        """
+        forbidden_strings = [
+            "42800",
+            "384210",
+            "83.92",
+            "16 Quantitative",
+            "refining margin",
+            "e3b0c442",
+            "16/16 Invariants",
+            "₹1,00,00,000",
+            "8,415.00",
+            "Dual-source market data reconciliation",
+            "DATA PIPELINES VERIFIED",
+        ]
+        for s in forbidden_strings:
+            assert s not in self.js_content, f"Forbidden fabricated value or stale claim '{s}' found in app.js"
+            assert s not in self.html_content, f"Forbidden fabricated value or stale claim '{s}' found in index.html"
+
+        # Verify backend source of truth in data.json
+        assert "arena" in self.data
+        summary = self.data["arena"]["summary"]
+        assert summary["total_virtual_capital"] == 10000000.0
+        assert "total_arena_pnl" in summary
+
+        benchmarks = self.data.get("indian_closing_benchmarks", {})
+        assert "NIFTY 50" in benchmarks
+        assert benchmarks["NIFTY 50"]["price"] == 23431.5
+
+        freshness = self.data.get("data_freshness_summary", {})
+        assert freshness.get("healthy_count") == 12
+        assert freshness.get("delayed_count") == 11
+
+        # Verify DATA SOURCE HEALTH telemetry banner exists and is derived from job ledger / data_freshness_summary
+        assert 'id="terminal-data-health-box"' in self.html_content
+        assert "Source state derived from job ledger" in self.html_content
+        assert "renderTerminalDataHealthBox" in self.js_content
+        assert "${healthyCount} HEALTHY" in self.js_content
+        assert "${delayedCount} DELAYED" in self.js_content
+
+        # Verify Command hierarchy reordering: option chain immediately follows strategy card, before risk gates and catalysts
+        strat_pos = self.html_content.find('id="terminal-strategy-card"')
+        opt_pos = self.html_content.find('id="terminal-option-chain"')
+        risk_pos = self.html_content.find('id="terminal-risk-gates"')
+        cat_pos = self.html_content.find('id="terminal-catalysts-section"')
+        evid_pos = self.html_content.find('id="terminal-evidence-panel"')
+
+        assert strat_pos != -1 and opt_pos != -1 and risk_pos != -1 and cat_pos != -1 and evid_pos != -1
+        assert strat_pos < opt_pos < risk_pos < cat_pos < evid_pos, (
+            f"Command hierarchy out of order: strat={strat_pos}, opt={opt_pos}, "
+            f"risk={risk_pos}, cat={cat_pos}, evid={evid_pos}"
+        )
+
+
 

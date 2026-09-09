@@ -219,7 +219,7 @@
               <span class="metric-card-label">ARENA CAPITAL</span>
               <span class="metric-card-subbadge" id="mm-capital-pockets">-- POCKETS</span>
             </div>
-            <div class="metric-card-val" id="mm-capital-val">₹1,00,00,000</div>
+            <div class="metric-card-val" id="mm-capital-val">₹--</div>
             <div class="metric-card-note" id="mm-capital-sub">Isolated Sub-Portfolios</div>
           </div>
           <!-- M2: Today's Alpha P&L -->
@@ -229,7 +229,7 @@
               <span class="metric-card-subbadge" id="mm-today-pnl-pct" style="color: var(--success);">--%</span>
             </div>
             <div class="metric-card-val" id="mm-today-pnl-val" style="color: var(--success);">+₹--</div>
-            <div class="metric-card-note">Mark-to-Market Real-time</div>
+            <div class="metric-card-note">Mark-to-Market (Paper)</div>
           </div>
           <!-- M3: Total Arena P&L -->
           <div class="terminal-metric-card" role="button" tabindex="0" onclick="navigate('arena')">
@@ -248,7 +248,7 @@
             </div>
             <div class="metric-card-val" id="mm-exp-val">--%</div>
             <div class="metric-progress-bar">
-              <div class="metric-progress-fill" id="mm-exp-bar" style="width: 43.2%;"></div>
+              <div class="metric-progress-fill" id="mm-exp-bar" style="width: 0%;"></div>
             </div>
             <div class="metric-card-note" style="display: flex; justify-content: space-between; margin-top: 4px;">
               <span id="mm-exp-curr">CURR: --%</span>
@@ -263,7 +263,7 @@
             </div>
             <div class="metric-card-val" id="mm-dd-val">--%</div>
             <div class="metric-progress-bar">
-              <div class="metric-progress-fill" id="mm-dd-bar" style="width: 5.7%; background: var(--danger);"></div>
+              <div class="metric-progress-fill" id="mm-dd-bar" style="width: 0%; background: var(--danger);"></div>
             </div>
             <div class="metric-card-note" style="display: flex; justify-content: space-between; margin-top: 4px;">
               <span id="mm-dd-curr">ACTUAL: --%</span>
@@ -344,44 +344,6 @@
                 <div class="payoff-axis-labels" id="payoff-axis-labels">
                   <!-- Generated dynamically via app.js -->
                 </div>
-              </div>
-            </div>
-
-            <!-- 2. Dynamic Evidence Sufficiency & Multi-Factor Signals Panel -->
-            <div class="evidence-panel-card" id="terminal-evidence-panel">
-              <div class="section-header" style="padding-bottom: 8px; border-bottom: 1px solid var(--border-subtle);">
-                <div class="section-title-group">
-                  <h3 style="font-size: 14px; font-weight: 700; color: var(--text-primary); font-family: 'Inter', sans-serif;">
-                    🔬 Dynamic Evidence Sufficiency &amp; Multi-Factor Signals
-                  </h3>
-                  <p style="font-size: 11px; color: var(--text-muted);">
-                    Institutional evidence sufficiency engine verifying independent observations and timestamp freshness before autonomous bias generation.
-                  </p>
-                </div>
-                <span class="ribbon-badge badge-eod" id="evidence-freshness-status">AUDITED</span>
-              </div>
-              
-              <div class="evidence-table-wrap" style="margin-top: 8px;">
-                <table class="evidence-table">
-                  <thead>
-                    <tr>
-                      <th>SIGNAL DOMAIN</th>
-                      <th>INDICATOR</th>
-                      <th>OBSERVED METRIC</th>
-                      <th>DIRECTIONAL IMPACT</th>
-                      <th>SOURCES AUDITED</th>
-                      <th>STATUS</th>
-                    </tr>
-                  </thead>
-                  <tbody id="terminal-evidence-tbody">
-                    <!-- Injected dynamically via app.js -->
-                  </tbody>
-                </table>
-              </div>
-              
-              <div class="sufficiency-banner pass" id="terminal-sufficiency-banner">
-                <span id="sufficiency-banner-text">🟢 4 / 4 SUFFICIENCY RULES SATISFIED • AUTONOMOUS VIEW CERTIFIED</span>
-                <span style="font-size: 10px; color: var(--text-muted);" id="sufficiency-banner-ts">Verified</span>
               </div>
             </div>
 
@@ -468,6 +430,44 @@
               </div>
             </div>
 
+            <!-- 2. Dynamic Evidence Sufficiency & Multi-Factor Signals Panel -->
+            <div class="evidence-panel-card" id="terminal-evidence-panel">
+              <div class="section-header" style="padding-bottom: 8px; border-bottom: 1px solid var(--border-subtle);">
+                <div class="section-title-group">
+                  <h3 style="font-size: 14px; font-weight: 700; color: var(--text-primary); font-family: 'Inter', sans-serif;">
+                    🔬 Dynamic Evidence Sufficiency &amp; Multi-Factor Signals
+                  </h3>
+                  <p style="font-size: 11px; color: var(--text-muted);">
+                    Institutional evidence sufficiency engine verifying independent observations and timestamp freshness before autonomous bias generation.
+                  </p>
+                </div>
+                <span class="ribbon-badge badge-eod" id="evidence-freshness-status">AUDITED</span>
+              </div>
+              
+              <div class="evidence-table-wrap" style="margin-top: 8px;">
+                <table class="evidence-table">
+                  <thead>
+                    <tr>
+                      <th>SIGNAL DOMAIN</th>
+                      <th>INDICATOR</th>
+                      <th>OBSERVED METRIC</th>
+                      <th>DIRECTIONAL IMPACT</th>
+                      <th>SOURCES AUDITED</th>
+                      <th>STATUS</th>
+                    </tr>
+                  </thead>
+                  <tbody id="terminal-evidence-tbody">
+                    <!-- Injected dynamically via app.js -->
+                  </tbody>
+                </table>
+              </div>
+              
+              <div class="sufficiency-banner pass" id="terminal-sufficiency-banner">
+                <span id="sufficiency-banner-text">🟢 4 / 4 SUFFICIENCY RULES SATISFIED • AUTONOMOUS VIEW CERTIFIED</span>
+                <span style="font-size: 10px; color: var(--text-muted);" id="sufficiency-banner-ts">Verified</span>
+              </div>
+            </div>
+
             <!-- Legacy Elements Preserved for test compatibility -->
             <div style="display: none;" id="legacy-anchors">
               <span id="ov-nifty-price"></span>
@@ -536,6 +536,23 @@
               </div>
             </div>
 
+            <!-- 3. Truthful Data Source Health Box -->
+            <div class="provenance-audit-box" id="terminal-data-health-box" style="margin-top: 14px;">
+              <div class="section-header" style="padding-bottom: 8px; border-bottom: 1px solid var(--border-subtle);">
+                <div class="section-title-group">
+                  <h3 style="font-size: 13px; font-weight: 700; color: var(--text-primary); font-family: 'Inter', sans-serif;">
+                    📡 DATA SOURCE HEALTH
+                  </h3>
+                  <p style="font-size: 10px; color: var(--text-muted);" id="dsh-telemetry-subtitle">
+                    Source state derived from job ledger
+                  </p>
+                </div>
+              </div>
+              <div style="margin-top: 8px;" id="terminal-data-health-content">
+                <!-- Injected dynamically via app.js -->
+              </div>
+            </div>
+
             <!-- 3. Institutional Order Ticket Quickslip (Strictly Paper Trading) -->
             <div class="quickslip-card" id="terminal-order-quickslip">
               <div class="section-header" style="padding-bottom: 8px; border-bottom: 1px solid var(--border-subtle);">
@@ -554,7 +571,7 @@
               <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
                 <div style="display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 11px;">
                   <span style="color: var(--text-muted);">INSTRUMENT:</span>
-                  <span style="color: var(--text-primary); font-weight: 700;" id="qs-symbol">NIFTY 25500 CE</span>
+                  <span style="color: var(--text-primary); font-weight: 700;" id="qs-symbol">--</span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 11px;">
                   <span style="color: var(--text-muted);">ORDER TYPE:</span>
@@ -566,7 +583,7 @@
                 </div>
                 <div style="display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 11px;">
                   <span style="color: var(--text-muted);">REQUIRED MARGIN:</span>
-                  <span style="color: var(--success); font-weight: 700;" id="qs-margin">₹8,415.00</span>
+                  <span style="color: var(--success); font-weight: 700;" id="qs-margin">₹--</span>
                 </div>
                 <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.2); padding: 8px; border-radius: 3px; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--success);">
                   ✔ PRE-TRADE RISK GATES: PASSED (NO BREACH DETECTED)
@@ -690,15 +707,15 @@
                 <div class="strategy-metrics-row">
                   <div class="strategy-metric-item">
                     <span class="lbl">Max Profit</span>
-                    <span class="val num" id="rec-max-profit" style="color: var(--success);">₹2,623.00</span>
+                    <span class="val num" id="rec-max-profit" style="color: var(--success);">₹--</span>
                   </div>
                   <div class="strategy-metric-item">
                     <span class="lbl">Max Loss</span>
-                    <span class="val num" id="rec-max-loss" style="color: var(--danger);">₹2,377.00</span>
+                    <span class="val num" id="rec-max-loss" style="color: var(--danger);">₹--</span>
                   </div>
                   <div class="strategy-metric-item">
                     <span class="lbl">Breakeven</span>
-                    <span class="val num" id="rec-breakeven">25,047.50</span>
+                    <span class="val num" id="rec-breakeven">--</span>
                   </div>
                   <div class="strategy-metric-item">
                     <span class="lbl">R / R Ratio</span>
@@ -972,7 +989,7 @@
                 <span class="badge badge-green" style="font-size: 9px;">PASSED</span>
               </div>
               <div class="progress-bar-container"><div class="progress-bar-fill" style="width: 14%; background-color: var(--success);"></div></div>
-              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">Today's Maximum Draw: 0.21% →</span>
+              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;" id="risk-today-draw">Today's Maximum Draw: --% →</span>
             </div>
 
             <div class="risk-progress-card" role="button" tabindex="0" onclick="openRiskDetail('drawdown')" title="Inspect Peak-to-Trough Drawdown History">
@@ -981,7 +998,7 @@
                 <span class="badge badge-green" style="font-size: 9px;">PASSED</span>
               </div>
               <div class="progress-bar-container"><div class="progress-bar-fill" style="width: 6%; background-color: var(--success);"></div></div>
-              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">Current Peak-to-Trough: 1.72% →</span>
+              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;" id="risk-current-dd">Current Peak-to-Trough: --% →</span>
             </div>
 
             <div class="risk-progress-card" role="button" tabindex="0" onclick="openRiskDetail('hedge')" title="Inspect Downside Puts & Delta Hedge Coverage">
@@ -990,7 +1007,7 @@
                 <span class="badge badge-green" style="font-size: 9px;">COVERED</span>
               </div>
               <div class="progress-bar-container"><div class="progress-bar-fill" style="width: 60%; background-color: var(--primary);"></div></div>
-              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;">3 / 5 Positions Insured with Puts →</span>
+              <span style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; display: block;" id="risk-insured-pos">Hedge Protocol Interlocked →</span>
             </div>
           </div>
         </section>
@@ -1060,7 +1077,7 @@
             </div>
             <div style="display: flex; align-items: center; gap: 8px;">
               <span class="badge badge-green" id="news-count-badge">24 ARTICLES ANALYZED</span>
-              <span style="font-size: 11px; color: var(--text-muted);" id="news-last-updated">Real-Time Ingestion Active</span>
+              <span style="font-size: 11px; color: var(--text-muted);" id="news-last-updated">Ingested from RSS Feeds</span>
             </div>
           </div>
 
@@ -1127,7 +1144,7 @@
                 <span class="ovn-conf-pill" id="ovn-conf-val">68% Conviction</span>
               </div>
               <div class="ovn-gap-estimate">
-                Expected Nifty Gap: <strong id="ovn-gap-val">+45.0 pts</strong> (<span id="ovn-regime-val">NEUTRAL_POSITIVE</span> regime)
+                Expected Nifty Gap: <strong id="ovn-gap-val">-- pts</strong> (<span id="ovn-regime-val">--</span> regime)
               </div>
             </div>
 
@@ -1136,18 +1153,18 @@
               <div class="ovn-metals-row">
                 <div class="ovn-metal-item">
                   <span class="lbl">Gold (Spot)</span>
-                  <span class="val num" id="ovn-gold-price">₹1,36,511.80 / 10g</span>
-                  <span class="sub num" id="ovn-gold-sub">$4,465.00/oz (+0.48%)</span>
+                  <span class="val num" id="ovn-gold-price">--</span>
+                  <span class="sub num" id="ovn-gold-sub">--</span>
                 </div>
                 <div class="ovn-metal-item">
                   <span class="lbl">Silver (Spot)</span>
-                  <span class="val num" id="ovn-silver-price">₹2,09,949.96 / kg</span>
-                  <span class="sub num" id="ovn-silver-sub">$68.67/oz (+0.32%)</span>
+                  <span class="val num" id="ovn-silver-price">--</span>
+                  <span class="sub num" id="ovn-silver-sub">--</span>
                 </div>
                 <div class="ovn-metal-item">
                   <span class="lbl">Brent Crude</span>
-                  <span class="val num" id="ovn-crude-price">$71.49 / bbl</span>
-                  <span class="sub num" id="ovn-crude-sub">-0.82% Today</span>
+                  <span class="val num" id="ovn-crude-price">--</span>
+                  <span class="sub num" id="ovn-crude-sub">--</span>
                 </div>
               </div>
             </div>
@@ -1157,17 +1174,17 @@
               <div class="ovn-metals-row">
                 <div class="ovn-metal-item">
                   <span class="lbl">USD / INR Spot</span>
-                  <span class="val num" id="ovn-usdinr-val">83.92</span>
+                  <span class="val num" id="ovn-usdinr-val">--</span>
                   <span class="sub">Stable Range</span>
                 </div>
                 <div class="ovn-metal-item">
                   <span class="lbl">US 10Y Yield</span>
-                  <span class="val num" id="ovn-us10y-val">4.08%</span>
+                  <span class="val num" id="ovn-us10y-val">--%</span>
                   <span class="sub">-2.4 bps</span>
                 </div>
                 <div class="ovn-metal-item">
                   <span class="lbl">US Dollar Index (DXY)</span>
-                  <span class="val num" id="ovn-dxy-val">102.15</span>
+                  <span class="val num" id="ovn-dxy-val">--</span>
                   <span class="sub">-0.18%</span>
                 </div>
               </div>
@@ -1503,19 +1520,19 @@
           <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px;">
             <div class="strategy-metric-item">
               <span class="lbl">Spot Price</span>
-              <span class="val num" id="dr-price">₹1,287.00</span>
+              <span class="val num" id="dr-price">₹--</span>
             </div>
             <div class="strategy-metric-item">
               <span class="lbl">Predicted Move</span>
-              <span class="val num" id="dr-predicted" style="color: var(--success);">+1.8%</span>
+              <span class="val num" id="dr-predicted" style="color: var(--success);">--%</span>
             </div>
             <div class="strategy-metric-item">
               <span class="lbl">Target</span>
-              <span class="val num" id="dr-target">₹1,310.00</span>
+              <span class="val num" id="dr-target">₹--</span>
             </div>
             <div class="strategy-metric-item">
               <span class="lbl">Stop-Loss</span>
-              <span class="val num" id="dr-stop">₹1,265.00</span>
+              <span class="val num" id="dr-stop">₹--</span>
             </div>
           </div>
         </div>
@@ -1613,7 +1630,7 @@
           <div style="background: var(--bg-surface); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
             <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Market Data Freshness</div>
             <div style="font-size: 14px; font-weight: 700; color: var(--text-primary); margin-top: 4px;" id="tm-mkt-age">8 sec age</div>
-            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">yfinance + NSE validated</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Yahoo Finance / NSE Feed</div>
           </div>
           <div style="background: var(--bg-surface); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
             <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">News & Filing Freshness</div>
@@ -1623,7 +1640,7 @@
           <div style="background: var(--bg-surface); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
             <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Reconciliation Status</div>
             <div style="font-size: 14px; font-weight: 700; color: var(--primary); margin-top: 4px;" id="tm-sources">3 Sources • 0 Conflicts</div>
-            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Discrepancy: ₹0.00</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Ledger Reconciled</div>
           </div>
         </div>
 
@@ -1642,7 +1659,7 @@
           </div>
           <div style="display: flex; justify-content: space-between;">
             <span style="color: var(--text-muted);">Point-in-Time Cryptographic Hash:</span>
-            <code style="font-size: 10px; background: #EEF2F6; padding: 2px 6px; border-radius: 4px;" id="tm-hash">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</code>
+            <code style="font-size: 10px; background: #EEF2F6; padding: 2px 6px; border-radius: 4px;" id="tm-hash">--</code>
           </div>
         </div>
       </div>
@@ -1865,7 +1882,7 @@
       <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
         <div>
           <h3 style="font-size: 16px; font-weight: 700; color: var(--text-primary); font-family: 'Inter', sans-serif;">Operations Quick Drawer</h3>
-          <p style="font-size: 11px; color: var(--text-muted);">Real-time pipeline telemetry, scheduler state &amp; replay launch.</p>
+          <p style="font-size: 11px; color: var(--text-muted);">Execution pipeline telemetry, scheduler state &amp; replay launch.</p>
         </div>
         <button class="btn-action" onclick="closeOpsDrawer()">✕ Close</button>
       </div>
