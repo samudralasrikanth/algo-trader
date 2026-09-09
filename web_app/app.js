@@ -3,7 +3,7 @@
 // Master Application Controller & Comprehensive Interactive Routing Engine
 // =============================================================================
 
-let DATA = window.INITIAL_DATA || {};
+let DATA = window.NEXUS_DATA || window.INITIAL_DATA || {};
 window.DATA = DATA;
 window.getCurrentLeaderboardSort = () => currentLeaderboardSort;
 window.getCurrentFilteredCmds = () => currentFilteredCmds;
