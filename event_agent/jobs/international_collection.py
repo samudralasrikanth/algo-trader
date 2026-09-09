@@ -9,11 +9,13 @@ Gathers global index, yields, dollar index, and forex rates after Indian market 
   - Asia: Nikkei 225, Hang Seng, Shanghai Composite, KOSPI, ASX 200
   - FX: USD/INR, EUR/USD, USD/JPY
 
-Enforces point-in-time timestamps and real freshness calculations with zero fabrication.
+Integrates exchange operating hours calculation:
+  Accurately identifies OPEN, PRE_MARKET, CLOSED, EOD, and DELAYED states.
+  Never labels closed markets as LIVE.
 """
 
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import datetime, time, timedelta, timezone
 import json
 import logging
 import urllib.request
@@ -63,8 +65,10 @@ class GlobalMarketQuote:
     ingestion_timestamp: str
     source: str
     freshness_seconds: int
-    quality: str                      # "LIVE" | "DELAYED" | "EOD" | "STALE" | "INVALID"
-    currency: str
+    quality: str                      # "OPEN" | "DELAYED" | "EOD" | "CLOSED" | "STALE" | "DATA_UNAVAILABLE"
+    market_state: str                 # "OPEN" | "PRE_MARKET" | "CLOSED" | "EOD"
+    market_state_desc: str
+    currency: str = "USD"
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -72,13 +76,70 @@ class GlobalMarketQuote:
 
 class InternationalDataCollector:
     """
-    Fetches real-time and post-close quotes for all major global markets.
+    Fetches global equity, forex, and bond benchmarks with truthful market-state awareness.
     """
 
     HEADERS = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "application/json",
     }
+
+    @classmethod
+    def calculate_market_state(
+        cls, region: str, symbol: str, ingest_time: datetime, mkt_dt: datetime
+    ) -> tuple[str, str, str]:
+        """
+        Computes accurate (market_state, market_state_desc, quality).
+        Enforces that closed markets are tagged CLOSED / EOD, never falsely marked LIVE.
+        """
+        weekday = ingest_time.weekday()  # 0=Mon, 4=Fri, 5=Sat, 6=Sun
+        hour = ingest_time.hour
+        minute = ingest_time.minute
+        time_utc = time(hour, minute)
+        ist_tz = timezone(timedelta(hours=5, minutes=30))
+        mkt_ist = mkt_dt.astimezone(ist_tz).strftime("%H:%M IST")
+
+        # 1. Foreign Exchange (24/5 continuous trading)
+        if region == "FX":
+            if weekday == 5 or (weekday == 4 and hour >= 21) or (weekday == 6 and hour < 21):
+                return "CLOSED", f"Forex weekend close • Last updated {mkt_ist}", "CLOSED"
+            else:
+                return "OPEN", "Forex 24/5 spot continuous session", "LIVE"
+
+        # 2. US Equities & Volatility (NYSE/NASDAQ 13:30 to 20:00 UTC)
+        if region == "US":
+            if weekday < 5:
+                if time(13, 30) <= time_utc <= time(20, 0):
+                    return "OPEN", "US Regular Trading Session (15m delayed)", "DELAYED"
+                elif time(8, 0) <= time_utc < time(13, 30):
+                    return "PRE_MARKET", "US Pre-Market Trading Window", "DELAYED"
+                else:
+                    return "CLOSED", f"Market closed • Last updated {mkt_ist}", "EOD"
+            else:
+                return "CLOSED", f"Weekend closed • Last updated {mkt_ist}", "EOD"
+
+        # 3. European Equities (08:00 to 16:30 UTC)
+        if region == "EUROPE":
+            if weekday < 5 and time(8, 0) <= time_utc <= time(16, 30):
+                return "OPEN", "European Regular Session (15m delayed)", "DELAYED"
+            else:
+                return "CLOSED", f"Market closed • Last updated {mkt_ist}", "EOD"
+
+        # 4. Asian Equities
+        if region == "ASIA":
+            if weekday < 5:
+                if symbol == "^N225" and time(0, 0) <= time_utc <= time(6, 0):
+                    return "OPEN", "Tokyo Stock Exchange Active Session", "DELAYED"
+                elif symbol in ["^HSI", "000001.SS"] and time(1, 30) <= time_utc <= time(8, 0):
+                    return "OPEN", "Hong Kong / Shanghai Active Session", "DELAYED"
+                elif symbol in ["^KS11", "^AXJO"] and time(0, 0) <= time_utc <= time(6, 30):
+                    return "OPEN", "Seoul / Sydney Active Session", "DELAYED"
+                else:
+                    return "CLOSED", f"Market closed • Last updated {mkt_ist}", "EOD"
+            else:
+                return "CLOSED", f"Weekend closed • Last updated {mkt_ist}", "EOD"
+
+        return "CLOSED", f"Market closed • Last updated {mkt_ist}", "EOD"
 
     @classmethod
     def fetch_single_quote(cls, item: Dict[str, str]) -> Optional[GlobalMarketQuote]:
@@ -113,12 +174,13 @@ class InternationalDataCollector:
 
             freshness = int(max(0, (ingest_time - mkt_dt).total_seconds()))
 
-            # Classify quality
-            if freshness <= 900:
-                quality = "LIVE"
-            elif freshness <= 86400:
-                quality = "EOD"
-            else:
+            # Compute accurate exchange status
+            mkt_state, mkt_desc, quality = cls.calculate_market_state(
+                item["region"], symbol, ingest_time, mkt_dt
+            )
+
+            # If stale > 3 days, override quality
+            if freshness > 86400 * 4:
                 quality = "STALE"
 
             return GlobalMarketQuote(
@@ -134,6 +196,8 @@ class InternationalDataCollector:
                 source="Yahoo Finance / Global Feeds",
                 freshness_seconds=freshness,
                 quality=quality,
+                market_state=mkt_state,
+                market_state_desc=mkt_desc,
                 currency=meta.get("currency", "USD"),
             )
         except Exception as e:
@@ -143,7 +207,7 @@ class InternationalDataCollector:
     @classmethod
     def collect_all(cls) -> Dict[str, Any]:
         """
-        Gathers all 18 international index, yield, and currency feeds.
+        Queries all 24 international tickers and compiles unified global market telemetry.
         """
         quotes = {}
         succeeded = 0
@@ -168,10 +232,13 @@ class InternationalDataCollector:
                     "source": "Yahoo Finance / Global Feeds",
                     "freshness_seconds": 999999,
                     "quality": "DATA_UNAVAILABLE",
+                    "market_state": "UNKNOWN",
+                    "market_state_desc": "Feed offline or timed out",
                     "currency": "USD",
                 }
                 failed += 1
 
+        # Universal aliases
         if "US 10-Year Treasury Yield" in quotes and "US 10Y Yield" not in quotes:
             quotes["US 10Y Yield"] = quotes["US 10-Year Treasury Yield"]
         elif "US 10Y Yield" in quotes and "US 10-Year Treasury Yield" not in quotes:
