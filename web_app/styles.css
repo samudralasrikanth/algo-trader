@@ -1354,3 +1354,487 @@ input:focus-visible {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
+
+/* ==========================================================================
+   V3.6.1 — NEWS, OVERNIGHT INTELLIGENCE & JOBS LEDGER STYLES
+   ========================================================================== */
+
+/* News Feed Styles */
+.news-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 12px 20px;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface-secondary);
+}
+
+.news-filter-bar .filter-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.news-filter-bar .filter-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.filter-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.filter-pill {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.filter-pill:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-dark);
+}
+
+.filter-pill.active {
+  background: var(--primary);
+  color: #ffffff;
+  border-color: var(--primary);
+}
+
+.news-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 16px;
+  padding: 18px 20px 24px 20px;
+}
+
+.news-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  position: relative;
+}
+
+.news-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(16, 24, 40, 0.08);
+  border-color: var(--primary);
+}
+
+.news-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.news-card-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.35;
+  margin: 0;
+}
+
+.news-card-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.news-card-impact {
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: var(--bg-surface-secondary);
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--primary);
+  line-height: 1.4;
+}
+
+.news-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 8px;
+  margin-top: auto;
+}
+
+/* Overnight Intelligence Styles */
+.overnight-hero-summary {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr 1.1fr;
+  gap: 16px;
+  padding: 16px 20px 20px 20px;
+}
+
+@media (max-width: 1024px) {
+  .overnight-hero-summary {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ovn-bias-card,
+.ovn-metrics-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ovn-card-lbl {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.ovn-bias-val-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.ovn-bias-badge {
+  font-size: 15px;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 6px;
+  background: var(--success-bg);
+  color: var(--success);
+  border: 1px solid var(--success-border);
+}
+
+.ovn-conf-pill {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+  background: var(--primary-light);
+  border: 1px solid var(--primary-border);
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+.ovn-gap-estimate {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ovn-metals-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.ovn-metal-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ovn-metal-item .lbl {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.ovn-metal-item .val {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.ovn-metal-item .sub {
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.intl-quotes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  padding: 16px 20px 20px 20px;
+}
+
+.intl-quote-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.intl-quote-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(16, 24, 40, 0.06);
+}
+
+.intl-quote-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.intl-quote-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.intl-quote-region {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.intl-quote-price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.intl-quote-price {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.intl-quote-change {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.intl-quote-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: var(--text-muted);
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 4px;
+}
+
+.drivers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 20px;
+}
+
+.driver-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.driver-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sector-map-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 20px;
+}
+
+.sector-map-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface-secondary);
+  font-size: 12px;
+  border-left: 3px solid var(--primary);
+}
+
+.scenarios-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+@media (max-width: 900px) {
+  .scenarios-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.scenario-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.scenario-card.bull {
+  border-top: 4px solid var(--success);
+}
+
+.scenario-card.base {
+  border-top: 4px solid var(--primary);
+}
+
+.scenario-card.bear {
+  border-top: 4px solid var(--danger);
+}
+
+.scenario-title {
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.evidence-trail-box {
+  padding: 16px 20px;
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: var(--bg-surface-secondary);
+  border-radius: var(--radius-sm);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* Jobs Ledger Styles */
+.scheduler-info-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  padding: 16px 20px 14px 20px;
+}
+
+@media (max-width: 900px) {
+  .scheduler-info-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.sched-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sched-card .lbl {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.sched-card .val {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.sched-card .sub {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.jobs-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  padding: 0 20px 20px 20px;
+}
+
+@media (max-width: 900px) {
+  .jobs-kpi-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.kpi-mini {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kpi-mini .lbl {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.kpi-mini .val {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.badge-success {
+  background: #ECFDF3;
+  color: #027A48;
+  border: 1px solid #A6F4C5;
+}
+
+.badge-partial {
+  background: #FFFAEB;
+  color: #B54708;
+  border: 1px solid #FEDF89;
+}
+
+.badge-failed {
+  background: #FEF3F2;
+  color: #B42318;
+  border: 1px solid #FECDCA;
+}
+

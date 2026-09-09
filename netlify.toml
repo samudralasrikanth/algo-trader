@@ -1,5 +1,6 @@
 [build]
   publish = "web_app"
+  functions = "netlify/functions"
 
 [[headers]]
   for = "/*"

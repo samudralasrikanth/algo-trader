@@ -45,8 +45,11 @@
           <button class="nav-link-btn" data-tab="markets" onclick="navigate('markets')">Markets</button>
           <button class="nav-link-btn" data-tab="arena" onclick="navigate('arena')">AI Arena</button>
           <button class="nav-link-btn" data-tab="intelligence" onclick="navigate('intelligence')">Intelligence</button>
+          <button class="nav-link-btn" data-tab="overnight" onclick="navigate('overnight')">Overnight</button>
+          <button class="nav-link-btn" data-tab="news" onclick="navigate('news')">News</button>
           <button class="nav-link-btn" data-tab="risk" onclick="navigate('risk')">Risk</button>
           <button class="nav-link-btn" data-tab="operations" onclick="navigate('operations')">Operations</button>
+          <button class="nav-link-btn" data-tab="jobs" onclick="navigate('jobs')">Jobs &amp; Data</button>
         </nav>
       </div>
 
@@ -159,15 +162,20 @@
               <span class="market-item-price num">83.92</span>
               <span class="market-item-change num" style="color: var(--text-secondary);">+0.04%</span>
             </div>
-            <div class="market-item" role="button" tabindex="0" onclick="showComingSoon('Gold Commodity Intelligence — Coming Soon')" title="MCX Gold Commodity Model">
-              <span class="market-item-title">GOLD (MCX)</span>
-              <span class="market-item-price num" style="font-size: 12px; color: var(--text-muted);">Data unavailable</span>
-              <span class="market-item-change" style="font-size: 11px; color: var(--text-muted);">Architecture Ready →</span>
+            <div class="market-item" role="button" tabindex="0" onclick="navigate('overnight')" title="Live Gold (GC=F) in INR/10g & USD/oz" id="strip-gold-item">
+              <span class="market-item-title">GOLD (₹/10g)</span>
+              <span class="market-item-price num" id="strip-gold-price">₹1,36,511.80</span>
+              <span class="market-item-change num" id="strip-gold-change" style="color: var(--success);">+0.48% (GC=F)</span>
             </div>
-            <div class="market-item" role="button" tabindex="0" onclick="showComingSoon('Crude Oil Commodity Intelligence — Coming Soon')" title="MCX Crude Commodity Model">
-              <span class="market-item-title">CRUDE (MCX)</span>
-              <span class="market-item-price num" style="font-size: 12px; color: var(--text-muted);">Data unavailable</span>
-              <span class="market-item-change" style="font-size: 11px; color: var(--text-muted);">Architecture Ready →</span>
+            <div class="market-item" role="button" tabindex="0" onclick="navigate('overnight')" title="Live Silver (SI=F) in INR/kg & USD/oz" id="strip-silver-item">
+              <span class="market-item-title">SILVER (₹/kg)</span>
+              <span class="market-item-price num" id="strip-silver-price">₹2,09,949.96</span>
+              <span class="market-item-change num" id="strip-silver-change" style="color: var(--success);">+0.32% (SI=F)</span>
+            </div>
+            <div class="market-item" role="button" tabindex="0" onclick="navigate('overnight')" title="Live Brent Crude Oil (BZ=F)" id="strip-crude-item">
+              <span class="market-item-title">BRENT CRUDE</span>
+              <span class="market-item-price num" id="strip-crude-price">$71.49</span>
+              <span class="market-item-change num" id="strip-crude-change" style="color: var(--danger);">-0.82%</span>
             </div>
           </div>
 
@@ -196,8 +204,8 @@
               <p>Dual-source market data reconciliation, news latency, and real-time feed integrity audit.</p>
             </div>
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span class="badge badge-green" id="dsh-overall-status">ALL SYSTEMS RECONCILED</span>
-              <span style="font-size: 11px; color: var(--text-muted);" id="dsh-last-check">Reconciliation Active</span>
+              <span class="badge badge-green" id="dsh-overall-status">DATA PIPELINES VERIFIED</span>
+              <span style="font-size: 11px; color: var(--text-muted);" id="dsh-last-check">Job Ledger Active</span>
             </div>
           </div>
           <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; padding: 12px 20px 18px 20px;" id="data-source-health-banner">
@@ -724,6 +732,354 @@
 
 
       <!-- ================================================================= -->
+      <!-- VIEW: NEWS & ANALYZED DISCLOSURES                                 -->
+      <!-- ================================================================= -->
+      <div id="view-news" class="view-panel">
+        <section class="section-panel" style="margin-bottom: 20px;">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h3>📰 Analyzed Market News &amp; Regulatory Filings</h3>
+              <p>Deduplicated corporate disclosures, regulatory notifications, and macroeconomic catalysts with causal AI impact assessment.</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="badge badge-green" id="news-count-badge">24 ARTICLES ANALYZED</span>
+              <span style="font-size: 11px; color: var(--text-muted);" id="news-last-updated">Real-Time Ingestion Active</span>
+            </div>
+          </div>
+
+          <!-- News Filter & Search Bar -->
+          <div class="news-filter-bar">
+            <div class="filter-group">
+              <span class="filter-label">CATEGORY:</span>
+              <div class="filter-pills" id="news-category-pills">
+                <button class="filter-pill active" onclick="filterNewsCategory('ALL')">ALL</button>
+                <button class="filter-pill" onclick="filterNewsCategory('EARNINGS')">EARNINGS</button>
+                <button class="filter-pill" onclick="filterNewsCategory('CORPORATE')">CORPORATE</button>
+                <button class="filter-pill" onclick="filterNewsCategory('REGULATORY')">REGULATORY</button>
+                <button class="filter-pill" onclick="filterNewsCategory('GLOBAL')">GLOBAL MACRO</button>
+                <button class="filter-pill" onclick="filterNewsCategory('COMMODITY')">COMMODITIES</button>
+              </div>
+            </div>
+
+            <div class="filter-group">
+              <span class="filter-label">SENTIMENT:</span>
+              <div class="filter-pills" id="news-sentiment-pills">
+                <button class="filter-pill active" onclick="filterNewsSentiment('ALL')">ALL</button>
+                <button class="filter-pill" onclick="filterNewsSentiment('BULLISH')">BULLISH</button>
+                <button class="filter-pill" onclick="filterNewsSentiment('NEUTRAL')">NEUTRAL</button>
+                <button class="filter-pill" onclick="filterNewsSentiment('BEARISH')">BEARISH</button>
+              </div>
+            </div>
+
+            <div class="search-input-wrapper">
+              <input type="text" id="news-search-box" class="subnav-search" placeholder="Search headline, symbol, or topic..." oninput="onNewsSearchInput(this.value)">
+            </div>
+          </div>
+
+          <!-- News Articles Grid -->
+          <div class="news-cards-grid" id="news-articles-container">
+            <!-- Injected via app.js -->
+          </div>
+        </section>
+      </div>
+
+
+      <!-- ================================================================= -->
+      <!-- VIEW: OVERNIGHT INTERNATIONAL INTELLIGENCE & INDIA OUTLOOK        -->
+      <!-- ================================================================= -->
+      <div id="view-overnight" class="view-panel">
+        
+        <!-- Overnight Intelligence Hero Banner -->
+        <section class="section-panel" style="margin-bottom: 20px; background: linear-gradient(180deg, #F8FAFC 0%, #FFFFFF 100%);">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h3>🌙 Overnight International Intelligence &amp; India Open Outlook</h3>
+              <p>Cross-asset synthesis of US, European, and Asian sessions, commodity trends, FX dynamics, and gap projections for the Indian open.</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="badge badge-blue" id="ovn-status-badge">SYNTHESIS ACTIVE</span>
+              <span style="font-size: 11px; color: var(--text-muted);" id="ovn-timestamp-badge">Updated: --</span>
+            </div>
+          </div>
+
+          <div class="overnight-hero-summary">
+            <div class="ovn-bias-card">
+              <span class="ovn-card-lbl">INDIAN MARKET OPENING BIAS</span>
+              <div class="ovn-bias-val-row">
+                <span class="ovn-bias-badge" id="ovn-bias-val">MILDLY_BULLISH</span>
+                <span class="ovn-conf-pill" id="ovn-conf-val">68% Conviction</span>
+              </div>
+              <div class="ovn-gap-estimate">
+                Expected Nifty Gap: <strong id="ovn-gap-val">+45.0 pts</strong> (<span id="ovn-regime-val">NEUTRAL_POSITIVE</span> regime)
+              </div>
+            </div>
+
+            <div class="ovn-metrics-card">
+              <span class="ovn-card-lbl">GLOBAL COMMODITIES STATUS</span>
+              <div class="ovn-metals-row">
+                <div class="ovn-metal-item">
+                  <span class="lbl">Gold (Spot)</span>
+                  <span class="val num" id="ovn-gold-price">₹1,36,511.80 / 10g</span>
+                  <span class="sub num" id="ovn-gold-sub">$4,465.00/oz (+0.48%)</span>
+                </div>
+                <div class="ovn-metal-item">
+                  <span class="lbl">Silver (Spot)</span>
+                  <span class="val num" id="ovn-silver-price">₹2,09,949.96 / kg</span>
+                  <span class="sub num" id="ovn-silver-sub">$68.67/oz (+0.32%)</span>
+                </div>
+                <div class="ovn-metal-item">
+                  <span class="lbl">Brent Crude</span>
+                  <span class="val num" id="ovn-crude-price">$71.49 / bbl</span>
+                  <span class="sub num" id="ovn-crude-sub">-0.82% Today</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="ovn-metrics-card">
+              <span class="ovn-card-lbl">MACRO RISK &amp; CURRENCY</span>
+              <div class="ovn-metals-row">
+                <div class="ovn-metal-item">
+                  <span class="lbl">USD / INR Spot</span>
+                  <span class="val num" id="ovn-usdinr-val">83.92</span>
+                  <span class="sub">Stable Range</span>
+                </div>
+                <div class="ovn-metal-item">
+                  <span class="lbl">US 10Y Yield</span>
+                  <span class="val num" id="ovn-us10y-val">4.08%</span>
+                  <span class="sub">-2.4 bps</span>
+                </div>
+                <div class="ovn-metal-item">
+                  <span class="lbl">US Dollar Index (DXY)</span>
+                  <span class="val num" id="ovn-dxy-val">102.15</span>
+                  <span class="sub">-0.18%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Global Markets 24-Asset Multi-Asset Snapshot Grid -->
+        <section class="section-panel" style="margin-bottom: 20px;">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h3>🌐 Point-in-Time Global Asset Monitor</h3>
+              <p>Live, delayed, or EOD closing quotes with explicit freshness and source attribution. Zero simulated pricing.</p>
+            </div>
+            <div class="filter-pills" id="intl-group-pills">
+              <button class="filter-pill active" onclick="switchIntlGroup('ALL')">ALL (24)</button>
+              <button class="filter-pill" onclick="switchIntlGroup('US')">US EQUITIES</button>
+              <button class="filter-pill" onclick="switchIntlGroup('ASIA')">ASIA-PACIFIC</button>
+              <button class="filter-pill" onclick="switchIntlGroup('COMMODITIES')">COMMODITIES &amp; FX</button>
+            </div>
+          </div>
+          <div class="intl-quotes-grid" id="intl-quotes-container">
+            <!-- Injected via app.js -->
+          </div>
+        </section>
+
+        <!-- Catalysts & Drivers (Global vs Indian) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+          <section class="section-panel">
+            <div class="section-header">
+              <div class="section-title-group">
+                <h3>🌍 Top Global Macro Drivers</h3>
+                <p>Key international catalysts influencing overnight sentiment</p>
+              </div>
+            </div>
+            <div class="drivers-list" id="ovn-global-drivers-container">
+              <!-- Injected via app.js -->
+            </div>
+          </section>
+
+          <section class="section-panel">
+            <div class="section-header">
+              <div class="section-title-group">
+                <h3>🇮🇳 Key Domestic &amp; Emerging Drivers</h3>
+                <p>Indian corporate disclosures, RBI policy cues, and institutional flows</p>
+              </div>
+            </div>
+            <div class="drivers-list" id="ovn-indian-drivers-container">
+              <!-- Injected via app.js -->
+            </div>
+          </section>
+        </div>
+
+        <!-- Sector Impact Matrix & Three Opening Scenarios -->
+        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 20px; margin-bottom: 20px;">
+          <section class="section-panel">
+            <div class="section-header">
+              <div class="section-title-group">
+                <h3>🏭 Sector Impact Map</h3>
+                <p>Derived beta and commodity sensitivity</p>
+              </div>
+            </div>
+            <div class="sector-map-list" id="ovn-sector-map-container">
+              <!-- Injected via app.js -->
+            </div>
+          </section>
+
+          <section class="section-panel">
+            <div class="section-header">
+              <div class="section-title-group">
+                <h3>🎯 Opening Scenarios (Bull / Base / Bear)</h3>
+                <p>Pre-calculated probabilistic opening paths with explicit trigger conditions</p>
+              </div>
+            </div>
+            <div class="scenarios-grid" id="ovn-scenarios-container">
+              <!-- Injected via app.js -->
+            </div>
+          </section>
+        </div>
+
+        <!-- Key Risks & Mitigations -->
+        <section class="section-panel" style="margin-bottom: 20px;">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h3 style="color: var(--danger);">🛡️ Key Overnight Risks &amp; Quantitative Mitigations</h3>
+              <p>Identified tail risks, volatility spikes, and autonomous hedging responses</p>
+            </div>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table" id="ovn-risks-table">
+              <thead>
+                <tr>
+                  <th style="width: 25%;">RISK FACTOR</th>
+                  <th style="width: 15%;">SEVERITY</th>
+                  <th style="width: 35%;">DESCRIPTION &amp; SENSITIVITY</th>
+                  <th style="width: 25%;">MITIGATION STRATEGY</th>
+                </tr>
+              </thead>
+              <tbody id="ovn-risks-tbody">
+                <!-- Injected via app.js -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Evidence Trail & Audit Provenance -->
+        <section class="section-panel">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h3>📜 Point-in-Time Evidence Trail</h3>
+              <p>Cryptographic data snapshot verification ensuring complete absence of look-ahead bias</p>
+            </div>
+          </div>
+          <div class="evidence-trail-box" id="ovn-evidence-container">
+            <!-- Injected via app.js -->
+          </div>
+        </section>
+
+      </div>
+
+
+      <!-- ================================================================= -->
+      <!-- VIEW: DATA PIPELINE JOB LEDGER & TELEMETRY                        -->
+      <!-- ================================================================= -->
+      <div id="view-jobs" class="view-panel">
+        
+        <!-- Scheduler Status Banner -->
+        <section class="section-panel" style="margin-bottom: 20px; background: linear-gradient(180deg, #F8FAFC 0%, #FFFFFF 100%);">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h3>⚙️ Data Pipeline Job Scheduler &amp; Execution Ledger</h3>
+              <p>Audit-grade log of all background data ingestion runs from persistent SQLite storage. Zero fabricated executions.</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span class="badge badge-green" id="scheduler-status-badge">SCHEDULER RUNNING</span>
+              <button class="subnav-btn" onclick="triggerManualJobRun()" id="job-run-now-btn">⚡ Run Collection Now</button>
+            </div>
+          </div>
+
+          <div class="scheduler-info-grid">
+            <div class="sched-card">
+              <span class="lbl">NEXT SCHEDULED RUN (IST)</span>
+              <span class="val" id="sched-next-ist">21:00:00 IST</span>
+              <span class="sub" id="sched-next-utc">15:30:00 UTC</span>
+            </div>
+            <div class="sched-card">
+              <span class="lbl">COLLECTION WINDOW</span>
+              <span class="val">18:00 – 06:00 IST</span>
+              <span class="sub">Overnight Primary Window (Every 3h)</span>
+            </div>
+            <div class="sched-card">
+              <span class="lbl">EXECUTION CADENCE</span>
+              <span class="val">Every 3 Hours</span>
+              <span class="sub">18:00, 21:00, 00:00, 03:00, 06:00 IST</span>
+            </div>
+            <div class="sched-card">
+              <span class="lbl">ORCHESTRATOR TYPE</span>
+              <span class="val">Netlify Scheduled Cron</span>
+              <span class="sub">30 0,12,15,18,21 * * * UTC</span>
+            </div>
+          </div>
+
+          <!-- Summary KPI Cards -->
+          <div class="jobs-kpi-row">
+            <div class="kpi-mini">
+              <span class="lbl">TOTAL RUNS LOGGED</span>
+              <span class="val num" id="jobs-total-runs">3</span>
+            </div>
+            <div class="kpi-mini">
+              <span class="lbl">SUCCESS RATE</span>
+              <span class="val num" id="jobs-success-rate" style="color: var(--success);">100.0%</span>
+            </div>
+            <div class="kpi-mini">
+              <span class="lbl">RECORDS PROCESSED</span>
+              <span class="val num" id="jobs-total-records">153</span>
+            </div>
+            <div class="kpi-mini">
+              <span class="lbl">LAST RUN DURATION</span>
+              <span class="val num" id="jobs-last-duration">18.2s</span>
+            </div>
+            <div class="kpi-mini">
+              <span class="lbl">DATA QUALITY SCORE</span>
+              <span class="val num" id="jobs-quality-score" style="color: var(--success);">HEALTHY</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Filter and Jobs Table -->
+        <section class="section-panel">
+          <div class="section-header">
+            <div class="section-title-group">
+              <h3>📋 Persistent Job Ledger (SQLite)</h3>
+              <p>Immutable operational record with duration, source counts, error traces, and commit SHA.</p>
+            </div>
+            <div class="filter-pills" id="jobs-filter-pills">
+              <button class="filter-pill active" onclick="filterJobsStatus('ALL')">ALL</button>
+              <button class="filter-pill" onclick="filterJobsStatus('SUCCESS')">SUCCESS</button>
+              <button class="filter-pill" onclick="filterJobsStatus('PARTIAL')">PARTIAL</button>
+              <button class="filter-pill" onclick="filterJobsStatus('FAILED')">FAILED</button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table" id="jobs-ledger-table">
+              <thead>
+                <tr>
+                  <th>RUN ID</th>
+                  <th>JOB NAME</th>
+                  <th>STARTED AT (IST)</th>
+                  <th class="numeric">DURATION</th>
+                  <th>STATUS</th>
+                  <th class="numeric">RECORDS (FETCH / PROC / REJ)</th>
+                  <th>SOURCES (OK / FAIL)</th>
+                  <th>DATA QUALITY</th>
+                  <th>COMMIT</th>
+                  <th style="text-align: right;">ACTION</th>
+                </tr>
+              </thead>
+              <tbody id="jobs-tbody">
+                <!-- Injected via app.js -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </div>
+
+
+      <!-- ================================================================= -->
       <!-- VIEW: COMING SOON PLACEHOLDER (MUTUAL FUNDS & COMMODITIES)        -->
       <!-- ================================================================= -->
       <div id="view-coming-soon" class="view-panel">
@@ -870,8 +1226,8 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px;">
           <div style="background: var(--bg-surface); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
             <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Data Quality Score</div>
-            <div style="font-size: 14px; font-weight: 700; color: var(--success); margin-top: 4px;" id="tm-quality">● GOOD</div>
-            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Dual-feed reconciled</div>
+            <div style="font-size: 14px; font-weight: 700; color: var(--success); margin-top: 4px;" id="tm-quality">● HEALTHY</div>
+            <div style="font-size: 11px; color: var(--text-secondary); margin-top: 2px;">Verified via job ledger</div>
           </div>
           <div style="background: var(--bg-surface); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border);">
             <div style="font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Market Data Freshness</div>
@@ -1015,6 +1371,47 @@
           <button class="subnav-btn" onclick="closeOrderConfirmModal()">✕</button>
         </div>
         <div id="oc-content" style="font-size: 12px;">
+          <!-- Injected via app.js -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- NEWS ARTICLE & DISCLOSURE DETAIL MODAL                            -->
+    <!-- ================================================================= -->
+    <div class="cmd-palette-backdrop" id="news-modal-backdrop" onclick="closeNewsModal()">
+      <div class="cmd-palette-box" style="padding: 24px; max-width: 680px;" onclick="event.stopPropagation()">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 16px;">
+          <div style="padding-right: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+              <span class="badge badge-blue" id="nm-category">EARNINGS</span>
+              <span class="badge badge-green" id="nm-sentiment">BULLISH (+0.42)</span>
+              <span style="font-size: 11px; color: var(--text-muted);" id="nm-source">Moneycontrol</span>
+            </div>
+            <h3 style="font-size: 16px; font-weight: 800; color: var(--text-primary); line-height: 1.3;" id="nm-title">News Headline</h3>
+          </div>
+          <button class="subnav-btn" onclick="closeNewsModal()" style="flex-shrink: 0;">✕</button>
+        </div>
+        
+        <div id="nm-content" style="font-size: 13px; line-height: 1.5; color: var(--text-secondary); max-height: 500px; overflow-y: auto;">
+          <!-- Injected via app.js -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- JOB RUN AUDIT DETAIL MODAL                                        -->
+    <!-- ================================================================= -->
+    <div class="cmd-palette-backdrop" id="job-modal-backdrop" onclick="closeJobModal()">
+      <div class="cmd-palette-box" style="padding: 24px; max-width: 720px;" onclick="event.stopPropagation()">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 16px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="badge badge-green" id="jm-status">SUCCESS</span>
+            <span style="font-size: 15px; font-weight: 700;" id="jm-title">Pipeline Execution Run Detail</span>
+          </div>
+          <button class="subnav-btn" onclick="closeJobModal()">✕</button>
+        </div>
+        <div id="jm-content" style="font-size: 12px; max-height: 520px; overflow-y: auto;">
           <!-- Injected via app.js -->
         </div>
       </div>

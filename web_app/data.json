@@ -4006,14 +4006,48 @@
     }
   },
   "data_source_health": {
+    "last_checked": "2026-09-09T15:05:46.842966+00:00",
     "sources": {
-      "YFINANCE": "HEALTHY",
-      "NSE": "HEALTHY",
-      "NEWS_RSS": "HEALTHY",
-      "EVENT_DATA": "DEGRADED",
-      "OPTION_CHAIN": "UNAVAILABLE"
+      "YAHOO_FINANCE": {
+        "name": "Yahoo Finance (Global / Commodities)",
+        "last_successful_fetch": "2026-09-09T15:05:46.842966+00:00",
+        "latest_timestamp": "2026-09-09T14:55:32+00:00",
+        "freshness": "608s",
+        "latency_ms": 420,
+        "status": "HEALTHY",
+        "failure_count": 0
+      },
+      "GOOGLE_NEWS_RSS": {
+        "name": "Google News Financial RSS Feeds",
+        "last_successful_fetch": "2026-09-09T15:05:46.842966+00:00",
+        "latest_timestamp": "2026-09-09T04:36:55+00:00",
+        "freshness": "Fresh",
+        "latency_ms": 650,
+        "status": "HEALTHY",
+        "failure_count": 0
+      },
+      "COMEX_METALS": {
+        "name": "COMEX Precious Metals (Gold & Silver)",
+        "last_successful_fetch": "2026-09-09T15:05:46.842966+00:00",
+        "latest_timestamp": "2026-09-09T14:55:32+00:00",
+        "freshness": "608s",
+        "latency_ms": 380,
+        "status": "LIVE",
+        "failure_count": 0
+      },
+      "NSE_INDICES": {
+        "name": "NSE Closing Feeds (Nifty & Bank Nifty)",
+        "last_successful_fetch": "2026-09-09T15:05:46.842966+00:00",
+        "latest_timestamp": "2026-09-09T10:01:14+00:00",
+        "freshness": "EOD",
+        "latency_ms": 410,
+        "status": "HEALTHY",
+        "failure_count": 0
+      }
     },
-    "last_checked": "2026-09-09T13:11:56.080815+00:00"
+    "active_jobs_count": 1,
+    "recent_jobs_count": 4,
+    "failed_jobs_count": 0
   },
   "execution_telemetry": {
     "data_quality": "GOOD",
@@ -20496,7 +20530,7 @@
       "Baseline 6: NIFTY Direction": 54.2,
       "Baseline 7: Simple RSI-14": 52.1
     },
-    "generated_at": "2026-09-09T14:47:42.919626+00:00"
+    "generated_at": "2026-09-09T15:05:07.858765+00:00"
   },
   "certification_v36": {
     "is_certified": true,
@@ -20573,6 +20607,1243 @@
       "is_converged": false,
       "status": "ACCEPTABLE"
     },
-    "timestamp": "2026-09-09T14:47:43.022614+00:00"
+    "timestamp": "2026-09-09T15:05:22.981782+00:00"
+  },
+  "job_runs_ledger": [
+    {
+      "id": 4,
+      "run_id": "RUN-20260909-150531-2ef779e3",
+      "job_name": "OVERNIGHT_DATA_ACQUISITION",
+      "started_at": "2026-09-09T15:05:31.382679+00:00",
+      "completed_at": "2026-09-09T15:05:46.834572+00:00",
+      "duration_ms": 15451,
+      "status": "SUCCESS",
+      "records_fetched": 51,
+      "records_processed": 51,
+      "records_rejected": 0,
+      "sources_attempted": 4,
+      "sources_succeeded": 4,
+      "sources_failed": 0,
+      "data_quality": "HEALTHY",
+      "error_message": null,
+      "config_hash": "v361_overnight_cfg_8c12155",
+      "code_commit": "545c2cd",
+      "created_at": "2026-09-09T15:05:31.382679+00:00"
+    },
+    {
+      "id": 3,
+      "run_id": "RUN-20260909-145555-afd73d35",
+      "job_name": "OVERNIGHT_DATA_ACQUISITION",
+      "started_at": "2026-09-09T14:55:55.538955+00:00",
+      "completed_at": "2026-09-09T14:56:13.741542+00:00",
+      "duration_ms": 18202,
+      "status": "SUCCESS",
+      "records_fetched": 51,
+      "records_processed": 51,
+      "records_rejected": 0,
+      "sources_attempted": 4,
+      "sources_succeeded": 4,
+      "sources_failed": 0,
+      "data_quality": "HEALTHY",
+      "error_message": null,
+      "config_hash": "v361_overnight_cfg_8c12155",
+      "code_commit": "545c2cd",
+      "created_at": "2026-09-09T14:55:55.538955+00:00"
+    },
+    {
+      "id": 2,
+      "run_id": "RUN-20260909-145343-b704505d",
+      "job_name": "OVERNIGHT_DATA_ACQUISITION",
+      "started_at": "2026-09-09T14:53:43.299720+00:00",
+      "completed_at": "2026-09-09T14:53:59.031214+00:00",
+      "duration_ms": 15731,
+      "status": "SUCCESS",
+      "records_fetched": 51,
+      "records_processed": 51,
+      "records_rejected": 0,
+      "sources_attempted": 4,
+      "sources_succeeded": 4,
+      "sources_failed": 0,
+      "data_quality": "HEALTHY",
+      "error_message": null,
+      "config_hash": "v361_overnight_cfg_8c12155",
+      "code_commit": "545c2cd",
+      "created_at": "2026-09-09T14:53:43.299720+00:00"
+    },
+    {
+      "id": 1,
+      "run_id": "RUN-20260909-145312-79b2bef3",
+      "job_name": "OVERNIGHT_DATA_ACQUISITION",
+      "started_at": "2026-09-09T14:53:12.305216+00:00",
+      "completed_at": "2026-09-09T14:53:30.719723+00:00",
+      "duration_ms": 18414,
+      "status": "SUCCESS",
+      "records_fetched": 51,
+      "records_processed": 51,
+      "records_rejected": 0,
+      "sources_attempted": 4,
+      "sources_succeeded": 4,
+      "sources_failed": 0,
+      "data_quality": "HEALTHY",
+      "error_message": "Intelligence synthesis failed: 'OvernightScenario' object has no attribute 'to_dict'",
+      "config_hash": "v361_overnight_cfg_8c12155",
+      "code_commit": "545c2cd",
+      "created_at": "2026-09-09T14:53:12.305216+00:00"
+    }
+  ],
+  "next_scheduled_runs": {
+    "next_run_utc": "2026-09-09T15:30:00+00:00",
+    "next_run_ist": "2026-09-09 21:00:00 IST",
+    "cron_utc": "30 0,12,15,18,21 * * *",
+    "window_description": "Every 3 hours during overnight window: 18:00, 21:00, 00:00, 03:00, 06:00 IST",
+    "current_utc_time": "2026-09-09T15:05:46.842983+00:00",
+    "is_in_overnight_window": true
+  },
+  "international_markets": {
+    "S&P 500": {
+      "symbol": "^GSPC",
+      "asset": "S&P 500",
+      "region": "US",
+      "type": "EQUITY_INDEX",
+      "price": 7643.37,
+      "change": 11.9,
+      "change_pct": 0.16,
+      "market_timestamp": "2026-09-09T15:05:32+00:00",
+      "ingestion_timestamp": "2026-09-09T15:05:33.010101+00:00",
+      "source": "Yahoo Finance / Global Feeds",
+      "freshness_seconds": 1,
+      "quality": "LIVE",
+      "currency": "USD"
+    },
+    "NASDAQ Composite": {
+      "symbol": "^IXIC",
+      "asset": "NASDAQ Composite",
+      "region": "US",
+      "type": "EQUITY_INDEX",
+      "price": 26286.582,
+      "change": 186.81,
+      "change_pct": 0.72,
+      "market_timestamp": "2026-09-09T15:05:31+00:00",
+      "ingestion_timestamp": "2026-09-09T15:05:33.537214+00:00",
+      "source": "Yahoo Finance / Global Feeds",
+      "freshness_seconds": 2,
+      "quality": "LIVE",
+      "currency": "USD"
+    },
+    "Dow Jones Industrial": {
+      "symbol": "^DJI",
+      "asset": "Dow Jones Industrial",
+      "region": "US",
+      "type": "EQUITY_INDEX",
+      "price": 52412.66,
+      "change": -354.22,
+      "change_pct": -0.67,
+      "market_timestamp": "2026-09-09T15:05:33+00:00",
+      "ingestion_timestamp": "2026-09-09T15:05:33.861507+00:00",
+      "source": "Yahoo Finance / Global Feeds",
+      "freshness_seconds": 0,
+      "quality": "LIVE",
+      "currency": "USD"
+    },
+    "Russell 2000": {
+      "symbol": "^RUT",
+      "asset": "Russell 2000",
+      "region": "US",
+      "type": "EQUITY_INDEX",
+      "price": 2935.096,
+      "change": 14.97,
+      "change_pct": 0.51,
+      "market_timestamp": "2026-09-09T14:50:30+00:00",
+      "ingestion_timestamp": "2026-09-09T15:05:34.240817+00:00",
+      "source": "Yahoo Finance / Global Feeds",
+      "freshness_seconds": 904,
+      "quality": "EOD",
+      "currency": "USD"
+    },
+    "CBOE VIX": {
+      "symbol": "^VIX",
+      "asset": "CBOE VIX",
+      "region": "US",
+      "type": "VOLATILITY",
+      "price": 16.05,
+      "change": 1.73,
+      "change_pct": 12.08,
+      "market_timestamp": "2026-09-09T14:50:31+00:00",
+      "ingestion_timestamp": "2026-09-09T15:05:34.576457+00:00",
+      "source": "Yahoo Finance / Global Feeds",
+      "freshness_seconds": 903,
+      "quality": "EOD",
+      "currency": "USD"
+    },
+    "US 10-Year Treasury Yield": {
+      "symbol": "^TNX",
+      "asset": "US 10-Year Treasury Yield",
+      "region": "US",
+      "type": "RATES",
+      "price": 4.81,
+      "change": 0.01,
+      "change_pct": 0.21,
+      "market_timestamp": "2026-09-09T14:50:25+00:00",
+      "ingestion_timestamp": "2026-09-09T15:05:34.916395+00:00",
+      "source": "Yahoo Finance / Global Feeds",
+      "freshness_seconds": 909,
+      "quality": "EOD",
+      "currency": "USD"
+    },
+    "US Dollar Index (DXY)": {
+      "symbol": "DX-Y.NYB",
+      "asset": "US Dollar Index (DXY)",
+      "region": "US",
+      "type": "CURRENCY_INDEX",
+      "price": 98.656,
+      "change": -0.34,
+      "change_pct": -0.34,
+      "market_timestamp": "2026-09-09T14:55:27+00:00",
+      "ingestion_timestamp": "2026-09-09T15:05:35.262327+00:00",
+      "source": "Yahoo Finance / Global Feeds",
+      "freshness_seconds": 608,
+      "quality": "LIVE",
+      "currency": "USD"
+    },
+    "FTSE 100": {
+      "symbol": "^FTSE",
+      "asset": "FTSE 100",
+      "region": "EUROPE",
+      "type": "EQUITY_INDEX",
+      "price": 10658.05,
+      "change": -98.45,
+      "change_pct": -0.92,
+      "market_timestamp": "2026-09-09T14:50:35+00:00",
+      "ingestion_timestamp": "2026-09-09T15:05:35.661923+00:00",
+      "source": "Yahoo Finance / Global Feeds",
+      "freshness_seconds": 900,
+      "quality": "LIVE",
+      "currency": "GBP"
+    },
+    "DAX 40": {
+      "symbol": "^GDAXI",
+      "asset": "DAX 40",
+      "region": "EUROPE",
+      "type": "EQUITY_INDEX",
+      "price": 25545.87,
+      "change": -293.46,
+      "change_pct": -1.14,
+      "market_timestamp": "2026-09-09T14:50:35+00:00",
+      "ingestion_timestamp": "2026-09-09T15:05:36.123372+00:00",
+      "source": "Yahoo Finance / Global Feeds",
+      "freshness_seconds": 901,
+      "quality": "EOD",
+      "currency": "EUR"
+    },
+    "CAC 40": {
+      "symbol": "^FCHI",
+      "asset": "CAC 40",
+      "region": "EUROPE",
+      "type": "EQUITY_INDEX",
+      "price": 8153.59,
+      "change": -132.81,
+      "change_pct": -1.6,
+      "market_timestamp": "2026-09-09T14:50:30+00:00",
+      "ingestion_timestamp": "2026-09-09T15:05:36.505810+00:00",
+      "source": "Yahoo Finance / Global Feeds",
+      "freshness_seconds": 906,
+      "quality": "EOD",
+      "currency": "EUR"
+    },
+    "Nikkei 225": {
+      "symbol": "^N225",
+      "asset": "Nikkei 225",
+      "region": "ASIA",
+      "type": "EQUITY_INDEX",
+      "price": 65142.78,
+      "change": 928.3,
+      "change_pct": 1.45,
+      "market_timestamp": "2026-09-09T06:45:02+00:00",
+      "ingestion_timestamp": "2026-09-09T15:05:37.175116+00:00",
+      "source": "Yahoo Finance / Global Feeds",
+      "freshness_seconds": 30035,
+      "quality": "EOD",
+      "currency": "JPY"
+    },
+    "Hang Seng": {
+      "symbol": "^HSI",
+      "asset": "Hang Seng",
+      "region": "ASIA",
+      "type": "EQUITY_INDEX",
+      "price": 25274.96,
+      "change": -36.25,
+      "change_pct": -0.14,
+      "market_timestamp": "2026-09-09T08:08:28+00:00",
+      "ingestion_timestamp": "2026-09-09T15:05:37.527396+00:00",
+      "source": "Yahoo Finance / Global Feeds",
+      "freshness_seconds": 25029,
+      "quality": "EOD",
+      "currency": "HKD"
+    },
+    "Shanghai Composite": {
+      "symbol": "000001.SS",
+      "asset": "Shanghai Composite",
+      "region": "ASIA",
+      "type": "EQUITY_INDEX",
+      "price": 3951.507,
+      "change": 9.42,
+      "change_pct": 0.24,
+      "market_timestamp": "2026-09-09T07:00:30+00:00",
+      "ingestion_timestamp": "2026-09-09T15:05:37.930662+00:00",
+      "source": "Yahoo Finance / Global Feeds",
+      "freshness_seconds": 29107,
+      "quality": "EOD",
+      "currency": "CNY"
+    },
+    "KOSPI": {
+      "symbol": "^KS11",
+      "asset": "KOSPI",
+      "region": "ASIA",
+      "type": "EQUITY_INDEX",
+      "price": 7051.64,
+      "change": 488.92,
+      "change_pct": 7.45,
+      "market_timestamp": "2026-09-09T09:05:40+00:00",
+      "ingestion_timestamp": "2026-09-09T15:05:38.247549+00:00",
+      "source": "Yahoo Finance / Global Feeds",
+      "freshness_seconds": 21598,
+      "quality": "EOD",
+      "currency": "KRW"
+    },
+    "ASX 200": {
+      "symbol": "^AXJO",
+      "asset": "ASX 200",
+      "region": "ASIA",
+      "type": "EQUITY_INDEX",
+      "price": 8911.4,
+      "change": -67.0,
+      "change_pct": -0.75,
+      "market_timestamp": "2026-09-09T06:50:44+00:00",
+      "ingestion_timestamp": "2026-09-09T15:05:38.621628+00:00",
+      "source": "Yahoo Finance / Global Feeds",
+      "freshness_seconds": 29694,
+      "quality": "EOD",
+      "currency": "AUD"
+    },
+    "USD/INR": {
+      "symbol": "INR=X",
+      "asset": "USD/INR",
+      "region": "FX",
+      "type": "CURRENCY_PAIR",
+      "price": 95.095,
+      "change": 0.61,
+      "change_pct": 0.65,
+      "market_timestamp": "2026-09-09T14:55:04+00:00",
+      "ingestion_timestamp": "2026-09-09T15:05:39.329319+00:00",
+      "source": "Yahoo Finance / Global Feeds",
+      "freshness_seconds": 635,
+      "quality": "LIVE",
+      "currency": "INR"
+    },
+    "EUR/USD": {
+      "symbol": "EURUSD=X",
+      "asset": "EUR/USD",
+      "region": "FX",
+      "type": "CURRENCY_PAIR",
+      "price": 1.164,
+      "change": 0.01,
+      "change_pct": 0.86,
+      "market_timestamp": "2026-09-09T15:05:32+00:00",
+      "ingestion_timestamp": "2026-09-09T15:05:39.690387+00:00",
+      "source": "Yahoo Finance / Global Feeds",
+      "freshness_seconds": 7,
+      "quality": "LIVE",
+      "currency": "USD"
+    },
+    "USD/JPY": {
+      "symbol": "JPY=X",
+      "asset": "USD/JPY",
+      "region": "FX",
+      "type": "CURRENCY_PAIR",
+      "price": 153.545,
+      "change": -5.38,
+      "change_pct": -3.39,
+      "market_timestamp": "2026-09-09T15:05:39+00:00",
+      "ingestion_timestamp": "2026-09-09T15:05:40.132681+00:00",
+      "source": "Yahoo Finance / Global Feeds",
+      "freshness_seconds": 1,
+      "quality": "LIVE",
+      "currency": "JPY"
+    },
+    "US 10Y Yield": {
+      "symbol": "^TNX",
+      "asset": "US 10-Year Treasury Yield",
+      "region": "US",
+      "type": "RATES",
+      "price": 4.81,
+      "change": 0.01,
+      "change_pct": 0.21,
+      "market_timestamp": "2026-09-09T14:50:25+00:00",
+      "ingestion_timestamp": "2026-09-09T15:05:34.916395+00:00",
+      "source": "Yahoo Finance / Global Feeds",
+      "freshness_seconds": 909,
+      "quality": "EOD",
+      "currency": "USD"
+    }
+  },
+  "commodities": {
+    "gold": {
+      "asset": "GOLD",
+      "symbol": "GC=F",
+      "price_usd_oz": 4460.9,
+      "price_inr": 136386.45,
+      "inr_unit": "\u20b9 / 10g",
+      "change_usd": -30.8,
+      "change_pct": -0.69,
+      "change_inr": -941.67,
+      "market_timestamp": "2026-09-09T14:55:32+00:00",
+      "ingestion_timestamp": "2026-09-09T15:05:40.918884+00:00",
+      "source": "COMEX / Yahoo Finance / Spot FX",
+      "freshness_seconds": 608,
+      "quality": "LIVE",
+      "error_reason": null
+    },
+    "silver": {
+      "asset": "SILVER",
+      "symbol": "SI=F",
+      "price_usd_oz": 68.61,
+      "price_inr": 209781.8,
+      "inr_unit": "\u20b9 / kg",
+      "change_usd": 1.64,
+      "change_pct": 2.45,
+      "change_inr": 5020.21,
+      "market_timestamp": "2026-09-09T14:55:32+00:00",
+      "ingestion_timestamp": "2026-09-09T15:05:40.918884+00:00",
+      "source": "COMEX / Yahoo Finance / Spot FX",
+      "freshness_seconds": 608,
+      "quality": "LIVE",
+      "error_reason": null
+    },
+    "energy_and_metals": {
+      "BRENT_CRUDE": {
+        "asset": "BRENT_CRUDE",
+        "symbol": "BZ=F",
+        "price": 101.21,
+        "unit": "USD/bbl",
+        "change": 5.69,
+        "change_pct": 5.96,
+        "market_timestamp": "2026-09-09T14:55:33+00:00",
+        "quality": "LIVE"
+      },
+      "WTI_CRUDE": {
+        "asset": "WTI_CRUDE",
+        "symbol": "CL=F",
+        "price": 96.3,
+        "unit": "USD/bbl",
+        "change": 5.0,
+        "change_pct": 5.48,
+        "market_timestamp": "2026-09-09T14:55:38+00:00",
+        "quality": "LIVE"
+      },
+      "COPPER": {
+        "asset": "COPPER",
+        "symbol": "HG=F",
+        "price": 6.84,
+        "unit": "USD/lb",
+        "change": 0.26,
+        "change_pct": 3.95,
+        "market_timestamp": "2026-09-09T14:55:39+00:00",
+        "quality": "LIVE"
+      },
+      "NATURAL_GAS": {
+        "asset": "NATURAL_GAS",
+        "symbol": "NG=F",
+        "price": 2.87,
+        "unit": "USD/MMBtu",
+        "change": -0.04,
+        "change_pct": -1.37,
+        "market_timestamp": "2026-09-09T14:55:37+00:00",
+        "quality": "LIVE"
+      }
+    },
+    "usd_inr_exchange_rate": 95.095,
+    "timestamp": "2026-09-09T15:05:40.918884+00:00"
+  },
+  "news_intelligence": [
+    {
+      "article_id": "ART-82ea2f5bfeaef508",
+      "headline": "Three Reasons Why Stock Market Is Falling: Nifty Below 23,500, Sensex Down Over 600 Points",
+      "source": "NDTV Profit",
+      "url": "https://news.google.com/rss/articles/CBMizAFBVV95cUxOVGpldXFsMEl4bkltRXp1bTJBbG8wREdKUnpXSkszRUZINmNaazBIMS03OEk4UmF6SE1zekMweF84REY0NkNNczAyLVd5U1p5SmMweWYxVTJCNy00TnhXWDhPV18yRnBuaWNtcjVFbzdRd0NpdThVVjVKZndfVk5aSzZFNFN4SzFJdU9nWjR2UHhfWnBveTZPamJpSWQtUjdYUzNMa1NKQ3BXYzdVZTZkLXp2aDM1NGhoOEZZUTRQSnBTei12ZmNhZ2t0U3HSAdQBQVVfeXFMUHliM2RsNE1TU3RyNlRSZklGajBBVHNUUk1ITVdxWHc2ZTduRkxFTjU3eHVxcFd0dmdqemxoV1E3aTc5aGxRT1VBTHk1N1dGNFZYRTZKXzdJb0Z2blpLSE0zSEZOc3NsNFVfWmp5Zl9aSWtTMUV1MHBEUTRiZ2hCSTA5NEVfNkpIWjdaQUd5bmJkZlRZc2hybTdZWjJvQVVlSXFBRUQ3Wl9wdEZSVXJNTEtiQXpoVEtGenVxa3phaGZmdWE2dkJ6VGlsbHRiN1N0eW5iSlg?oc=5",
+      "category": "Markets",
+      "region": "India",
+      "published_at": "2026-09-09T04:36:55+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:43.992444+00:00",
+      "content_hash": "82ea2f5bfeaef508",
+      "event_type": "GENERAL_MARKET_DEVELOPMENT",
+      "sentiment": "NEGATIVE",
+      "impact": "MEDIUM",
+      "surprise": "EXPECTATION_DATA_UNAVAILABLE",
+      "affected_assets": [
+        "NIFTY 50"
+      ],
+      "affected_sectors": [
+        "Broad Market"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Negative catalyst for NIFTY 50. System expects negative reaction with medium volatility.",
+      "ai_reasoning": "Event classified as GENERAL_MARKET_DEVELOPMENT impacting Broad Market. Directional bias is NEGATIVE with MEDIUM systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 61.2
+    },
+    {
+      "article_id": "ART-fec5fdb34eb6f701",
+      "headline": "Stock market today: Trade guide for Sensex, Nifty 50, crude oil to gold | Seven stocks to buy",
+      "source": "Livemint",
+      "url": "https://news.google.com/rss/articles/CBMi7wFBVV95cUxQeUpqcWNXNWE0X2tVd0NtdTNDZGlheUlwSVZ4Q2lSQWFNcHgtUXFBU3ZTZlI4cE8yVHVYeDlsb2FGcXRrUnA0bFRqTU1fMVVjSHQ5clBzY0V4eDI4Ty1NUV9SM3gyQWdkR2E0RzNoQzI4VnQ2VWh6OGtqOFlZamRrUDVLU2NLUTJ0ek9mb0xvdHhPNVZMMXVwXzN4d295ejJwNWJCQUY5NEEzLXJ5S1VMNHo5N3NDb25kMmh0VVRGb3ZiODlKcUxQX0xVM2VpTkhHdVh2OGJZM1RwTlJOYmRrb3JUeGt0YnRFTDFvNXVVY9IB9AFBVV95cUxNakVYOVNENEpnQWZKMlVPVC1BT0JLLVhVR0RabjRHMHoxeE5QWVJmUV9MRUdfb2ZWZUlMbHlMX1lmUllkMEhsbkdCNlNBOFNNV2dqNkphZTNWdzRWRUlGdzhnTGxfTjJodjhEajFkaWhUWjVxNHRXWnEtVW9UWUIwbWM3dTRoLXZqNHVaTEV1OFpHTUN1U1p5QnJwODZoTjVZRXAyQWxzSFVOYkJacWlnTGVEdC1VWk81NzNqY2lsdnBXaURDbWd5SU1aUGxnbmQ4aDB5RUx2QlVlWWlvR1FWNWM3LUpmWWtVaHg2eHdXMmV5X1ho?oc=5",
+      "category": "Markets",
+      "region": "India",
+      "published_at": "2026-09-09T01:35:43+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:43.992552+00:00",
+      "content_hash": "fec5fdb34eb6f701",
+      "event_type": "COMMODITY_PRICE_SHOCK",
+      "sentiment": "NEUTRAL",
+      "impact": "MEDIUM",
+      "surprise": "EXPECTATION_DATA_UNAVAILABLE",
+      "affected_assets": [
+        "ONGC",
+        "BPCL"
+      ],
+      "affected_sectors": [
+        "Energy"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Neutral catalyst for ONGC, BPCL. System expects neutral reaction with medium volatility.",
+      "ai_reasoning": "Event classified as COMMODITY_PRICE_SHOCK impacting Energy. Directional bias is NEUTRAL with MEDIUM systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 61.2
+    },
+    {
+      "article_id": "ART-8860211186b8d674",
+      "headline": "Share Market Today: Nifty 50, Bank Nifty | Sep 09, 2026",
+      "source": "Liquide Blog",
+      "url": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxNdF9yVm41WVM4dzNEclUySTBwR1E5VjFfa1d2YmtFTXpONjhrQ1FrQ3J6SEx5UGNCTzZGZXFzV1BsdFpaZ19BWWQyOXNodHNvS1ExSkpUSHA0QTVRZTNOUGw4Z0pNVHdVNjNKOGdFYkRvQXpIZGlGdUxxVE9Cek5TMm5GTjEyMnVGZVdVWmhCOHlfUm5CaW1JajVlVnZvRVpTMlMxenFQVUZPNWRDM1A0TkNOWi1aMlRkbGdr?oc=5",
+      "category": "Markets",
+      "region": "India",
+      "published_at": "2026-09-09T11:13:37+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:43.992637+00:00",
+      "content_hash": "8860211186b8d674",
+      "event_type": "GENERAL_MARKET_DEVELOPMENT",
+      "sentiment": "NEUTRAL",
+      "impact": "MEDIUM",
+      "surprise": "EXPECTATION_DATA_UNAVAILABLE",
+      "affected_assets": [
+        "HDFCBANK",
+        "ICICIBANK",
+        "SBIN"
+      ],
+      "affected_sectors": [
+        "Financial Services"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Neutral catalyst for HDFCBANK, ICICIBANK, SBIN. System expects neutral reaction with medium volatility.",
+      "ai_reasoning": "Event classified as GENERAL_MARKET_DEVELOPMENT impacting Financial Services. Directional bias is NEUTRAL with MEDIUM systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 61.2
+    },
+    {
+      "article_id": "ART-47346d5e9292cbf2",
+      "headline": "Sensex, Nifty Hit 3\u2011Month Low as Crude Tops $100",
+      "source": "HDFC Sky",
+      "url": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxPWmI3QmJycHZ5emV5b0Z2S2JQaTdUWUJFSzRwMkpFTE5RSlZsbm9lb0xXcEU4aXIyVlowanVfQ1RwVnBhTE1aa05ZSGVrNVEyUlZ4MjNmX0huNjJ5MzdQZ01fSU1NdGp5YmtNX3F3dVREYzZuZVktLURUaDVvcWxpc1VHaFZVTmUyMFZCQ2V2OXFoVHFEbl8wM2ZsWENSS2NsQXF3UlozNE1RcEYzVkVQanBCZ1BkbjJWRWxQcVg2aHg4U0U?oc=5",
+      "category": "Markets",
+      "region": "India",
+      "published_at": "2026-09-09T10:35:18+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:43.992739+00:00",
+      "content_hash": "47346d5e9292cbf2",
+      "event_type": "COMMODITY_PRICE_SHOCK",
+      "sentiment": "NEUTRAL",
+      "impact": "MEDIUM",
+      "surprise": "EXPECTATION_DATA_UNAVAILABLE",
+      "affected_assets": [
+        "ONGC",
+        "BPCL"
+      ],
+      "affected_sectors": [
+        "Energy"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Neutral catalyst for ONGC, BPCL. System expects neutral reaction with medium volatility.",
+      "ai_reasoning": "Event classified as COMMODITY_PRICE_SHOCK impacting Energy. Directional bias is NEUTRAL with MEDIUM systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 61.2
+    },
+    {
+      "article_id": "ART-98452e4aca47a959",
+      "headline": "RBI launches key surveys to get inputs for monetary policy",
+      "source": "ETLegalWorld.com",
+      "url": "https://news.google.com/rss/articles/CBMixgFBVV95cUxQLUt0OGlfaDJnbkdQWmk4aHV2Y2dvVW1KQUVqN1BCSWpncDRma1pQLWxSNGtaMVBZMzIxblF3Wno0RVRTelY5cXVhZzFoT0cyTHlWMUtaOHh2dEljMmdIdTg0V3BQVDdXWkk1cjZTWUZyZGlRRkF1bDRSRVdzNlhoUE9UZ0dWODZKTmNQSF9VUWlEYXNkRGJuNXJ2a3JEMDJJaUR1dm9nN0pqTXlMWmRpTm93U2F6YTllczNEVEZKZ0xaZU5ianfSAcsBQVVfeXFMT3ZBLUNvWTZscGhYNUo5TFd5cnBXZjJfQXZTTWFja3pocEh5T1N1ajh0MFRRM2RuaTVYX2FKaldCQWFkbmZsaUR0T3VGYjJmQXJwbTU5ZWxMZGtpcVlxQWRITjdKZzQ5QTFBakY2YjlUNWtLNTNDOGxyUlcyRnpPZ0h1Qk16bTVxT0NUekRGZTFlenRYTXZwN29uUno3WlV4V25UcU92RDFRZkJ3bHJPMTk4bDhmR1ZGb2RxOXlWYmRqX3QzMUdCeU92dGc?oc=5",
+      "category": "Macro",
+      "region": "India",
+      "published_at": "2026-09-08T18:48:14+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:44.421808+00:00",
+      "content_hash": "98452e4aca47a959",
+      "event_type": "GENERAL_MARKET_DEVELOPMENT",
+      "sentiment": "NEUTRAL",
+      "impact": "MEDIUM",
+      "surprise": "EXPECTATION_DATA_UNAVAILABLE",
+      "affected_assets": [
+        "NIFTY 50"
+      ],
+      "affected_sectors": [
+        "Broad Market"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Neutral catalyst for NIFTY 50. System expects neutral reaction with medium volatility.",
+      "ai_reasoning": "Event classified as GENERAL_MARKET_DEVELOPMENT impacting Broad Market. Directional bias is NEUTRAL with MEDIUM systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 61.2
+    },
+    {
+      "article_id": "ART-9c71a5f35de35a05",
+      "headline": "GFF: Stablecoins pose sovereignty challenge, RBI adviser says",
+      "source": "MediaNama",
+      "url": "https://news.google.com/rss/articles/CBMiigFBVV95cUxQNHNTVW16blgtOS1pU1NLTE01bWRIR1dfOUJnVEVseUVoXzM0RzNGYkwtTkNrRWV5bDNGT0lKMFZqemw5ZmQxWnhmVkFHMk02WUc2TG42YWdYRHZneDlKc2RubDQ4VHJkNG5NUmNFWDQzSXZsU1VFcWZYaWtVX2l6bF9Hc1I4VmhhaEE?oc=5",
+      "category": "Macro",
+      "region": "India",
+      "published_at": "2026-09-09T10:45:48+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:44.421898+00:00",
+      "content_hash": "9c71a5f35de35a05",
+      "event_type": "GENERAL_MARKET_DEVELOPMENT",
+      "sentiment": "NEUTRAL",
+      "impact": "MEDIUM",
+      "surprise": "EXPECTATION_DATA_UNAVAILABLE",
+      "affected_assets": [
+        "NIFTY 50"
+      ],
+      "affected_sectors": [
+        "Broad Market"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Neutral catalyst for NIFTY 50. System expects neutral reaction with medium volatility.",
+      "ai_reasoning": "Event classified as GENERAL_MARKET_DEVELOPMENT impacting Broad Market. Directional bias is NEUTRAL with MEDIUM systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 61.2
+    },
+    {
+      "article_id": "ART-4c1b08ae903697b2",
+      "headline": "RBI Bulletin",
+      "source": "rbi.org.in",
+      "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTE0wWUdXaGJEVG1fTjBWXy1lblNoRk1TR1Z6NVloZk9DRHB2akluX1ktWTRJZHFqN1Y3Qk9sbjlKUFhPS2RZY1pacFVWUHY1S3Fvd1ZmbG1rOC03c21lMjRhWUp4YzVHSEVOSHc?oc=5",
+      "category": "Macro",
+      "region": "India",
+      "published_at": "2026-08-25T07:00:00+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:44.421957+00:00",
+      "content_hash": "4c1b08ae903697b2",
+      "event_type": "GENERAL_MARKET_DEVELOPMENT",
+      "sentiment": "NEUTRAL",
+      "impact": "MEDIUM",
+      "surprise": "EXPECTATION_DATA_UNAVAILABLE",
+      "affected_assets": [
+        "NIFTY 50"
+      ],
+      "affected_sectors": [
+        "Broad Market"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Neutral catalyst for NIFTY 50. System expects neutral reaction with medium volatility.",
+      "ai_reasoning": "Event classified as GENERAL_MARKET_DEVELOPMENT impacting Broad Market. Directional bias is NEUTRAL with MEDIUM systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 61.2
+    },
+    {
+      "article_id": "ART-034e7344b25080f3",
+      "headline": "RBI MPC meeting begins; inflation, growth outlook in focus",
+      "source": "DD News",
+      "url": "https://news.google.com/rss/articles/CBMiigFBVV95cUxQeU1neUtNdVUzUmE0LVdFb0VSbTk2dlduNy1Gdkg3WklLaHotNnN2NktLdUFUak0wemVTaS1Xby1KNThNaHJEVHdBNkNLV2t2WUxkcnR1SkJuOU9ZRDY4VTBsS3B5djlDbmxwbVdjalFMRGFOdU9MX0ZhTmNqa0cwZExUcGJMSVRJLUE?oc=5",
+      "category": "Macro",
+      "region": "India",
+      "published_at": "2026-09-05T19:47:13+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:44.422028+00:00",
+      "content_hash": "034e7344b25080f3",
+      "event_type": "GENERAL_MARKET_DEVELOPMENT",
+      "sentiment": "NEUTRAL",
+      "impact": "MEDIUM",
+      "surprise": "EXPECTATION_DATA_UNAVAILABLE",
+      "affected_assets": [
+        "NIFTY 50"
+      ],
+      "affected_sectors": [
+        "Broad Market"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Neutral catalyst for NIFTY 50. System expects neutral reaction with medium volatility.",
+      "ai_reasoning": "Event classified as GENERAL_MARKET_DEVELOPMENT impacting Broad Market. Directional bias is NEUTRAL with MEDIUM systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 61.2
+    },
+    {
+      "article_id": "ART-73c20382eb8fc4a7",
+      "headline": "Margin worries for private banks, Middle East war drag down Indian shares",
+      "source": "Yahoo Finance Singapore",
+      "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxQMjFESFltSWlTUWtFeWtZLTZhWWgzelhIaTY3SGtRMjEtbzRfampZa2R6bXB1TWs5WlFUT3VZWFpRTUpuNUlIRnQ5MlFxd19LVDJud0xrMmZsNU5la1FjRGxBOGQwWXNScmdNNXB1TzFXb01IWEV0UHZJdVBoOTgxUw?oc=5",
+      "category": "Companies",
+      "region": "India",
+      "published_at": "2026-07-20T07:00:00+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:45.171565+00:00",
+      "content_hash": "73c20382eb8fc4a7",
+      "event_type": "GENERAL_MARKET_DEVELOPMENT",
+      "sentiment": "NEUTRAL",
+      "impact": "MEDIUM",
+      "surprise": "EXPECTATION_DATA_UNAVAILABLE",
+      "affected_assets": [
+        "HDFCBANK",
+        "ICICIBANK",
+        "SBIN"
+      ],
+      "affected_sectors": [
+        "Financial Services"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Neutral catalyst for HDFCBANK, ICICIBANK, SBIN. System expects neutral reaction with medium volatility.",
+      "ai_reasoning": "Event classified as GENERAL_MARKET_DEVELOPMENT impacting Financial Services. Directional bias is NEUTRAL with MEDIUM systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 61.2
+    },
+    {
+      "article_id": "ART-21f3622ba72f0a58",
+      "headline": "Stocks to Watch Today: Reliance Industries, ICICI Bank, HDFC Bank, NATCO Pharma, Oberoi Realty, RBL Bank,...",
+      "source": "Moneycontrol.com",
+      "url": "https://news.google.com/rss/articles/CBMiuAJBVV95cUxNc0hqNHZYRE5pdUdlMUkySUJubnZpYi1aX18xeDJ4WUpZdlR6amt6SU9CbXBkemtPSWF3OEVZNG9LajhCSmxWY2J0N01pc01YRG9wcW9jUG8xV2VFMDlGWERzS1k5Z2J3N2libG5Hc0JsN3hzY2FFYjNSVDVLTWlOQVl5bkVhTGxQeDhDRUswMmxPVXNjV1Q4MURhemdGWEV1MnZUcFQyaWVXc2JQZHlIeC1uV3poWmF6Z0l0UkQ0TmdEbE5GZzZxMjlBRDRKWGVPT2UwNnZYbWYtc3N6M3BJLTVWc0dxSjA5VVFRVlY2VDgxU2I5bjEzenZqYzJLbkxaa3J1VmQ3anhlNFhFRDNWQ2FxZ3piYk5rTFRnVFhLRzJOOG9hWjAwd3U4Y3ZqQ1JhMjNpZ1BIenDSAb4CQVVfeXFMT1Vsbk9nQ2hPU0o1WUVSZmpKX096a1Rrc3ZvWWFKY3AybjFrRXJ3U0k5Tjlzb3dneEdycGdjNmFCU0pkTjBMVDYxU1duS2VFZGlfNzNER3lGOExMclZSaTVTVmI5T3B4MTlFUzNSNzE0SUh2dDlVLWx6aDdiNnptT0I5eFg2TDZRU09JY2IxcDJYZVg0YzF3Vi02eWpXbVo3aWZ2LWN3RW9iR2ZIMlk2YThLVHpkTWpDMFdaRkFfSFVfQmcwdzhsZTctX1NaaVB5bkl3S3l4YUhibGZrc3dBR3IyR3hNb3FMZ2pxVWwwakFELXNpZUxubXZ1WTU0NzJlemlnZF8wcnBQaTdTSnhncU90Z1hIZk55S3gzcElNbFF3OEE1NlVIcnc5Ny1ocnN0OUVxRTJSdzUzVHp1S0RB?oc=5",
+      "category": "Companies",
+      "region": "India",
+      "published_at": "2026-07-20T07:00:00+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:45.171789+00:00",
+      "content_hash": "21f3622ba72f0a58",
+      "event_type": "GENERAL_MARKET_DEVELOPMENT",
+      "sentiment": "NEUTRAL",
+      "impact": "MEDIUM",
+      "surprise": "EXPECTATION_DATA_UNAVAILABLE",
+      "affected_assets": [
+        "RELIANCE",
+        "HDFCBANK",
+        "ICICIBANK",
+        "SBIN"
+      ],
+      "affected_sectors": [
+        "Energy / Oil & Gas",
+        "Financial Services"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Neutral catalyst for RELIANCE, HDFCBANK, ICICIBANK. System expects neutral reaction with medium volatility.",
+      "ai_reasoning": "Event classified as GENERAL_MARKET_DEVELOPMENT impacting Energy / Oil & Gas, Financial Services. Directional bias is NEUTRAL with MEDIUM systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 61.2
+    },
+    {
+      "article_id": "ART-f3bfaacb74085db3",
+      "headline": "IT powers Indian shares to weekly gains; Reliance, bank earnings eyed",
+      "source": "Reuters",
+      "url": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxPbGF0TVI5MFFQVjZIYVVVZHQyMU5tUWlJLTFUZ2lwNVhwV0F5bVg5UUJLN2o3UTZiRFotcS0xVUUtX0dQRVN2d2lZZ1B2a1A4SW85aXcyV2VveW5leEdZUXJvZXplV0lTX1FzU3BBaHJacG1UNGNWbnFlUlpLY1BFaHctQVhSWkZuS05WZUpBSHNMUFR6czJid3liTU1ZOUFCNFpwMFdRXzI4dw?oc=5",
+      "category": "Companies",
+      "region": "India",
+      "published_at": "2026-07-17T07:00:00+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:45.171967+00:00",
+      "content_hash": "f3bfaacb74085db3",
+      "event_type": "GENERAL_MARKET_DEVELOPMENT",
+      "sentiment": "POSITIVE",
+      "impact": "MEDIUM",
+      "surprise": "EXPECTATION_DATA_UNAVAILABLE",
+      "affected_assets": [
+        "RELIANCE",
+        "HDFCBANK",
+        "ICICIBANK",
+        "SBIN"
+      ],
+      "affected_sectors": [
+        "Energy / Oil & Gas",
+        "Financial Services"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Positive catalyst for RELIANCE, HDFCBANK, ICICIBANK. System expects positive reaction with medium volatility.",
+      "ai_reasoning": "Event classified as GENERAL_MARKET_DEVELOPMENT impacting Energy / Oil & Gas, Financial Services. Directional bias is POSITIVE with MEDIUM systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 61.2
+    },
+    {
+      "article_id": "ART-12460405ed0ca4ff",
+      "headline": "Stock Alert: Reliance, HDFC Bank, Cipla, Ashoka Buildcon",
+      "source": "Business Standard",
+      "url": "https://news.google.com/rss/articles/CBMizwFBVV95cUxNVVVpeW1QOVZuRE5Sc1ZxNXljaUcyUXJXVDYtMm14b2g0cmpjbXl5WGZSZ0xTX1RIdlRWcVBJTElYWDV2ZGRLSVRLTktWM0M0RWdpR2RZZTBMSWY2X3NGTWRRbEwwMmJRVzIzWmxua240LXRFS1c2WVNjZm5Dd1Y3QjlUdU53Vmx6MnM2Yjh2QksxdGdQS015ZUM1d3B0dGpnYjd2YnhKcExEQmJldjI3ejZZSXZkTkY1UHNiR293UDRldzZDaWJaS3NRZFZvQ0HSAdQBQVVfeXFMTUNQcURxMVVlTUI3dmFJTlR3OGdTcEg1dE14X1hDOWNDbmwyR1dIckhsbEJLdGFZNUtHR1VFWUY0dEJJeG16OVFEV19UTDVUQXFZbVFpem5uVGNVd2p2MzZGajZmenNoX0dSTjY3VEoyQjJRelhvSGthMENqeUsyaWx1ZUhPbV9vQmxZOGZXVGIzR3I5TDFveC1rS3FPS0oxNnZMQ1laMlYwaDgtOU8xQWRSM202TlBtQzNEWjBMZkpuQmZpWS1QemlOQWZWNW5vTVhzNGY?oc=5",
+      "category": "Companies",
+      "region": "India",
+      "published_at": "2026-08-31T03:34:20+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:45.172142+00:00",
+      "content_hash": "12460405ed0ca4ff",
+      "event_type": "GENERAL_MARKET_DEVELOPMENT",
+      "sentiment": "NEUTRAL",
+      "impact": "MEDIUM",
+      "surprise": "EXPECTATION_DATA_UNAVAILABLE",
+      "affected_assets": [
+        "RELIANCE",
+        "HDFCBANK",
+        "ICICIBANK",
+        "SBIN"
+      ],
+      "affected_sectors": [
+        "Energy / Oil & Gas",
+        "Financial Services"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Neutral catalyst for RELIANCE, HDFCBANK, ICICIBANK. System expects neutral reaction with medium volatility.",
+      "ai_reasoning": "Event classified as GENERAL_MARKET_DEVELOPMENT impacting Energy / Oil & Gas, Financial Services. Directional bias is NEUTRAL with MEDIUM systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 61.2
+    },
+    {
+      "article_id": "ART-427c8cdd31d9623f",
+      "headline": "Crude Oil, Gold & Silver: What\u2019s The Next Big Move? | Kunal Shah",
+      "source": "Business Today",
+      "url": "https://news.google.com/rss/articles/CBMixwFBVV95cUxORGxUOTczb3lLMUNuWU5KTVhyNW0tZXZQeHRGZ0FXY0lreHZNTFF3eHlkMVJTdjc3RlFRT1lMb09HSzZuTXJHM2diSjJUTll2Vmh6clJMa1U1LThXc2lpeE1IMVNpYmJESjBrUGFCRVdTa3ZNZ096QXduNkdvQ0RDeW9rWVE1ZEZrVDU0a0tMeWs5ejdXbWVDbURnemFHM0FuVGREZ3lwTmM4S09peHBsSVh0YVp0c1FxbjdtX05aTW1zQkQ3bVJZ0gHMAUFVX3lxTE1pN1cxcFA1RDdqVXh2SXFCSkV6b0U3bnBjRWg5UEtoM2xSMUFMaVQ5MnJvbzJnWXpTQzlDUEY0Z1RrR1dMdExkaEYzRWQ3aVBBMHdFd3pRYjBadFlSV3l4dlpSRWxlQmk1Q1JOTVhwRVR5QVBsQnhwTTJZb3Z5TUxwdXB5NV81UnpIemdMRGU3V1VMbDFzVV9XS0ZMVnZrbG1KeklxRWsyS3YxRlkxdllXNjlhRUNXaHJMQTA1RDlCZ1FxZ1pka0gzYVRSNA?oc=5",
+      "category": "Commodities",
+      "region": "India",
+      "published_at": "2026-09-07T11:41:16+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:45.824664+00:00",
+      "content_hash": "427c8cdd31d9623f",
+      "event_type": "COMMODITY_PRICE_SHOCK",
+      "sentiment": "NEUTRAL",
+      "impact": "MEDIUM",
+      "surprise": "EXPECTATION_DATA_UNAVAILABLE",
+      "affected_assets": [
+        "ONGC",
+        "BPCL"
+      ],
+      "affected_sectors": [
+        "Energy"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Neutral catalyst for ONGC, BPCL. System expects neutral reaction with medium volatility.",
+      "ai_reasoning": "Event classified as COMMODITY_PRICE_SHOCK impacting Energy. Directional bias is NEUTRAL with MEDIUM systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 61.2
+    },
+    {
+      "article_id": "ART-fc33a1005b159237",
+      "headline": "MCX crude oil prices surge as US-Iran war escalates; MCX Gold trades near \u20b91.54 lakh per 10 gram; check today's trade setup",
+      "source": "Upstox",
+      "url": "https://news.google.com/rss/articles/CBMilAJBVV95cUxNMUJvMHJJM3UwWVdwZnMwQkVZbEFYSkQyblNjeXRjdV9ESkR1cXVnUGtMdUYzM2ktZl9qcGRqME9jSHR6TVIySmVPQ0lZMlB6WHhiOG1udmJqRzZ3bFU2QzRLS3ZiMDI5aUY0cmRPSC1nVGFYeVdKakJvUlBCT2J5aWNYRVgyVklCNGhSNzR2cmVPbTlpbzVuZE9NNVA1c1VZdjdOQ0swWlBRbzB0WVdhcTBjdlF3Rlh2X3Vod3FLeFptVTRmbEdtZ2RkUWtQUXhta2tBeXNJVW5QMnhPMG96eGZSa1luV2Fhc185MHJDOU5Ock5rRkRmTG5raDJ3dHFkazlmb1FPRjNfU3RRZEJtcW9ZaTA?oc=5",
+      "category": "Commodities",
+      "region": "India",
+      "published_at": "2026-09-01T08:28:15+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:45.824812+00:00",
+      "content_hash": "fc33a1005b159237",
+      "event_type": "COMMODITY_PRICE_SHOCK",
+      "sentiment": "NEUTRAL",
+      "impact": "MEDIUM",
+      "surprise": "EXPECTATION_DATA_UNAVAILABLE",
+      "affected_assets": [
+        "ONGC",
+        "BPCL"
+      ],
+      "affected_sectors": [
+        "Energy"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Neutral catalyst for ONGC, BPCL. System expects neutral reaction with medium volatility.",
+      "ai_reasoning": "Event classified as COMMODITY_PRICE_SHOCK impacting Energy. Directional bias is NEUTRAL with MEDIUM systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 61.2
+    },
+    {
+      "article_id": "ART-15f980a6ff81d4ed",
+      "headline": "Gold, silver rates to USD vs INR: Commodity heatmap amid soaring crude oil prices",
+      "source": "Livemint",
+      "url": "https://news.google.com/rss/articles/CBMi2wFBVV95cUxNMkxWMjF6bUh6c0VVckFNNDhaWWRHS0dTNG1jSHAtR3ZuYmxoVWZqTEhleGV5YnlNbGpGSi00bndMc3BGUlpJd0pZRUMxcjNDYlBPUE40Yk1Jc2g0N3l5VGFNbjIwR01tWm5LbmNWaU1mczFzRTZfcFJkRnRncnUzNk53REdFSW1hb05peDU1WGZGdl90THl6TDczSmdrYjJOQVUzQ0NCTlBHanpWSkNFWmhsdGtDak5teFZWX0JyVTJIRlBZaEFYVldjcTh0eWk4YVdqSC1NajZpbDTSAeABQVVfeXFMTllPbGFfX1BvN2NBeVNDQnFuSWVpZS1CQy1IUktaMEd6ZG9PbGQ1N0luMDNyZWtHa1JRcGpzdVlqVW5WSjNTMm0tZXFseHExUVNLZTFKYngxLXZ1VDgxYm10NGhGQ3NsQ1lfWVkyVDFTa2lGbnhjNVIzOWhOSFdDakFEUllISWRuS2l2T0JqSmh4aU5JcHhqb2NLYlNQZjZKYlVldlhsR1g5ck83R1hUMnZLc3lXei1ndGtCM3NhcHpoMU43a1dlUmltLUl1amhSUzY4azhxb053N0xsQXllRlU?oc=5",
+      "category": "Commodities",
+      "region": "India",
+      "published_at": "2026-08-12T07:00:00+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:45.824931+00:00",
+      "content_hash": "15f980a6ff81d4ed",
+      "event_type": "COMMODITY_PRICE_SHOCK",
+      "sentiment": "NEUTRAL",
+      "impact": "MEDIUM",
+      "surprise": "EXPECTATION_DATA_UNAVAILABLE",
+      "affected_assets": [
+        "ONGC",
+        "BPCL"
+      ],
+      "affected_sectors": [
+        "Energy"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Neutral catalyst for ONGC, BPCL. System expects neutral reaction with medium volatility.",
+      "ai_reasoning": "Event classified as COMMODITY_PRICE_SHOCK impacting Energy. Directional bias is NEUTRAL with MEDIUM systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 61.2
+    },
+    {
+      "article_id": "ART-25e16e15463d7e8e",
+      "headline": "Gold, silver regain momentum; crude oil falls below $100 a barrel",
+      "source": "Business Standard",
+      "url": "https://news.google.com/rss/articles/CBMi0gFBVV95cUxQRFd5VlpCdi1ZU0tyQzRNN1dQakZKYmZTaDF2RFhXX1FXVGlUVW9kWHJOTnh4Rmh1YTFjWDdmOGQ5N1BLLVVLZWJRQUJRNnhwTVNySXdBZmpiNEo0b2dGMTRLNE9JM0R4Zy16Y3Mwamx6QjVTMjVsbHBHY2x5dlBCamhJVWkzT3NENHpHMHhhcTUxcGltUkRFbDNsRVR6OGhWTEY0bzV4WU9rcFdEXzZLaXRHWUhCbVQzSVFfbkhMZGZpMlFaTkRvR1ZFSkhicVhqZXfSAdcBQVVfeXFMT1dVZk5FdjZ0RE1FRkJ6R1ZwVlB5cDdrQ0x4V0hWMUhHbThmbTJSbk81ZVY3Q3dyV0t5OTNhVVRTdnpTX0ZfOHFUSEd5YnZkUWZoSmVmNmgwbWhVQVp2QjR1amhSMkVYV2ZOQ1Nad3dYVDRBVjhoOHVCVndWY0lwR2xvYzhyU2RHLW9JSTc3S0FTUHF3VTFvRlpNSXVtRTlhQkxsbHJWdHhlRjdfUmZ1UEtOTDVqcTRlc1VwcVpIeEI4Q0xiTXVUT2lkLVQ4aWJuTUdkSmUzNGs?oc=5",
+      "category": "Commodities",
+      "region": "India",
+      "published_at": "2026-07-24T07:00:00+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:45.825034+00:00",
+      "content_hash": "25e16e15463d7e8e",
+      "event_type": "EARNINGS_MISS",
+      "sentiment": "NEGATIVE",
+      "impact": "HIGH",
+      "surprise": "-1.42 sigma",
+      "affected_assets": [
+        "ONGC",
+        "BPCL"
+      ],
+      "affected_sectors": [
+        "Energy"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Negative catalyst for ONGC, BPCL. System expects negative reaction with high volatility.",
+      "ai_reasoning": "Event classified as EARNINGS_MISS impacting Energy. Directional bias is NEGATIVE with HIGH systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 68.5
+    },
+    {
+      "article_id": "ART-127f3809a93d981f",
+      "headline": "Fed holds interest rates steady as inflation hits 3-year high",
+      "source": "abcnews.com",
+      "url": "https://news.google.com/rss/articles/CBMinwFBVV95cUxObE9meWdub2FOS2dVY0pKYUxReEZrZGJhMnIyNG9JTEJpZlhISXFXMlZGZk1kSjRPWlRPejV6aTdXSHZnWWFkeHBvZVEydk9Sa1dLallzVGtIenB2OV9yR2daTDNrb2psQW5uZ2JSYnlOMUxmYzExZ1NBT1V3OGVlaERaZ1pPaVYwTDUyNVJCR1lJUkpoRFhhMzJha09TOVXSAaQBQVVfeXFMUGc0WHV5TzVaUnlTZjZ2Y1h3RHdSSnc0LWZoTzF3Uzk4WFkyQVByY1kxNkNoeDREX3Z6TDRSOUsyMmFvbHBGUWNlWUlXZGxJZFN6RFB5NWREWWtlRXUyMXJyUUlMTXo0cmh4NlpfT1pMUklyOGJLb1F5SDdteTItMzl5NVQybXk5U2ZQWkRGYmhnU0dJZ2hoTEFjb3FLaktRcjZNbDc?oc=5",
+      "category": "Global",
+      "region": "Global",
+      "published_at": "2026-09-09T05:39:13+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:46.331219+00:00",
+      "content_hash": "127f3809a93d981f",
+      "event_type": "GENERAL_MARKET_DEVELOPMENT",
+      "sentiment": "POSITIVE",
+      "impact": "MEDIUM",
+      "surprise": "EXPECTATION_DATA_UNAVAILABLE",
+      "affected_assets": [
+        "NIFTY 50"
+      ],
+      "affected_sectors": [
+        "Broad Market"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Positive catalyst for NIFTY 50. System expects positive reaction with medium volatility.",
+      "ai_reasoning": "Event classified as GENERAL_MARKET_DEVELOPMENT impacting Broad Market. Directional bias is POSITIVE with MEDIUM systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 61.2
+    },
+    {
+      "article_id": "ART-ee82effd9862440c",
+      "headline": "Market Minute: Inflation data set to support Fed rate hike",
+      "source": "The Real Economy Blog",
+      "url": "https://news.google.com/rss/articles/CBMikgFBVV95cUxQazQzWm14UG1LcG9zTzhUb2ZxcmFzSnJMVmlaa3RjSnNlcjZQdERsc3RwNEs5VXFHcGY0LTZqUkRMUFBwYng5TWRaS2d1blFNalNhVlZRQ1Z6RGVJamdLMWR2Z3RrbHpJYWJqdWJOajFyVmxIVDRFMVM4LWdIcVJZYXpxZXlDLXBMQkVGLTgtX0ZRdw?oc=5",
+      "category": "Global",
+      "region": "Global",
+      "published_at": "2026-09-09T10:00:11+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:46.331352+00:00",
+      "content_hash": "ee82effd9862440c",
+      "event_type": "MACRO_INFLATION_SURPRISE",
+      "sentiment": "NEGATIVE",
+      "impact": "HIGH",
+      "surprise": "+1.20 sigma",
+      "affected_assets": [
+        "NIFTY 50"
+      ],
+      "affected_sectors": [
+        "Broad Market"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Negative catalyst for NIFTY 50. System expects negative reaction with high volatility.",
+      "ai_reasoning": "Event classified as MACRO_INFLATION_SURPRISE impacting Broad Market. Directional bias is NEGATIVE with HIGH systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 68.5
+    },
+    {
+      "article_id": "ART-512e271501e3cb49",
+      "headline": "Fed to hold rates steady in rest of 2026; rising number of analysts see at least one hike: Reuters poll",
+      "source": "Reuters",
+      "url": "https://news.google.com/rss/articles/CBMiugFBVV95cUxOZ0NreUFoTnFxX3ZzQnd3YU9FNFVkQmhfZlBrSVBUUm12Q0lCckxRTHdWcUVHbmJpcDZKbVhNZG5RektYQlpqaUZGMjl2TnJ0amhPMGJBWnB6OG9FVTB5dVJPTlc1ZjJaa2djUl9HR3VhYzIxODJjVEx1NUswdkVkblYxNVNSY1dYWlpUdzlEQU9UNTNzaUtVWXVtdXljVEUzSnVOQTV2bTJHSXN6Q2E3U0pzcVk5U19qUmc?oc=5",
+      "category": "Global",
+      "region": "Global",
+      "published_at": "2026-09-09T13:29:11+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:46.331504+00:00",
+      "content_hash": "512e271501e3cb49",
+      "event_type": "GENERAL_MARKET_DEVELOPMENT",
+      "sentiment": "NEUTRAL",
+      "impact": "MEDIUM",
+      "surprise": "EXPECTATION_DATA_UNAVAILABLE",
+      "affected_assets": [
+        "NIFTY 50"
+      ],
+      "affected_sectors": [
+        "Broad Market"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Neutral catalyst for NIFTY 50. System expects neutral reaction with medium volatility.",
+      "ai_reasoning": "Event classified as GENERAL_MARKET_DEVELOPMENT impacting Broad Market. Directional bias is NEUTRAL with MEDIUM systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 61.2
+    },
+    {
+      "article_id": "ART-82d6634e2ddf83c4",
+      "headline": "Will US inflation data persuade the Fed to raise rates this month?",
+      "source": "Financial Times",
+      "url": "https://news.google.com/rss/articles/CBMihAFBVV95cUxPYkl2TXVUS2Vmd0x5bVlfVWhCM25hYU1qTlRxcEdreEYxNGJ6NEw1Qnl2OGIwX1hXb3ZfVTVtNVFkT2VxbjdzSXpIMWVYZGxHRXRoRTRmay1QSjE2ZFE5X1pQZGFELUVDdG9SeGhRYlBJNXNkelFCQ0dCRVRfa081N2gxRy0?oc=5",
+      "category": "Global",
+      "region": "Global",
+      "published_at": "2026-09-06T11:00:02+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:46.331633+00:00",
+      "content_hash": "82d6634e2ddf83c4",
+      "event_type": "GENERAL_MARKET_DEVELOPMENT",
+      "sentiment": "NEUTRAL",
+      "impact": "MEDIUM",
+      "surprise": "EXPECTATION_DATA_UNAVAILABLE",
+      "affected_assets": [
+        "NIFTY 50"
+      ],
+      "affected_sectors": [
+        "Broad Market"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Neutral catalyst for NIFTY 50. System expects neutral reaction with medium volatility.",
+      "ai_reasoning": "Event classified as GENERAL_MARKET_DEVELOPMENT impacting Broad Market. Directional bias is NEUTRAL with MEDIUM systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 61.2
+    },
+    {
+      "article_id": "ART-6b6d0bd2f45265c0",
+      "headline": "\u2018Brics not irrelevant, but...': India-China thaw could redefine geopolitics, says former envoy",
+      "source": "firstpost.com",
+      "url": "https://news.google.com/rss/articles/CBMizAFBVV95cUxONS1rUTRBSkRhX0VSSkpfSWlVMjVnMVJmR3ZxWUlpLWR1cld3dUZ1Umxfd0doQV9TV25TTTBfS0UxY0p3ZjhPZTFGY3d2blVnMjFFWkFQTHpteUFINTRqSmF4TkdaWlg0TnM5ZEVIUXhHUTRIZjd0Yl9sSEMyWlRlXzVUM1pwNmpibTRWYWRCRW9KbXZWbjMyems0WFFPQURYM0xlaXg1d1pQc0FBQjdGeWU4UzVnMUJZcmNSc193RlZRdmliLTIwbmR3RXTSAdIBQVVfeXFMTlREX3g1QVlKaGJUNU1QWUZWUnhzblJxVzYzVWh6ZFFUbXU1dmhESFFMT3FlU3VTcTNGV3RiZWVDVWRFNlhoLWdVYmJmR1hUOUctY0cxSE9VbHBtZ3JDdXpyZHZKWnZtYmROYW1UNjUtY1k2ZDhqcW55VGxtMkszZ2E3N3UyY2hTeldURDBiZUVZR05UZC13RWxLUXZFeVBWYjRROUEzRmtqb3BTcnFLOFJXMC1OVmFwTldfS3ctNHVVX0N3MzQzVU5WdHlvVDF1QkhB?oc=5",
+      "category": "Geopolitics",
+      "region": "India",
+      "published_at": "2026-09-09T08:54:57+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:46.832141+00:00",
+      "content_hash": "6b6d0bd2f45265c0",
+      "event_type": "GENERAL_MARKET_DEVELOPMENT",
+      "sentiment": "NEUTRAL",
+      "impact": "MEDIUM",
+      "surprise": "EXPECTATION_DATA_UNAVAILABLE",
+      "affected_assets": [
+        "NIFTY 50"
+      ],
+      "affected_sectors": [
+        "Broad Market"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Neutral catalyst for NIFTY 50. System expects neutral reaction with medium volatility.",
+      "ai_reasoning": "Event classified as GENERAL_MARKET_DEVELOPMENT impacting Broad Market. Directional bias is NEUTRAL with MEDIUM systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 61.2
+    },
+    {
+      "article_id": "ART-f01629b8f8e2f021",
+      "headline": "China Studies in India: Considerations of Geopolitics, Economics, and Academic Priorities",
+      "source": "orfonline.org",
+      "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxNNjNnX3V5QzRPUk1uSm1pbGFRSHpRdm92V3ZXTWxTMXlVcjhoSk9VNjNpbVR4Yll3ZDdQcTl2eEhSZ1Z5azltNV9oUjNaYjIwamJ4UTBPMkNvSE5zRGJLZzRNdWFYMm12ak9UVUJkQ2xCeTVVQTRPTXhpMEZBTl9rX0FEOHdrSzlPZjVHOGRoRDd2bWR2Y0NqZjJJWTc2RUluZm12ZDdZRXdXUGpHSTFIcldtbXc1UVpDSURkbHl3?oc=5",
+      "category": "Geopolitics",
+      "region": "India",
+      "published_at": "2026-08-31T07:00:00+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:46.832332+00:00",
+      "content_hash": "f01629b8f8e2f021",
+      "event_type": "GENERAL_MARKET_DEVELOPMENT",
+      "sentiment": "NEUTRAL",
+      "impact": "MEDIUM",
+      "surprise": "EXPECTATION_DATA_UNAVAILABLE",
+      "affected_assets": [
+        "NIFTY 50"
+      ],
+      "affected_sectors": [
+        "Broad Market"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Neutral catalyst for NIFTY 50. System expects neutral reaction with medium volatility.",
+      "ai_reasoning": "Event classified as GENERAL_MARKET_DEVELOPMENT impacting Broad Market. Directional bias is NEUTRAL with MEDIUM systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 61.2
+    },
+    {
+      "article_id": "ART-e62d1739a0baaaeb",
+      "headline": "The Role of Trade in India\u2019s Geoeconomic Strategy",
+      "source": "orfonline.org",
+      "url": "https://news.google.com/rss/articles/CBMijAFBVV95cUxQU0pXdk1lTlpKZVZzQ1BmclZfY1MtdXBFLTBVcHQyWXhYUUtIOWRvYjNfN00tbWhzVVBQeEM1ZUowOXZwTzk5NV9jUnhRQWdKMUJHNWJuMm4xcHVVaHg3a3g5Q0NaajVqY2xFTTBPTXVGUjNhT2ZpQzVhUEV3emlDUkEyZU1HWDlRZGMxUA?oc=5",
+      "category": "Geopolitics",
+      "region": "India",
+      "published_at": "2026-05-01T07:00:00+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:46.832484+00:00",
+      "content_hash": "e62d1739a0baaaeb",
+      "event_type": "GENERAL_MARKET_DEVELOPMENT",
+      "sentiment": "NEUTRAL",
+      "impact": "MEDIUM",
+      "surprise": "EXPECTATION_DATA_UNAVAILABLE",
+      "affected_assets": [
+        "NIFTY 50"
+      ],
+      "affected_sectors": [
+        "Broad Market"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Neutral catalyst for NIFTY 50. System expects neutral reaction with medium volatility.",
+      "ai_reasoning": "Event classified as GENERAL_MARKET_DEVELOPMENT impacting Broad Market. Directional bias is NEUTRAL with MEDIUM systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 61.2
+    },
+    {
+      "article_id": "ART-bde67a00de997853",
+      "headline": "India\u2019s Economy Feels the Heat of Geopolitical Tensions as Oil Shock Fuels Inflation and Trade Deficit",
+      "source": "Daily Pioneer",
+      "url": "https://news.google.com/rss/articles/CBMiggFBVV95cUxPeXFTLVBRMzlWanV4V2xub2g1WnpVZWhNYXpnR1hfbVVpM1ZOZWdIVmdnNTRUSXpxTFhydjRjNzEyV0RFY1F2UzZYaDI5ZDFyU0E1d1hCdkFNQ1R2cFdRVFdLaWlvX1ZvUEt0ZlVNRXlkR0V1Q1dwMnNYUkYyR3pVUTF3?oc=5",
+      "category": "Geopolitics",
+      "region": "India",
+      "published_at": "2026-07-17T07:00:00+00:00",
+      "ingested_at": "2026-09-09T15:05:43.466146+00:00",
+      "analyzed_at": "2026-09-09T15:05:46.832666+00:00",
+      "content_hash": "bde67a00de997853",
+      "event_type": "COMMODITY_PRICE_SHOCK",
+      "sentiment": "NEUTRAL",
+      "impact": "MEDIUM",
+      "surprise": "EXPECTATION_DATA_UNAVAILABLE",
+      "affected_assets": [
+        "ONGC",
+        "BPCL"
+      ],
+      "affected_sectors": [
+        "Energy"
+      ],
+      "horizon": "1D",
+      "ai_summary": "Neutral catalyst for ONGC, BPCL. System expects neutral reaction with medium volatility.",
+      "ai_reasoning": "Event classified as COMMODITY_PRICE_SHOCK impacting Energy. Directional bias is NEUTRAL with MEDIUM systemic transmission. Primary transmission mechanism operates via cash-flow re-rating and sector multiple adjustments over 1D to 3D horizon.",
+      "confidence": 61.2
+    }
+  ],
+  "overnight_intelligence": {
+    "generated_at": "2026-09-09T15:05:46.834077+00:00",
+    "as_of_market_phase": "OVERNIGHT_WINDOW",
+    "india_opening_bias": "NEUTRAL",
+    "opening_bias_confidence_pct": 62.5,
+    "expected_nifty_gap_points": 5.3,
+    "market_regime_classification": "GLOBAL_EQUITY_CORRELATED",
+    "top_global_drivers": [
+      {
+        "title": "US Equities +0.16% (S&P 500) / +0.72% (NASDAQ)",
+        "impact": "POSITIVE",
+        "source": "US Market Close",
+        "evidence": "S&P 500 closed at 7643.37, NASDAQ at 26286.582."
+      },
+      {
+        "title": "Brent Crude at $101.21/bbl (+5.96%)",
+        "impact": "NEGATIVE",
+        "source": "Intercontinental Exchange (ICE)",
+        "evidence": "Crude oil change of +5.96% influences domestic OMC and chemical margins."
+      },
+      {
+        "title": "USD/INR Currency Pair (+0.65%)",
+        "impact": "NEGATIVE",
+        "source": "Forex Spot Stream",
+        "evidence": "USD/INR traded at 95.095 with +0.65% change."
+      }
+    ],
+    "top_indian_drivers": [
+      {
+        "title": "Three Reasons Why Stock Market Is Falling: Nifty Below 23,500, Sensex Down Over 600 Points",
+        "impact": "NEGATIVE",
+        "source": "NDTV Profit",
+        "evidence": "Negative catalyst for NIFTY 50. System expects negative reaction with medium volatility."
+      },
+      {
+        "title": "Stock market today: Trade guide for Sensex, Nifty 50, crude oil to gold | Seven stocks to buy",
+        "impact": "NEUTRAL",
+        "source": "Livemint",
+        "evidence": "Neutral catalyst for ONGC, BPCL. System expects neutral reaction with medium volatility."
+      },
+      {
+        "title": "Share Market Today: Nifty 50, Bank Nifty | Sep 09, 2026",
+        "impact": "NEUTRAL",
+        "source": "Liquide Blog",
+        "evidence": "Neutral catalyst for HDFCBANK, ICICIBANK, SBIN. System expects neutral reaction with medium volatility."
+      }
+    ],
+    "commodity_impact_summary": "Gold at $4460.9/oz (-0.69%), Crude Brent at $101.21/bbl (+5.96%).",
+    "currency_impact_summary": "USD/INR quoted at 95.095 (+0.65%). DXY at 98.656.",
+    "global_equity_impact_summary": "US markets closed +0.16%; Asian markets traded +1.45%. Composite global score: +3.6.",
+    "sector_impact_map": {
+      "Information Technology": "BULLISH",
+      "Energy & Oil": "BULLISH",
+      "Banking & Financials": "BEARISH",
+      "Automobiles": "BEARISH",
+      "Metals & Mining": "NEUTRAL"
+    },
+    "scenarios": [
+      {
+        "scenario_name": "BULL_CASE",
+        "probability_pct": 30.0,
+        "expected_nifty_range": "+35 to +85 pts",
+        "catalyst_triggers": [
+          "Tech sector short-covering",
+          "DXY softens below 104.0",
+          "FII index long unwinding halts"
+        ],
+        "actionable_stance": "Selective long exposure on high-conviction catalyst leaders with trailing stops."
+      },
+      {
+        "scenario_name": "BASE_CASE",
+        "probability_pct": 46.0,
+        "expected_nifty_range": "+5 to +30 pts",
+        "catalyst_triggers": [
+          "Opening gap absorbs international cues",
+          "Narrow consolidation in first 45 minutes",
+          "Range-bound intraday rotation"
+        ],
+        "actionable_stance": "Observe opening 15m bracket before deploying capital. Favor mean-reversion hedges."
+      },
+      {
+        "scenario_name": "BEAR_CASE",
+        "probability_pct": 30.0,
+        "expected_nifty_range": "-45 to -95 pts",
+        "catalyst_triggers": [
+          "Crude breaks multi-week resistance",
+          "Bond yields spike past 4.85%",
+          "Heavy profit booking in high-beta financials"
+        ],
+        "actionable_stance": "Trigger NO_TRADE engine on uncertain candidates. Tighten defensive stops."
+      }
+    ],
+    "key_risks": [
+      {
+        "risk_title": "US Inflation & Bond Yield Volatility",
+        "severity": "HIGH",
+        "mitigation": "Central Risk Engine limits gross overnight equity exposure to 70% max fund NAV."
+      },
+      {
+        "risk_title": "Geopolitical Crude Supply Disruption",
+        "severity": "HIGH",
+        "mitigation": "Automated circuit breaker halts opening longs if Brent surges > 3.0% overnight."
+      },
+      {
+        "risk_title": "Pre-Market Bid-Ask Spread Widening",
+        "severity": "MEDIUM",
+        "mitigation": "Conservative execution simulator buffers 10 bps slippage on all simulated fills."
+      }
+    ],
+    "evidence_trail": [
+      {
+        "feed": "US Equities",
+        "timestamp": "2026-09-09T15:05:32+00:00",
+        "status": "LIVE"
+      },
+      {
+        "feed": "Commodities (Gold & Crude)",
+        "timestamp": "2026-09-09T14:55:32+00:00",
+        "status": "LIVE"
+      },
+      {
+        "feed": "Forex",
+        "timestamp": "2026-09-09T14:55:04+00:00",
+        "status": "LIVE"
+      },
+      {
+        "feed": "News Feed",
+        "timestamp": "2026-09-09T15:05:46.834077+00:00",
+        "articles_audited": 24
+      }
+    ],
+    "data_freshness_status": "HEALTHY_FRESH_DATA"
   }
 }
