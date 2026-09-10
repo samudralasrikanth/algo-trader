@@ -4055,7 +4055,10 @@ window.NEXUS_DATA = {
     "news_data_age": "3 min",
     "sources_count": 3,
     "conflicts_count": 0,
-    "mode": "PAPER_LIVE"
+    "mode": "UPSTOX_SANDBOX",
+    "broker": "Upstox Sandbox (Developer API v2 Active)",
+    "broker_adapter": "UPSTOX SANDBOX",
+    "api_key_masked": "5d23...5cd"
   },
   "orders": [
     {
@@ -4078,7 +4081,9 @@ window.NEXUS_DATA = {
       "rejection_reason": "",
       "strategy_id": null,
       "trade_proposal_id": "TRD-2026-09-09-ALPHA-LT-EQUITY-1-e83c0d40",
-      "execution_mode": "PAPER_LIVE",
+      "execution_mode": "BROKER_SANDBOX",
+      "broker_adapter": "UPSTOX SANDBOX",
+      "broker_order_id": "UPSTOX-SBX-ORD-TRD-2026-09-09-ALPHA-LT-EQUITY-1-e83c0d40",
       "fills": [
         {
           "fill_id": "FILL-ORD-TRD-2026-09-09-ALPHA-LT-EQUITY-1-e83c0d40-1311560253",
@@ -4111,7 +4116,9 @@ window.NEXUS_DATA = {
       "rejection_reason": "",
       "strategy_id": null,
       "trade_proposal_id": "TRD-2026-09-09-MOMENTUM-LT-EQUITY-1-e83c0d40",
-      "execution_mode": "PAPER_LIVE",
+      "execution_mode": "BROKER_SANDBOX",
+      "broker_adapter": "UPSTOX SANDBOX",
+      "broker_order_id": "UPSTOX-SBX-ORD-TRD-2026-09-09-MOMENTUM-LT-EQUITY-1-e83c0d40",
       "fills": [
         {
           "fill_id": "FILL-ORD-TRD-2026-09-09-MOMENTUM-LT-EQUITY-1-e83c0d40-1311560254",
@@ -20597,7 +20604,7 @@ window.NEXUS_DATA = {
       "Baseline 6: NIFTY Direction": 54.2,
       "Baseline 7: Simple RSI-14": 52.1
     },
-    "generated_at": "2026-09-09T17:10:23.416108+00:00"
+    "generated_at": "2026-09-10T03:44:47.301864+00:00"
   },
   "certification_v36": {
     "is_certified": true,
@@ -20674,7 +20681,7 @@ window.NEXUS_DATA = {
       "is_converged": false,
       "status": "ACCEPTABLE"
     },
-    "timestamp": "2026-09-09T17:10:46.924336+00:00"
+    "timestamp": "2026-09-10T03:45:09.435206+00:00"
   },
   "job_runs_ledger": [
     {

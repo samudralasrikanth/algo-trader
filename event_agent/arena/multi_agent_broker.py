@@ -18,6 +18,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from ..broker.cost_model import CostModel
 from ..broker.order import Order, OrderFill, OrderSide, OrderStatus, OrderType, ExecutionMode
 from ..broker.execution_simulator import Candle5M, ExecutionSimulator, Fill
+from ..broker.broker_adapter import BrokerAdapter, UpstoxSandboxAdapter, get_paper_broker_adapter
 from .asset_models import (
     AssetClass,
     LegSide,
@@ -349,9 +350,11 @@ class MultiAgentBroker:
         self,
         cost_model: Optional[CostModel] = None,
         simulator: Optional[ExecutionSimulator] = None,
+        broker_adapter: Optional[BrokerAdapter] = None,
     ):
         self.cost_model = cost_model or CostModel(default_schedule="equity_delivery")
         self.simulator = simulator or ExecutionSimulator(conservative_ambiguity=True)
+        self.broker_adapter = broker_adapter or get_paper_broker_adapter()
         self.sub_portfolios: Dict[str, SubPortfolio] = {
             "ALPHA": SubPortfolio("ALPHA", "ALPHA-1.0"),
             "MOMENTUM": SubPortfolio("MOMENTUM", "MOMENTUM-1.0"),
@@ -416,7 +419,7 @@ class MultiAgentBroker:
         quantity = evaluation.adjusted_quantity
         requested_price = proposal.entry_price
 
-        # 1. Create Paper Broker V2 Order
+        # 1. Create Paper Broker V2 Order (Upstox Sandbox)
         order_side = OrderSide.BUY if proposal.direction == TradeDirection.BUY else OrderSide.SELL
         order_id = f"ORD-{trade_id}"
         order = Order(
@@ -430,8 +433,11 @@ class MultiAgentBroker:
             requested_price=requested_price,
             trade_proposal_id=trade_id,
             status=OrderStatus.CREATED,
+            execution_mode=ExecutionMode.BROKER_SANDBOX,
+            broker_adapter="UPSTOX SANDBOX",
+            broker_order_id=f"UPSTOX-SBX-{order_id}",
         )
-        order.status = OrderStatus.SUBMITTED
+        self.broker_adapter.submit_order(order)
 
         # 2. Simulate realistic execution with non-linear volume/spread slippage
         quote_dict = {"price": requested_price, "symbol": proposal.symbol}
@@ -499,6 +505,9 @@ class MultiAgentBroker:
             sub_port.open_positions[proposal.symbol] = position
 
         order.status = OrderStatus.FILLED
+        order.execution_mode = ExecutionMode.BROKER_SANDBOX
+        order.broker_adapter = "UPSTOX SANDBOX"
+        order.broker_order_id = f"UPSTOX-SBX-{order_id}"
         self.orders[order_id] = order
         sub_port.orders[order_id] = order
         self.executed_trade_ids.add(trade_id)

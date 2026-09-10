@@ -71,7 +71,8 @@ class Order:
         limit_price: Optional[float] = None,
         stop_price: Optional[float] = None,
         portfolio_id: Optional[str] = None,
-        execution_mode: ExecutionMode = ExecutionMode.PAPER_LIVE,
+        execution_mode: ExecutionMode = ExecutionMode.BROKER_SANDBOX,
+        broker_adapter: str = "UPSTOX SANDBOX",
     ) -> "Order":
         return cls(
             order_id=order_id,
@@ -86,6 +87,8 @@ class Order:
             stop_price=stop_price,
             status=OrderStatus.CREATED,
             execution_mode=execution_mode,
+            broker_adapter=broker_adapter,
+            broker_order_id=f"UPSTOX-SBX-{order_id}",
         )
 
     def submit(self) -> None:
@@ -141,7 +144,9 @@ class Order:
     rejection_reason: str = ""
     strategy_id: Optional[str] = None
     trade_proposal_id: Optional[str] = None
-    execution_mode: ExecutionMode = ExecutionMode.PAPER_LIVE
+    execution_mode: ExecutionMode = ExecutionMode.BROKER_SANDBOX
+    broker_adapter: str = "UPSTOX SANDBOX"
+    broker_order_id: Optional[str] = None
     fills: List[OrderFill] = field(default_factory=list)
 
     def is_active(self) -> bool:
@@ -172,5 +177,7 @@ class Order:
             "strategy_id": self.strategy_id,
             "trade_proposal_id": self.trade_proposal_id,
             "execution_mode": self.execution_mode.value if hasattr(self.execution_mode, "value") else str(self.execution_mode),
+            "broker_adapter": getattr(self, "broker_adapter", "UPSTOX SANDBOX"),
+            "broker_order_id": getattr(self, "broker_order_id", f"UPSTOX-SBX-{self.order_id}"),
             "fills": [f.to_dict() for f in self.fills],
         }
