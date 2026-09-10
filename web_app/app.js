@@ -386,8 +386,8 @@ function updateViewPanels(primaryTab, subTab) {
   currentPrimaryTab = primaryTab;
   currentSubTab = subTab || '';
 
-  // Update Primary Nav Link Active State (Header & Sidebar synchronized)
-  document.querySelectorAll('.primary-nav .nav-link-btn, .terminal-sidebar .sidebar-nav-btn').forEach(btn => {
+  // Update Primary Nav Link Active State (Header, Sidebar & Mobile Nav synchronized)
+  document.querySelectorAll('.primary-nav .nav-link-btn, .terminal-sidebar .sidebar-nav-btn, .mobile-bottom-nav .mobile-nav-btn').forEach(btn => {
     btn.classList.toggle('active', btn.getAttribute('data-tab') === primaryTab);
   });
 
