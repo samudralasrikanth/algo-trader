@@ -15,10 +15,29 @@
 </head>
 <body>
 
+  <!-- Mobile Sidebar Overlay Backdrop -->
+  <div class="mobile-sidebar-backdrop" id="mobile-sidebar-backdrop" onclick="toggleMobileSidebar(false)"></div>
+
   <!-- Left Navigation Bar (Stitch Screen 5bbea71045434e189ed0f2426779d132: Light Paper Edition) -->
   <aside class="terminal-sidebar" id="terminal-sidebar" aria-label="NEXUS Global Navigation">
     <div class="sidebar-top">
-      <!-- Nexus Brand Logo with Telemetry Pulse -->
+      <!-- Mobile Close & Brand Header (visible on mobile drawer) -->
+      <div class="sidebar-mobile-header">
+        <div class="sidebar-mobile-brand">
+          <div class="sidebar-brand-icon">
+            <span>NX</span>
+          </div>
+          <div class="sidebar-mobile-brand-text">
+            <span class="sidebar-mobile-brand-title">NEXUS AI</span>
+            <span class="sidebar-mobile-brand-sub">Executive Terminal</span>
+          </div>
+        </div>
+        <button class="sidebar-mobile-close-btn" onclick="toggleMobileSidebar(false)" aria-label="Close navigation menu">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <!-- Nexus Brand Logo with Telemetry Pulse (desktop) -->
       <a class="sidebar-brand" onclick="navigate('overview')" href="#/overview" title="NEXUS AI — Executive Command">
         <div class="sidebar-brand-icon">
           <span>NX</span>
@@ -148,6 +167,12 @@
 
       <!-- Tier 2: Terminal Utility Strip (Search, Clock, Diagnostics, Profile) -->
       <div class="terminal-header-tier-bottom">
+        <!-- Mobile hamburger menu button (visible only on mobile) -->
+        <button class="mobile-hamburger-btn" id="mobile-hamburger-btn" onclick="toggleMobileSidebar()" aria-label="Open navigation menu">
+          <span class="material-symbols-outlined">menu</span>
+          <span>Menu</span>
+        </button>
+
         <div class="terminal-search-wrapper" onclick="openCommandPalette()">
           <span class="material-symbols-outlined search-icon">search</span>
           <input type="text" readonly placeholder="Search instrument, strike, algorithm, execution node..." class="terminal-search-input">
@@ -1954,7 +1979,7 @@
     </div>
   </div>
 
-  <!-- Mobile Bottom Navigation (visible only ≤ 640px) -->
+  <!-- Mobile Bottom Navigation (visible only ≤ 768px) -->
   <nav class="mobile-bottom-nav" id="mobile-bottom-nav" aria-label="Mobile Navigation">
     <div class="mobile-bottom-nav-inner">
       <a class="mobile-nav-btn active" data-tab="overview" onclick="navigate('overview')" href="#/overview">
@@ -1973,18 +1998,14 @@
         <span class="material-symbols-outlined">neurology</span>
         <span>Intel</span>
       </a>
-      <a class="mobile-nav-btn" data-tab="overnight" onclick="navigate('overnight')" href="#/overnight">
-        <span class="material-symbols-outlined">dark_mode</span>
-        <span>Overnight</span>
-      </a>
       <a class="mobile-nav-btn" data-tab="risk" onclick="navigate('risk')" href="#/risk">
         <span class="material-symbols-outlined">verified_user</span>
         <span>Risk</span>
       </a>
-      <a class="mobile-nav-btn" data-tab="news" onclick="navigate('news')" href="#/news">
-        <span class="material-symbols-outlined">feed</span>
-        <span>News</span>
-      </a>
+      <button class="mobile-nav-btn mobile-nav-menu-btn" onclick="toggleMobileSidebar()" aria-label="Open Navigation Menu">
+        <span class="material-symbols-outlined">menu</span>
+        <span>Menu</span>
+      </button>
     </div>
   </nav>
 

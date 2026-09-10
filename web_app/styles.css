@@ -97,7 +97,7 @@ body {
   background-color: var(--bg-app);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .app-shell {
     padding-left: 0;
   }
@@ -3005,11 +3005,8 @@ input:focus-visible {
   box-shadow: 1px 0 3px rgba(11, 28, 48, 0.04);
 }
 
-@media (max-width: 640px) {
-  .terminal-sidebar {
-    display: none;
-  }
-}
+/* Sidebar mobile: handled by slide-in overlay in mobile responsive section below */
+
 
 .sidebar-top {
   display: flex;
@@ -3202,6 +3199,296 @@ input:focus-visible {
    MOBILE RESPONSIVE OVERHAUL — ≤ 768px & ≤ 640px
    ========================================================================== */
 
+/* ── Mobile Hamburger Button ─────────────────────────────────────────────── */
+.mobile-hamburger-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-surface-secondary);
+  color: var(--text-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s ease;
+  font-family: 'Hanken Grotesk', 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.mobile-hamburger-btn:active {
+  background-color: var(--bg-surface-tertiary);
+  transform: scale(0.96);
+}
+
+.mobile-hamburger-btn .material-symbols-outlined {
+  font-size: 20px;
+}
+
+@media (max-width: 768px) {
+  .mobile-hamburger-btn {
+    display: inline-flex;
+  }
+}
+
+/* ── Mobile Sidebar Overlay & Backdrop ───────────────────────────────────── */
+.mobile-sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background-color: rgba(11, 28, 48, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+.mobile-sidebar-backdrop.active {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Body lock when mobile sidebar is open */
+body.sidebar-mobile-locked {
+  overflow: hidden;
+  touch-action: none;
+}
+
+/* Desktop defaults for elements that toggle on mobile */
+.sidebar-mobile-header {
+  display: none;
+}
+
+.sidebar-top > .sidebar-brand {
+  display: flex;
+}
+
+@media (max-width: 768px) {
+  .terminal-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 85vw;
+    height: 100vh;
+    height: 100dvh;
+    background-color: var(--bg-surface);
+    border-right: 1px solid var(--border);
+    z-index: 1201;
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    box-shadow: none;
+  }
+
+  .terminal-sidebar.mobile-open {
+    transform: translateX(0);
+    box-shadow: 8px 0 32px rgba(11, 28, 48, 0.22);
+  }
+
+  /* Inside mobile drawer: top header bar */
+  .sidebar-mobile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    background-color: var(--bg-surface-secondary);
+    flex-shrink: 0;
+  }
+
+  .sidebar-mobile-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .sidebar-mobile-brand-text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar-mobile-brand-title {
+    font-family: 'Hanken Grotesk', 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+  }
+
+  .sidebar-mobile-brand-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+  }
+
+  .sidebar-mobile-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+  }
+
+  .sidebar-mobile-close-btn:active {
+    background-color: var(--bg-surface-tertiary);
+  }
+
+  .sidebar-mobile-close-btn .material-symbols-outlined {
+    font-size: 20px;
+  }
+
+  .sidebar-top > .sidebar-brand {
+    display: none !important;
+  }
+
+  .terminal-sidebar .sidebar-top {
+    width: 100%;
+    padding: 0;
+    gap: 0;
+  }
+
+  .terminal-sidebar .sidebar-nav {
+    width: 100%;
+    padding: 8px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    align-items: stretch;
+  }
+
+  .terminal-sidebar .sidebar-nav-btn {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    width: 100%;
+    height: 42px;
+    padding: 0 12px;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-family: 'Hanken Grotesk', 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    background: transparent;
+    transition: all 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .terminal-sidebar .sidebar-nav-btn:hover {
+    background-color: var(--bg-surface-secondary);
+    color: var(--text-primary);
+  }
+
+  .terminal-sidebar .sidebar-nav-btn.active {
+    background-color: var(--primary-light);
+    color: var(--primary);
+    font-weight: 600;
+  }
+
+  .terminal-sidebar .sidebar-nav-btn .material-symbols-outlined {
+    font-size: 20px;
+    color: inherit;
+    flex-shrink: 0;
+  }
+
+  /* Labels are visible as full text next to icons */
+  .terminal-sidebar .sidebar-tooltip {
+    position: static;
+    display: inline;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    background: transparent;
+    color: inherit;
+    font-size: 13px;
+    font-weight: inherit;
+    padding: 0;
+    box-shadow: none;
+    transform: none;
+    white-space: nowrap;
+  }
+
+  .terminal-sidebar .sidebar-divider {
+    display: none;
+  }
+
+  .terminal-sidebar .sidebar-bottom {
+    width: 100%;
+    padding: 12px 10px;
+    margin-top: auto;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background-color: var(--bg-surface-secondary);
+    flex-shrink: 0;
+  }
+
+  .terminal-sidebar .sidebar-telemetry-ping {
+    width: 100%;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0 12px;
+    gap: 10px;
+    border-radius: var(--radius-sm);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    cursor: pointer;
+  }
+
+  .terminal-sidebar .sidebar-telemetry-ping .sidebar-tooltip {
+    display: inline;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  .terminal-sidebar .sidebar-profile-btn {
+    width: 100%;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 0 12px;
+    gap: 10px;
+    border-radius: var(--radius-sm);
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+
+  .terminal-sidebar .sidebar-profile-btn .sidebar-tooltip {
+    display: inline;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+}
+
 /* ── Mobile Bottom Navigation Bar ────────────────────────────────────────── */
 .mobile-bottom-nav {
   display: none;
@@ -3248,7 +3535,7 @@ input:focus-visible {
   cursor: pointer;
   transition: color 0.15s ease;
   text-decoration: none;
-  min-width: 52px;
+  min-width: 50px;
   border-radius: var(--radius-sm);
   -webkit-tap-highlight-color: transparent;
 }
@@ -3266,7 +3553,12 @@ input:focus-visible {
   transform: scale(0.92);
 }
 
-@media (max-width: 640px) {
+.mobile-nav-btn.mobile-nav-menu-btn {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+@media (max-width: 768px) {
   .mobile-bottom-nav {
     display: block;
   }
@@ -3337,11 +3629,6 @@ input:focus-visible {
   /* App shell — no sidebar padding */
   .app-shell {
     padding-left: 0;
-  }
-
-  /* Hide desktop sidebar */
-  .terminal-sidebar {
-    display: none;
   }
 
   /* Header: simplify for mobile */

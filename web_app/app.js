@@ -366,7 +366,33 @@ function handleRoute() {
   updateViewPanels(primary, sub);
 }
 
+// -----------------------------------------------------------------------------
+// Mobile Sidebar Drawer Navigation Controls
+// -----------------------------------------------------------------------------
+function toggleMobileSidebar(forceState) {
+  const sidebar = document.getElementById('terminal-sidebar');
+  const backdrop = document.getElementById('mobile-sidebar-backdrop');
+  if (!sidebar) return;
+
+  const isOpen = sidebar.classList.contains('mobile-open');
+  const shouldOpen = forceState !== undefined ? Boolean(forceState) : !isOpen;
+
+  if (shouldOpen) {
+    sidebar.classList.add('mobile-open');
+    if (backdrop) backdrop.classList.add('active');
+    document.body.classList.add('sidebar-mobile-locked');
+  } else {
+    sidebar.classList.remove('mobile-open');
+    if (backdrop) backdrop.classList.remove('active');
+    document.body.classList.remove('sidebar-mobile-locked');
+  }
+}
+window.toggleMobileSidebar = toggleMobileSidebar;
+
 function navigate(primaryTab, subTab, options = {}) {
+  // Always close mobile side drawer if open
+  toggleMobileSidebar(false);
+
   let targetHash = `#/${primaryTab}`;
   if (subTab) {
     targetHash += `/${subTab}`;
@@ -3587,6 +3613,8 @@ function setupKeyboardShortcuts() {
       if (isPaletteOpen) closeCommandPalette();
       else openCommandPalette();
     } else if (e.key === 'Escape') {
+      toggleMobileSidebar(false);
+      closeOpsDrawer();
       closeCommandPalette();
       closeStockDrawer();
       closeFailureModal();
