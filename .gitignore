@@ -6,11 +6,24 @@ __pycache__/
 # Local environment & secrets
 .env
 .env.local
+.env.production
+*.secret
+credentials*.json
+token*.json
+
 
 # SQLite local databases (Supabase Cloud is used)
 data/*.db
 data/*.db-wal
 data/*.db-shm
+data/reports/
+
+# Node dependencies
+node_modules/
+
+# Test artifacts & caches
+test_*.png
+.pytest_cache/
 
 # OS generated files
 .DS_Store

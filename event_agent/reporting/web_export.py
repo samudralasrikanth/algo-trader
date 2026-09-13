@@ -16,6 +16,7 @@ V3.2 Arena Extensions:
 
 import json
 import logging
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -358,7 +359,8 @@ def build_web_payload(
             "news_data_age": "3 min",
             "sources_count": 3,
             "conflicts_count": 0,
-            "mode": "PAPER_LIVE",
+            "mode": os.environ.get("PAPER_BROKER", "upstox_sandbox").upper(),
+            "broker_adapter": "UPSTOX SANDBOX",
         },
         "orders": arena_cycle_result.get("orders", []),
         "system_status": system_status,

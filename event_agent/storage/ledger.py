@@ -2,11 +2,16 @@
 # event_agent/storage/ledger.py — SQLite Prediction & Performance Ledger
 # =============================================================================
 
+import logging
+import os
 import sqlite3
 import json
+import urllib.request
 from datetime import datetime, date, timedelta
 from typing import List, Dict, Any, Optional
 import yfinance as yf
+
+logger = logging.getLogger(__name__)
 
 from ..config import DB_PATH, ALLOCATION_PER_STOCK, HORIZONS
 
@@ -434,7 +439,57 @@ def init_db() -> None:
         )
         """)
 
+        # 17. Daily Automated Trade Reports Table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS daily_trade_reports (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            report_date TEXT UNIQUE NOT NULL,
+            job_run_id TEXT,
+            status TEXT NOT NULL,
+            total_trades INTEGER NOT NULL DEFAULT 0,
+            winning_trades INTEGER NOT NULL DEFAULT 0,
+            losing_trades INTEGER NOT NULL DEFAULT 0,
+            win_rate REAL NOT NULL DEFAULT 0.0,
+            gross_pnl REAL NOT NULL DEFAULT 0.0,
+            charges REAL NOT NULL DEFAULT 0.0,
+            net_pnl REAL NOT NULL DEFAULT 0.0,
+            realized_pnl REAL NOT NULL DEFAULT 0.0,
+            unrealized_pnl REAL NOT NULL DEFAULT 0.0,
+            best_trade TEXT,
+            worst_trade TEXT,
+            best_strategy TEXT,
+            best_agent TEXT,
+            prediction_direction TEXT,
+            actual_direction TEXT,
+            prediction_correct INTEGER,
+            ai_provider TEXT,
+            ai_model TEXT,
+            ai_request_id TEXT,
+            ai_latency_ms INTEGER,
+            ai_tokens TEXT,
+            ai_status TEXT,
+            voice_provider TEXT,
+            voice_status TEXT,
+            voice_duration_ms INTEGER,
+            video_provider TEXT,
+            video_render_id TEXT,
+            video_status TEXT,
+            video_url TEXT,
+            youtube_video_id TEXT,
+            youtube_url TEXT,
+            youtube_status TEXT,
+            email_status TEXT,
+            email_sent_at TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            provenance_hash TEXT NOT NULL,
+            report_payload_json TEXT
+        )
+        """)
+
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_pred_date ON predictions(date)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_daily_trade_reports_date ON daily_trade_reports(report_date)")
+
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_pred_sym ON predictions(symbol)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_eval_date ON evaluations(eval_date)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_eval_sym ON evaluations(symbol)")
@@ -1554,3 +1609,233 @@ def get_trade_full_audit(trade_id: str) -> Dict[str, Any]:
                 "conflicts_count": 0,
             }
         }
+
+
+def save_daily_trade_report(report: Dict[str, Any]) -> bool:
+    """
+    Save or update daily trade report in SQLite and synchronously mirror to Supabase.
+    Strictly ensures no API secrets are stored.
+    """
+    init_db()
+    now_iso = datetime.now().isoformat()
+    best_tr = json.dumps(report.get("best_trade")) if report.get("best_trade") is not None else None
+    worst_tr = json.dumps(report.get("worst_trade")) if report.get("worst_trade") is not None else None
+    ai_tok = json.dumps(report.get("ai_tokens")) if report.get("ai_tokens") is not None else None
+    payload_json = json.dumps(report.get("report_payload_json")) if report.get("report_payload_json") is not None else None
+
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        INSERT INTO daily_trade_reports (
+            report_date, job_run_id, status, total_trades, winning_trades, losing_trades,
+            win_rate, gross_pnl, charges, net_pnl, realized_pnl, unrealized_pnl,
+            best_trade, worst_trade, best_strategy, best_agent,
+            prediction_direction, actual_direction, prediction_correct,
+            ai_provider, ai_model, ai_request_id, ai_latency_ms, ai_tokens, ai_status,
+            voice_provider, voice_status, voice_duration_ms,
+            video_provider, video_render_id, video_status, video_url,
+            youtube_video_id, youtube_url, youtube_status,
+            email_status, email_sent_at, created_at, updated_at,
+            provenance_hash, report_payload_json
+        ) VALUES (
+            ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?, ?, ?,
+            ?, ?, ?, ?,
+            ?, ?, ?,
+            ?, ?, ?, ?, ?, ?,
+            ?, ?, ?,
+            ?, ?, ?, ?,
+            ?, ?, ?,
+            ?, ?, ?, ?,
+            ?, ?
+        )
+        ON CONFLICT(report_date) DO UPDATE SET
+            job_run_id = excluded.job_run_id,
+            status = excluded.status,
+            total_trades = excluded.total_trades,
+            winning_trades = excluded.winning_trades,
+            losing_trades = excluded.losing_trades,
+            win_rate = excluded.win_rate,
+            gross_pnl = excluded.gross_pnl,
+            charges = excluded.charges,
+            net_pnl = excluded.net_pnl,
+            realized_pnl = excluded.realized_pnl,
+            unrealized_pnl = excluded.unrealized_pnl,
+            best_trade = excluded.best_trade,
+            worst_trade = excluded.worst_trade,
+            best_strategy = excluded.best_strategy,
+            best_agent = excluded.best_agent,
+            prediction_direction = excluded.prediction_direction,
+            actual_direction = excluded.actual_direction,
+            prediction_correct = excluded.prediction_correct,
+            ai_provider = excluded.ai_provider,
+            ai_model = excluded.ai_model,
+            ai_request_id = excluded.ai_request_id,
+            ai_latency_ms = excluded.ai_latency_ms,
+            ai_tokens = excluded.ai_tokens,
+            ai_status = excluded.ai_status,
+            voice_provider = excluded.voice_provider,
+            voice_status = excluded.voice_status,
+            voice_duration_ms = excluded.voice_duration_ms,
+            video_provider = excluded.video_provider,
+            video_render_id = excluded.video_render_id,
+            video_status = excluded.video_status,
+            video_url = excluded.video_url,
+            youtube_video_id = excluded.youtube_video_id,
+            youtube_url = excluded.youtube_url,
+            youtube_status = excluded.youtube_status,
+            email_status = excluded.email_status,
+            email_sent_at = excluded.email_sent_at,
+            updated_at = excluded.updated_at,
+            provenance_hash = excluded.provenance_hash,
+            report_payload_json = excluded.report_payload_json
+        """, (
+            report["report_date"],
+            report.get("job_run_id"),
+            report.get("status", "SUCCESS"),
+            int(report.get("total_trades", 0)),
+            int(report.get("winning_trades", 0)),
+            int(report.get("losing_trades", 0)),
+            float(report.get("win_rate", 0.0)),
+            float(report.get("gross_pnl", 0.0)),
+            float(report.get("charges", 0.0)),
+            float(report.get("net_pnl", 0.0)),
+            float(report.get("realized_pnl", 0.0)),
+            float(report.get("unrealized_pnl", 0.0)),
+            best_tr,
+            worst_tr,
+            report.get("best_strategy"),
+            report.get("best_agent"),
+            report.get("prediction_direction"),
+            report.get("actual_direction"),
+            1 if report.get("prediction_correct") else (0 if report.get("prediction_correct") is False else None),
+            report.get("ai_provider"),
+            report.get("ai_model"),
+            report.get("ai_request_id"),
+            report.get("ai_latency_ms"),
+            ai_tok,
+            report.get("ai_status"),
+            report.get("voice_provider"),
+            report.get("voice_status"),
+            report.get("voice_duration_ms"),
+            report.get("video_provider"),
+            report.get("video_render_id"),
+            report.get("video_status"),
+            report.get("video_url"),
+            report.get("youtube_video_id"),
+            report.get("youtube_url"),
+            report.get("youtube_status"),
+            report.get("email_status"),
+            report.get("email_sent_at"),
+            report.get("created_at", now_iso),
+            now_iso,
+            report.get("provenance_hash", "PROVENANCE UNAVAILABLE"),
+            payload_json,
+        ))
+        conn.commit()
+
+    # Attempt Supabase cloud mirror
+    supabase_url = os.environ.get("SUPABASE_URL", "").strip()
+    if "htcgeupzkxxxplqtvxue" in supabase_url:
+        supabase_url = ""
+    supabase_key = (os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY") or "").strip()
+    if supabase_key.startswith("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0Y2dl"):
+        supabase_key = ""
+    if supabase_url and supabase_key:
+        try:
+            import urllib.request
+            headers = {
+                "apikey": supabase_key,
+                "Authorization": f"Bearer {supabase_key}",
+                "Content-Type": "application/json",
+                "Prefer": "resolution=merge-duplicates",
+            }
+            supabase_row = {
+                "report_date": report["report_date"],
+                "job_run_id": report.get("job_run_id"),
+                "status": report.get("status", "SUCCESS"),
+                "total_trades": int(report.get("total_trades", 0)),
+                "winning_trades": int(report.get("winning_trades", 0)),
+                "losing_trades": int(report.get("losing_trades", 0)),
+                "win_rate": float(report.get("win_rate", 0.0)),
+                "gross_pnl": float(report.get("gross_pnl", 0.0)),
+                "charges": float(report.get("charges", 0.0)),
+                "net_pnl": float(report.get("net_pnl", 0.0)),
+                "realized_pnl": float(report.get("realized_pnl", 0.0)),
+                "unrealized_pnl": float(report.get("unrealized_pnl", 0.0)),
+                "best_strategy": report.get("best_strategy"),
+                "best_agent": report.get("best_agent"),
+                "prediction_direction": report.get("prediction_direction"),
+                "actual_direction": report.get("actual_direction"),
+                "prediction_correct": report.get("prediction_correct"),
+                "ai_provider": report.get("ai_provider"),
+                "ai_model": report.get("ai_model"),
+                "ai_request_id": report.get("ai_request_id"),
+                "ai_latency_ms": report.get("ai_latency_ms"),
+                "ai_status": report.get("ai_status"),
+                "voice_provider": report.get("voice_provider"),
+                "voice_status": report.get("voice_status"),
+                "voice_duration_ms": report.get("voice_duration_ms"),
+                "video_provider": report.get("video_provider"),
+                "video_render_id": report.get("video_render_id"),
+                "video_status": report.get("video_status"),
+                "video_url": report.get("video_url"),
+                "youtube_video_id": report.get("youtube_video_id"),
+                "youtube_url": report.get("youtube_url"),
+                "youtube_status": report.get("youtube_status"),
+                "email_status": report.get("email_status"),
+                "email_sent_at": report.get("email_sent_at"),
+                "provenance_hash": report.get("provenance_hash", "PROVENANCE UNAVAILABLE"),
+            }
+            req = urllib.request.Request(
+                f"{supabase_url}/rest/v1/daily_trade_reports",
+                data=json.dumps([supabase_row]).encode("utf-8"),
+                headers=headers,
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=5) as resp:
+                pass
+        except Exception as exc:
+            logger.debug("Supabase daily_trade_reports sync skipped/failed: %s", exc)
+
+    return True
+
+
+def get_daily_trade_report(report_date: str) -> Optional[Dict[str, Any]]:
+    """Retrieve daily trade report by report date from SQLite."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM daily_trade_reports WHERE report_date = ?", (report_date,))
+        row = cursor.fetchone()
+        if not row:
+            return None
+        d = dict(row)
+        for json_col in ("best_trade", "worst_trade", "ai_tokens", "report_payload_json"):
+            if d.get(json_col) and isinstance(d[json_col], str):
+                try:
+                    d[json_col] = json.loads(d[json_col])
+                except Exception:
+                    pass
+        return d
+
+
+def get_recent_daily_trade_reports(limit: int = 10) -> List[Dict[str, Any]]:
+    """Retrieve recent daily trade reports ordered by report_date DESC."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM daily_trade_reports ORDER BY report_date DESC LIMIT ?", (limit,))
+        rows = cursor.fetchall()
+        results = []
+        for r in rows:
+            d = dict(r)
+            for json_col in ("best_trade", "worst_trade", "ai_tokens", "report_payload_json"):
+                if d.get(json_col) and isinstance(d[json_col], str):
+                    try:
+                        d[json_col] = json.loads(d[json_col])
+                    except Exception:
+                        pass
+            results.append(d)
+        return results
+

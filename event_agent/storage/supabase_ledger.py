@@ -10,22 +10,28 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 from pathlib import Path
 
-# Load credentials from .env if present
+# Load credentials strictly from environment variables or local .env file
 ENV_PATH = Path(__file__).resolve().parents[2] / ".env"
-SUPABASE_URL = "https://htcgeupzkxxxplqtvxue.supabase.co"
-SUPABASE_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0Y2dldXB6a3h4eHBscXR2eHVlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4ODA0MTc2OSwiZXhwIjoyMTAzNjE3NzY5fQ.qxw3vZfo5nNMTEB60JGFtEuvjw7O7cyyouc5hbzVgd0"
-SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0Y2dldXB6a3h4eHBscXR2eHVlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgwNDE3NjksImV4cCI6MjEwMzYxNzc2OX0.QQ7xiTfI1A26UpOx2QrmfubplsbeIzqSNxzggSZtPx4"
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY", "")
+SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY", "")
 
 if ENV_PATH.exists():
     with open(ENV_PATH, "r") as f:
         for line in f:
             line = line.strip()
-            if line.startswith("SUPABASE_URL="):
+            if line.startswith("SUPABASE_URL=") and not SUPABASE_URL:
                 SUPABASE_URL = line.split("=", 1)[1].strip()
-            elif line.startswith("SUPABASE_SERVICE_ROLE_KEY="):
+            elif line.startswith("SUPABASE_SERVICE_ROLE_KEY=") and not SUPABASE_SERVICE_KEY:
                 SUPABASE_SERVICE_KEY = line.split("=", 1)[1].strip()
-            elif line.startswith("SUPABASE_ANON_KEY="):
+            elif line.startswith("SUPABASE_ANON_KEY=") and not SUPABASE_ANON_KEY:
                 SUPABASE_ANON_KEY = line.split("=", 1)[1].strip()
+
+# Reject known dummy / placeholder URLs
+if "htcgeupzkxxxplqtvxue" in SUPABASE_URL:
+    SUPABASE_URL = ""
+if SUPABASE_SERVICE_KEY.startswith("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0Y2dl"):
+    SUPABASE_SERVICE_KEY = ""
 
 
 def get_headers(use_service_role: bool = True) -> Dict[str, str]:

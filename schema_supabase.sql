@@ -144,3 +144,95 @@ CREATE POLICY "Service Role All Job Logs" ON public.job_execution_logs FOR ALL U
 CREATE POLICY "Service Role All Predictions" ON public.predictions FOR ALL USING (true);
 CREATE POLICY "Service Role All Evaluations" ON public.evaluations FOR ALL USING (true);
 CREATE POLICY "Service Role All News" ON public.news_archive FOR ALL USING (true);
+
+-- 7. Daily Automated Trade Reports Table (V3.7 Reporting Pipeline)
+CREATE TABLE IF NOT EXISTS public.daily_trade_reports (
+    id BIGSERIAL PRIMARY KEY,
+    report_date DATE NOT NULL,
+    job_run_id TEXT,
+    status TEXT NOT NULL,
+
+    total_trades INTEGER NOT NULL DEFAULT 0,
+    winning_trades INTEGER NOT NULL DEFAULT 0,
+    losing_trades INTEGER NOT NULL DEFAULT 0,
+    win_rate NUMERIC NOT NULL DEFAULT 0.0,
+
+    gross_pnl NUMERIC NOT NULL DEFAULT 0.0,
+    charges NUMERIC NOT NULL DEFAULT 0.0,
+    net_pnl NUMERIC NOT NULL DEFAULT 0.0,
+
+    realized_pnl NUMERIC NOT NULL DEFAULT 0.0,
+    unrealized_pnl NUMERIC NOT NULL DEFAULT 0.0,
+
+    best_trade JSONB,
+    worst_trade JSONB,
+
+    best_strategy TEXT,
+    best_agent TEXT,
+
+    prediction_direction TEXT,
+    actual_direction TEXT,
+    prediction_correct BOOLEAN,
+
+    ai_provider TEXT,
+    ai_model TEXT,
+    ai_request_id TEXT,
+    ai_latency_ms INTEGER,
+    ai_tokens JSONB,
+    ai_status TEXT,
+
+    voice_provider TEXT,
+    voice_status TEXT,
+    voice_duration_ms INTEGER,
+
+    video_provider TEXT,
+    video_render_id TEXT,
+    video_status TEXT,
+    video_url TEXT,
+
+    youtube_video_id TEXT,
+    youtube_url TEXT,
+    youtube_status TEXT,
+
+    email_status TEXT,
+    email_sent_at TIMESTAMPTZ,
+
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+
+    provenance_hash TEXT NOT NULL,
+    report_payload_json JSONB,
+    UNIQUE(report_date)
+);
+
+ALTER TABLE public.daily_trade_reports ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public Read Daily Trade Reports" ON public.daily_trade_reports FOR SELECT USING (true);
+CREATE POLICY "Service Role All Daily Trade Reports" ON public.daily_trade_reports FOR ALL USING (true);
+
+-- 8. Authoritative Scheduler Invocations & Heartbeat Table (P0 Scheduler Architecture)
+CREATE TABLE IF NOT EXISTS public.scheduler_invocations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    invocation_id TEXT UNIQUE NOT NULL,
+    scheduled_for TIMESTAMPTZ NOT NULL,
+    started_at TIMESTAMPTZ NOT NULL,
+    completed_at TIMESTAMPTZ NULL,
+    status TEXT NOT NULL,
+    trigger_source TEXT NOT NULL,
+    environment TEXT NOT NULL CHECK (environment IN ('PAPER', 'SHADOW', 'MICRO_LIVE', 'CONTROLLED_LIVE', 'PRODUCTION_LIVE')),
+    git_commit TEXT NULL,
+    config_hash TEXT NULL,
+    workflow_run_id TEXT NULL,
+    job_run_id TEXT NULL,
+    error_code TEXT NULL,
+    error_message TEXT NULL,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- RLS: Operational telemetry is protected.
+-- Direct anonymous public reads are disallowed.
+-- The Netlify health_scheduler serverless function projects the controlled public view.
+ALTER TABLE public.scheduler_invocations ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public Read Scheduler Invocations" ON public.scheduler_invocations;
+CREATE POLICY "Service Role All Scheduler Invocations" ON public.scheduler_invocations FOR ALL USING (true);
+
+

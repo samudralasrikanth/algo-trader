@@ -14,9 +14,27 @@
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 
+[functions.nexus_scheduler]
+  schedule = "0 13 * * 1-5"
+
 [[redirects]]
   from = "/api/health/ai"
   to = "/.netlify/functions/health_ai"
+  status = 200
+
+[[redirects]]
+  from = "/api/health/scheduler"
+  to = "/.netlify/functions/health_scheduler"
+  status = 200
+
+[[redirects]]
+  from = "/api/daily_report"
+  to = "/.netlify/functions/daily_report"
+  status = 200
+
+[[redirects]]
+  from = "/api/live_ticker"
+  to = "/.netlify/functions/live_ticker"
   status = 200
 
 [[redirects]]

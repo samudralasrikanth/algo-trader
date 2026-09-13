@@ -13,8 +13,8 @@ from datetime import datetime
 ENV_PATH = Path(__file__).resolve().parent / ".env"
 DB_PATH = Path(__file__).resolve().parent / "data" / "event_predictions.db"
 
-SUPABASE_URL = "https://htcgeupzkxxxplqtvxue.supabase.co"
-SUPABASE_SERVICE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0Y2dldXB6a3h4eHBscXR2eHVlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4ODA0MTc2OSwiZXhwIjoyMTAzNjE3NzY5fQ.qxw3vZfo5nNMTEB60JGFtEuvjw7O7cyyouc5hbzVgd0"
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
 
 if ENV_PATH.exists():
     with open(ENV_PATH, "r") as f:

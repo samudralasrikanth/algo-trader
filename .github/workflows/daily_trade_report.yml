@@ -1,0 +1,167 @@
+name: 🎬 NEXUS Daily Trade Report & Video Pipeline (18:30 IST)
+
+# =============================================================================
+# .github/workflows/daily_trade_report.yml
+# =============================================================================
+# Cloud runner for heavy post-market processing:
+# Upstox reconciliation, AI analysis, ElevenLabs voice, Creatomate video,
+# YouTube upload, executive email, and authoritative Supabase ledger sync.
+#
+# CANONICAL INVOCATION MODEL:
+# Netlify Scheduled Function (0 13 * * 1-5 / 18:30 IST)
+#   ↓ (workflow_dispatch)
+# GitHub Actions Cloud Runner
+#
+# No concurrent duplicate production cron runs.
+# =============================================================================
+
+on:
+  workflow_dispatch:
+    inputs:
+      scheduled_date:
+        description: 'Target trading date (YYYY-MM-DD, defaults to current date)'
+        required: false
+        default: ''
+      invocation_id:
+        description: 'Deterministic invocation identity passed from Netlify Scheduler'
+        required: false
+        default: ''
+      environment:
+        description: 'Trading Environment (Strictly PAPER)'
+        required: true
+        default: 'PAPER'
+      trigger_source:
+        description: 'Trigger Source (NETLIFY_CRON | MANUAL | RECOVERY)'
+        required: false
+        default: 'WORKFLOW_DISPATCH'
+
+concurrency:
+  group: nexus-daily-report-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  execute-daily-report:
+    name: 📊 Execute NEXUS Daily Trade Report Pipeline
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: 1. Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 2. Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: 3. Install Production Dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install requests pandas yfinance python-dotenv pytest
+
+      - name: 4. Validate Production Secrets & Diagnostic Audit
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          UPSTOX_API_KEY: ${{ secrets.UPSTOX_API_KEY }}
+          UPSTOX_API_SECRET: ${{ secrets.UPSTOX_API_SECRET }}
+          UPSTOX_ACCESS_TOKEN: ${{ secrets.UPSTOX_ACCESS_TOKEN }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          CREATOMATE_API_KEY: ${{ secrets.CREATOMATE_API_KEY }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          REPORT_EMAIL_TO: ${{ secrets.REPORT_EMAIL_TO }}
+        run: |
+          python3 -c "
+          import os
+          secrets = [
+              'SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'OPENROUTER_API_KEY',
+              'UPSTOX_API_KEY', 'UPSTOX_API_SECRET', 'UPSTOX_ACCESS_TOKEN',
+              'ELEVENLABS_API_KEY', 'CREATOMATE_API_KEY', 'YOUTUBE_CLIENT_ID',
+              'YOUTUBE_CLIENT_SECRET', 'YOUTUBE_REFRESH_TOKEN', 'RESEND_API_KEY',
+              'REPORT_EMAIL_TO'
+          ]
+          print('=== NEXUS SECRETS DIAGNOSTIC AUDIT (ZERO-SECRET LEAK) ===')
+          missing = []
+          for s in secrets:
+              val = os.environ.get(s, '')
+              status = 'PRESENT' if bool(val and 'placeholder' not in val.lower()) else 'MISSING'
+              print(f'{s:28}: {status}')
+              if status == 'MISSING' and s in ('SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'):
+                  missing.append(s)
+          print('==========================================================')
+          if missing:
+              print(f'CRITICAL CONFIGURATION WARNING: Core Supabase secrets missing: {missing}')
+          "
+
+      - name: 5. Hard Environmental Safety Assertion
+        env:
+          INPUT_ENVIRONMENT: ${{ inputs.environment || 'PAPER' }}
+        run: |
+          python3 -c "
+          import os, sys
+          env = os.environ.get('INPUT_ENVIRONMENT', 'PAPER').strip().upper()
+          assert env == 'PAPER', f'CRITICAL SAFETY VIOLATION: Environment is {env}. Production live trading is blocked!'
+          print(f'[✓] Safety Assertion Passed: Environment strictly confirmed as {env}')
+          "
+
+      - name: 6. Execute Python Daily Report Orchestrator
+        id: orchestrator
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL || 'openai/gpt-4o-mini' }}
+          UPSTOX_API_KEY: ${{ secrets.UPSTOX_API_KEY }}
+          UPSTOX_API_SECRET: ${{ secrets.UPSTOX_API_SECRET }}
+          UPSTOX_ACCESS_TOKEN: ${{ secrets.UPSTOX_ACCESS_TOKEN }}
+          UPSTOX_SANDBOX: 'true'
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ vars.ELEVENLABS_VOICE_ID || 'JBFqnCBsd6RMkjVDRZzb' }}
+          CREATOMATE_API_KEY: ${{ secrets.CREATOMATE_API_KEY }}
+          CREATOMATE_TEMPLATE_ID: ${{ vars.CREATOMATE_TEMPLATE_ID || '' }}
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
+          YOUTUBE_PUBLISH_MODE: 'private'
+          EMAIL_PROVIDER: 'resend'
+          EMAIL_PROVIDER_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          REPORT_EMAIL_TO: ${{ secrets.REPORT_EMAIL_TO }}
+          NEXUS_ENVIRONMENT: 'PAPER'
+          GITHUB_RUN_ID: ${{ github.run_id }}
+          GITHUB_COMMIT: ${{ github.sha }}
+        run: |
+          python3 -m event_agent.jobs.daily_report \
+            --scheduled-date "${{ inputs.scheduled_date }}" \
+            --invocation-id "${{ inputs.invocation_id }}" \
+            --workflow-run-id "${{ github.run_id }}" \
+            --environment "PAPER" \
+            --trigger-source "${{ inputs.trigger_source || 'WORKFLOW_DISPATCH' }}"
+
+      - name: 7. Deploy Updated Static Snapshots to Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        run: |
+          if [ -n "$NETLIFY_AUTH_TOKEN" ]; then
+            npx -y netlify-cli deploy --dir=web_app --site-name nifty50-event-agent --prod --no-build || true
+          else
+            echo "NETLIFY_AUTH_TOKEN not provided; skipping static deploy."
+          fi
+
+      - name: 8. Upload Execution Logs & Telemetry Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus-daily-report-${{ github.run_id }}
+          path: |
+            data/reports/
+            data/job_runs.db
+          retention-days: 14

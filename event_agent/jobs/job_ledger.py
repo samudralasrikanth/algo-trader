@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 import hashlib
 import json
 import logging
+import os
 from pathlib import Path
 import sqlite3
 import urllib.request
@@ -31,25 +32,27 @@ logger = logging.getLogger(__name__)
 DB_PATH = Path(__file__).resolve().parents[2] / "data" / "job_runs.db"
 ENV_PATH = Path(__file__).resolve().parents[2] / ".env"
 
-# Supabase configuration defaults
-SUPABASE_URL = "https://htcgeupzkxxxplqtvxue.supabase.co"
-SUPABASE_SERVICE_KEY = (
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
-    "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0Y2dldXB6a3h4eHBscXR2eHVlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4ODA0MTc2OSwiZXhwIjoyMTAzNjE3NzY5fQ."
-    "qxw3vZfo5nNMTEB60JGFtEuvjw7O7cyyouc5hbzVgd0"
-)
+# Supabase configuration
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "")
+SUPABASE_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY", "")
 
 if ENV_PATH.exists():
     try:
         with open(ENV_PATH, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
-                if line.startswith("SUPABASE_URL="):
+                if line.startswith("SUPABASE_URL=") and not SUPABASE_URL:
                     SUPABASE_URL = line.split("=", 1)[1].strip()
-                elif line.startswith("SUPABASE_SERVICE_ROLE_KEY="):
+                elif line.startswith("SUPABASE_SERVICE_ROLE_KEY=") and not SUPABASE_SERVICE_KEY:
                     SUPABASE_SERVICE_KEY = line.split("=", 1)[1].strip()
     except Exception as e:
         logger.debug("Failed reading .env for Supabase config: %s", e)
+
+# Reject dummy placeholders
+if "htcgeupzkxxxplqtvxue" in SUPABASE_URL:
+    SUPABASE_URL = ""
+if SUPABASE_SERVICE_KEY.startswith("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0Y2dl"):
+    SUPABASE_SERVICE_KEY = ""
 
 
 @dataclass

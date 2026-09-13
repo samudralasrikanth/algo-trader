@@ -10,16 +10,31 @@ from datetime import datetime, date, timedelta
 import yfinance as yf
 import pandas as pd
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).resolve().parent / ".env")
+except Exception:
+    pass
+
 from event_agent.config import NIFTY50_UNIVERSE, DB_PATH
 from event_agent.collectors.event_calendar import get_stock_events, get_macro_events
 from event_agent.storage.ledger import (
     init_db, get_latest_predictions, get_active_night_predictions,
     get_daily_audits, get_performance_scorecard, get_all_news,
-    get_factor_attribution_summary, get_job_execution_logs, get_arena_data
+    get_factor_attribution_summary, get_job_execution_logs, get_arena_data,
+    get_recent_daily_trade_reports
 )
 from event_agent.reporting.web_export import build_web_payload
 from event_agent.arena.orchestrator import ArenaOrchestrator
 from run_night_forecast import get_next_trading_day
+
+# V4.0 Real-Money Readiness & Certification Engines
+from event_agent.execution.environment import EnvironmentManager
+from event_agent.risk.kill_switch import IndependentKillSwitch
+from event_agent.certification.readiness_engine import RealMoneyReadinessEngine
+from event_agent.certification.six_month_ledger import SixMonthCertificationLedger
+from event_agent.certification.monte_carlo import MonteCarloPathSimulator
+from event_agent.certification.stress_tester import AutomatedStressTester
 
 WEB_DIR = Path(__file__).resolve().parent / "web_app"
 WEB_DIR.mkdir(exist_ok=True, parents=True)
@@ -79,8 +94,21 @@ def export_web_dataset():
 
     macro_events = get_macro_events(window_days=30)
 
-    # Merge legacy + V3 payload fields
-    payload = dict(v3_payload)
+    # Daily Automated Video Report & Social Broadcast
+    recent_reports = get_recent_daily_trade_reports(limit=10)
+    latest_report = recent_reports[0] if recent_reports else None
+
+    # Merge existing data.json + V3 payload fields without wiping out scheduler/telemetry
+    existing_data = {}
+    if DATA_JSON_PATH.exists():
+        try:
+            with open(DATA_JSON_PATH, "r", encoding="utf-8") as existing_f:
+                existing_data = json.load(existing_f)
+        except Exception:
+            existing_data = {}
+
+    payload = dict(existing_data)
+    payload.update(v3_payload)
     payload.update({
         "generated_at": datetime.now().isoformat(),
         "next_trading_day": next_day_str,
@@ -94,7 +122,16 @@ def export_web_dataset():
         "universe": NIFTY50_UNIVERSE,
         "stock_charts": stock_charts,
         "stock_events": stock_events_map,
-        "macro_events": macro_events
+        "macro_events": macro_events,
+        "daily_video_report": latest_report,
+        "daily_video_report_history": recent_reports,
+        # V4.0 Real-Money Readiness & Certification Payload
+        "v4_readiness_audit": RealMoneyReadinessEngine.evaluate_readiness().to_dict(),
+        "v4_six_month_calendar": SixMonthCertificationLedger().get_summary(),
+        "v4_environment_metadata": EnvironmentManager.get_runtime_environment_metadata(),
+        "v4_kill_switch_status": IndependentKillSwitch().get_status(),
+        "v4_monte_carlo": MonteCarloPathSimulator.simulate().to_dict(),
+        "v4_stress_test_summary": AutomatedStressTester.run_all_scenarios(),
     })
 
     print(f"[4/4] Writing output files to {DATA_JSON_PATH} and {DATA_JS_PATH}...")
@@ -102,7 +139,7 @@ def export_web_dataset():
         json.dump(payload, fp, indent=2)
 
     with open(DATA_JS_PATH, "w", encoding="utf-8") as fp:
-        fp.write(f"window.INITIAL_DATA = {json.dumps(payload)};\n")
+        fp.write(f"window.NEXUS_DATA = {json.dumps(payload)};\nwindow.INITIAL_DATA = window.NEXUS_DATA;\n")
 
     print(f"[✓] Successfully exported V3.2 Arena web payload to {DATA_JSON_PATH} and {DATA_JS_PATH}")
 

@@ -51,6 +51,7 @@ WEB_JS_PATH = Path(__file__).resolve().parents[2] / "web_app" / "data.js"
 SCHEDULED_UTC_SLOTS: List[Tuple[int, int]] = [
     (0, 30),   # 06:00 IST (PRE_MARKET)
     (12, 30),  # 18:00 IST (POST_MARKET)
+    (13, 0),   # 18:30 IST (DAILY_TRADE_REPORT)
     (15, 30),  # 21:00 IST (OVERNIGHT)
     (18, 30),  # 00:00 IST (OVERNIGHT)
     (21, 30),  # 03:00 IST (OVERNIGHT)
@@ -571,6 +572,49 @@ class OvernightScheduler:
         )
         return completed_parent
 
+    def execute_daily_trade_report(
+        self,
+        report_date: Optional[str] = None,
+        force_regenerate: bool = False,
+        custom_trades_fixture: Optional[List[Dict[str, Any]]] = None,
+        trigger_type: str = "SCHEDULED",
+    ) -> Any:
+        """
+        Executes the Daily Automated Trade Report Pipeline (18:30 IST / 13:00 UTC).
+        Reconciles trades -> P&L -> OpenRouter AI -> ElevenLabs -> Creatomate -> YouTube -> Email.
+        Checks MarketClock.is_trading_day() unless forced or custom fixture is provided.
+        """
+        from ..arena.market_clock import MarketClock
+        from ..reporting.daily_trade_pipeline import DailyTradeReportPipeline
+
+        now_utc = datetime.now(timezone.utc)
+        ist_tz = timezone(timedelta(hours=5, minutes=30))
+        now_ist = now_utc.astimezone(ist_tz)
+        target_date = report_date or now_ist.strftime("%Y-%m-%d")
+
+        # Verify market session unless forced or fixture provided
+        if not force_regenerate and custom_trades_fixture is None:
+            try:
+                target_dt = datetime.strptime(target_date, "%Y-%m-%d").replace(tzinfo=ist_tz)
+            except Exception:
+                target_dt = now_ist
+
+            if not MarketClock.is_trading_day(target_dt):
+                logger.info("Market session inactive on %s (Weekend/NSE Holiday). Skipping automated daily trade report.", target_date)
+                return {
+                    "report_date": target_date,
+                    "overall_status": "SKIPPED_NO_MARKET_SESSION",
+                    "reason": "Weekend or NSE Holiday",
+                }
+
+        pipeline = DailyTradeReportPipeline(ledger=self.ledger)
+        return pipeline.run_pipeline(
+            report_date=target_date,
+            force_regenerate=force_regenerate,
+            custom_trades_fixture=custom_trades_fixture,
+            trigger_type=trigger_type,
+        )
+
     def _export_to_web_app(
         self,
         mkt_data: Dict[str, Any],
@@ -668,6 +712,10 @@ def main():
     parser.add_argument("--run-now", action="store_true", help="Executes an immediate manual collection run")
     parser.add_argument("--schedule-info", action="store_true", help="Prints current schedule window and heartbeat info")
     parser.add_argument("--replay", type=str, help="Reconstructs snapshot state for a historical run_id")
+    parser.add_argument("--run-daily-report", action="store_true", help="Executes the 18:30 IST daily automated trade report pipeline")
+    parser.add_argument("--date", type=str, default=None, help="Target date (YYYY-MM-DD) for daily trade report")
+    parser.add_argument("--force", action="store_true", help="Force re-generation of daily report even if exists")
+    parser.add_argument("--test-fixture", action="store_true", help="Run daily report with controlled test trades fixture")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -686,6 +734,51 @@ def main():
     if args.run_now:
         rec = scheduler.execute_collection_pipeline(trigger_type="MANUAL")
         print(json.dumps(rec.to_dict(), indent=2))
+        return
+
+    if args.run_daily_report:
+        fixture = None
+        if args.test_fixture:
+            fixture = [
+                {
+                    "trade_id": "TRD-SCHED-RELIANCE",
+                    "symbol": "RELIANCE.NS",
+                    "side": "BUY",
+                    "entry_price": 2510.0,
+                    "exit_price": 2562.0,
+                    "quantity": 80,
+                    "gross_pnl": 4160.0,
+                    "net_pnl": 3980.0,
+                    "charges": 180.0,
+                    "agent_id": "ALPHA",
+                    "strategy_version": "Event_Arbitrage_V1",
+                    "decision_reason": "Pre-market catalyst beat street estimates",
+                },
+                {
+                    "trade_id": "TRD-SCHED-HDFC",
+                    "symbol": "HDFCBANK.NS",
+                    "side": "BUY",
+                    "entry_price": 1650.0,
+                    "exit_price": 1665.0,
+                    "quantity": 100,
+                    "gross_pnl": 1500.0,
+                    "net_pnl": 1390.0,
+                    "charges": 110.0,
+                    "agent_id": "BETA",
+                    "strategy_version": "Momentum_V1",
+                    "decision_reason": "Credit growth expansion catalyst",
+                }
+            ]
+        res = scheduler.execute_daily_trade_report(
+            report_date=args.date,
+            force_regenerate=args.force,
+            custom_trades_fixture=fixture,
+            trigger_type="MANUAL",
+        )
+        if hasattr(res, "to_dict"):
+            print(json.dumps(res.to_dict(), indent=2))
+        else:
+            print(json.dumps(res, indent=2))
         return
 
     parser.print_help()

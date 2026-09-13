@@ -1,0 +1,30 @@
+{
+  "name": "nexus-algo-trader",
+  "version": "3.7.0",
+  "description": "NEXUS AI Enterprise Multi-Asset Intelligence & Automated Daily Post-Market Video Report Pipeline",
+  "scripts": {
+    "report:run": "python3 auto_scheduler.py --run-daily-report",
+    "report:fixture": "python3 auto_scheduler.py --run-daily-report --test-fixture",
+    "report:test": "python3 -m pytest -q tests/test_daily_trade_report.py",
+    "test": "pytest -q",
+    "build": "node -e 'console.log(\"Web app ready in web_app/\")'",
+    "deploy:netlify": "npx -y netlify-cli deploy --dir=web_app --site-name nifty50-event-agent --prod --no-build"
+  },
+  "keywords": [
+    "trading",
+    "nifty50",
+    "nexus",
+    "ai-reporting",
+    "creatomate",
+    "elevenlabs",
+    "openrouter",
+    "youtube"
+  ],
+  "author": "NEXUS AI Intelligence",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@netlify/functions": "^2.8.2",
+    "@supabase/supabase-js": "^2.45.0"
+  }
+}
