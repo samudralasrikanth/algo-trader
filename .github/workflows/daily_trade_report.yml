@@ -34,6 +34,10 @@ on:
         description: 'Trigger Source (NETLIFY_CRON | MANUAL | RECOVERY)'
         required: false
         default: 'WORKFLOW_DISPATCH'
+      test_fixture:
+        description: 'Run with test trade fixture (for weekend / market-closed testing)'
+        required: false
+        default: 'false'
 
 concurrency:
   group: nexus-daily-report-${{ github.ref }}
@@ -139,12 +143,17 @@ jobs:
           GITHUB_RUN_ID: ${{ github.run_id }}
           GITHUB_COMMIT: ${{ github.sha }}
         run: |
+          EXTRA_ARGS=""
+          if [ "${{ inputs.test_fixture }}" = "true" ]; then
+            EXTRA_ARGS="--test-fixture"
+          fi
           python3 -m event_agent.jobs.daily_report \
             --scheduled-date "${{ inputs.scheduled_date }}" \
             --invocation-id "${{ inputs.invocation_id }}" \
             --workflow-run-id "${{ github.run_id }}" \
             --environment "PAPER" \
-            --trigger-source "${{ inputs.trigger_source || 'WORKFLOW_DISPATCH' }}"
+            --trigger-source "${{ inputs.trigger_source || 'WORKFLOW_DISPATCH' }}" \
+            $EXTRA_ARGS
 
       - name: 7. Deploy Updated Static Snapshots to Netlify
         env:
