@@ -23,8 +23,8 @@ import urllib.request
 import urllib.error
 from typing import Any, Dict, List, Optional
 
-from .trade_reconciliation import DailyReconciliationReport
-from ..engine.llm_provider import OpenRouterProvider
+from event_agent.reporting.trade_reconciliation import DailyReconciliationReport
+from event_agent.engine.llm_provider import OpenRouterProvider
 
 logger = logging.getLogger(__name__)
 
@@ -229,7 +229,7 @@ Produce a JSON object with these exact keys:
             logger.error("OpenRouter HTTP Error %d: %s", e.code, err_body)
             if e.code == 402 or "credit" in err_body.lower():
                 logger.info("OpenRouter credit limit reached. Activating NEXUS Deterministic AI Analyst Fallback...")
-                return self._build_fallback_result(report, latency_ms=latency_ms, error_msg=f"HTTP {e.code}")
+                return self._build_fallback_result(reconciliation, latency_ms=latency_ms, error_msg=f"HTTP {e.code}")
             return self._build_failed_result(
                 error_msg=f"OpenRouter HTTP {e.code}: {err_body[:200]}",
                 latency_ms=latency_ms,
@@ -237,7 +237,7 @@ Produce a JSON object with these exact keys:
         except Exception as e:
             latency_ms = int((time.perf_counter() - start_time) * 1000)
             logger.error("OpenRouter exception: %s. Using fallback engine...", e)
-            return self._build_fallback_result(report, latency_ms=latency_ms, error_msg=str(e))
+            return self._build_fallback_result(reconciliation, latency_ms=latency_ms, error_msg=str(e))
 
     def _build_fallback_result(
         self,

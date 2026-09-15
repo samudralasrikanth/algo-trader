@@ -33,9 +33,9 @@ import urllib.request
 import urllib.error
 from typing import Any, Dict, List, Optional
 
-from ..trade_reconciliation import DailyReconciliationReport
-from ..ai_analyst import DailyAIAnalysisResult
-from ..content_strategy import ContentIntelligenceEngine, DailyContentPackage
+from event_agent.reporting.trade_reconciliation import DailyReconciliationReport
+from event_agent.reporting.ai_analyst import DailyAIAnalysisResult
+from event_agent.reporting.content_strategy import ContentIntelligenceEngine, DailyContentPackage
 
 logger = logging.getLogger(__name__)
 
