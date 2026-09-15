@@ -7,3 +7,5 @@ matplotlib
 python-dotenv
 pyotp
 NorenRestApiPy
+opencv-python-headless
+Pillow

@@ -1462,9 +1462,20 @@ print(asset.duration.seconds)
         dated_path = os.path.join(videos_dir, f"nexus_daily_report_{report_date}.mp4")
         latest_path = os.path.join(videos_dir, "nexus_daily_report_latest.mp4")
 
-        # Audio Muxing via Swift AVFoundation
+        # Audio Muxing via ffmpeg (Linux Cloud Runners) or Swift AVFoundation (macOS)
+        import shutil
+        mux_success = False
         if resolved_audio and os.path.exists(resolved_audio):
-            swift_muxer = f'''
+            if shutil.which("ffmpeg"):
+                try:
+                    cmd = ["ffmpeg", "-y", "-i", temp_raw_video, "-i", resolved_audio, "-c:v", "copy", "-c:a", "aac", "-shortest", dated_path]
+                    subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    mux_success = os.path.exists(dated_path) and os.path.getsize(dated_path) > 1000
+                except Exception as fe:
+                    logger.warning("ffmpeg mux failed: %s; falling back to swift if available", fe)
+
+            if not mux_success and shutil.which("swift"):
+                swift_muxer = f'''
 import Foundation
 import AVFoundation
 
@@ -1501,15 +1512,16 @@ if let export = AVAssetExportSession(asset: composition, presetName: AVAssetExpo
     sema.wait()
 }}
 '''
-            swift_script_path = f"/tmp/nexus_muxer_{report_date}.swift"
-            with open(swift_script_path, "w") as f:
-                f.write(swift_muxer)
-            subprocess.run(["swift", swift_script_path], capture_output=True, text=True)
-            if os.path.exists(swift_script_path):
-                os.remove(swift_script_path)
-        else:
-            # Copy raw video if audio is missing
-            import shutil
+                swift_script_path = f"/tmp/nexus_muxer_{report_date}.swift"
+                with open(swift_script_path, "w") as f:
+                    f.write(swift_muxer)
+                subprocess.run(["swift", swift_script_path], capture_output=True, text=True)
+                if os.path.exists(swift_script_path):
+                    os.remove(swift_script_path)
+                mux_success = os.path.exists(dated_path) and os.path.getsize(dated_path) > 1000
+
+        if not mux_success and os.path.exists(temp_raw_video):
+            # Fallback to copying raw video
             shutil.copy2(temp_raw_video, dated_path)
 
         if os.path.exists(temp_raw_video):
