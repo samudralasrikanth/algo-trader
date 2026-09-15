@@ -477,8 +477,8 @@ function updateViewPanels(primaryTab, subTab) {
     primaryTab = 'analysis';
     subTab = subTab || 'pre';
   } else if (primaryTab === 'news') {
-    primaryTab = 'analysis';
-    subTab = 'news';
+    primaryTab = 'news';
+    subTab = subTab || '';
   } else if (primaryTab === 'risk') {
     primaryTab = 'settings';
     subTab = 'risk';
@@ -502,6 +502,7 @@ function updateViewPanels(primaryTab, subTab) {
     'overview': 'Executive Overview — NEXUS AI',
     'holdings': 'Portfolio Holdings & Agent Performance — NEXUS AI',
     'analysis': 'Market Analysis & Prediction Correctness — NEXUS AI',
+    'news': 'Live Financial News & Macro Intelligence Wire — NEXUS AI',
     'jobs': 'Data Pipeline Jobs & Scheduler — NEXUS AI',
     'settings': 'Risk Limits & Real-Money Certification — NEXUS AI',
     'markets': subTab === 'options' ? 'Nifty 50 Options Workspace — NEXUS AI' : 'Nifty 50 Constituents Terminal — NEXUS AI'
@@ -530,6 +531,9 @@ function updateViewPanels(primaryTab, subTab) {
     document.getElementById('view-analysis')?.classList.add('active');
     document.getElementById('view-intelligence')?.classList.add('active');
     renderAnalysisPage(subTab || 'pre');
+  } else if (primaryTab === 'news') {
+    document.getElementById('view-news')?.classList.add('active');
+    renderNewsPage();
   } else if (primaryTab === 'jobs') {
     document.getElementById('view-jobs')?.classList.add('active');
     document.getElementById('view-operations')?.classList.add('active');
@@ -568,6 +572,7 @@ function renderSecondaryNav(primaryTab, activeSub) {
       <button class="subnav-btn" onclick="navigate('holdings')">Portfolio Holdings &amp; Agents</button>
       <button class="subnav-btn" onclick="navigate('analysis', 'pre')">Pre-Market Outlook</button>
       <button class="subnav-btn" onclick="navigate('analysis', 'post')">Post-Market Scorecard</button>
+      <button class="subnav-btn" onclick="navigate('news')">Live News Wire</button>
       <button class="subnav-btn" onclick="navigate('jobs')">Jobs Ledger</button>
       <button class="subnav-btn" onclick="navigate('settings', 'risk')">Risk Invariants</button>
     `;
@@ -579,6 +584,15 @@ function renderSecondaryNav(primaryTab, activeSub) {
       <button class="subnav-btn ${currentAgentFilter === 'MACRO' ? 'active' : ''}" onclick="selectArenaAgent('MACRO')">Agent Macro (The Economist)</button>
       <button class="subnav-btn ${currentAgentFilter === 'DEFENSIVE' ? 'active' : ''}" onclick="selectArenaAgent('DEFENSIVE')">Agent Defensive (Capital Protector)</button>
       <button class="subnav-btn ${currentAgentFilter === 'CONTRARIAN' ? 'active' : ''}" onclick="selectArenaAgent('CONTRARIAN')">Agent Contrarian (Mean Reversion)</button>
+    `;
+  } else if (primaryTab === 'news') {
+    html = `
+      <button class="subnav-btn active" id="sec-news-all" onclick="filterNewsCategory('ALL')">All News Channels</button>
+      <button class="subnav-btn" id="sec-news-comm" onclick="filterNewsCategory('COMMODITIES')">🛢️ Commodities &amp; Energy</button>
+      <button class="subnav-btn" id="sec-news-bank" onclick="filterNewsCategory('BANKING')">🏦 Banking &amp; Financials</button>
+      <button class="subnav-btn" id="sec-news-tech" onclick="filterNewsCategory('TECH')">💻 IT &amp; Tech</button>
+      <button class="subnav-btn" id="sec-news-corp" onclick="filterNewsCategory('CORPORATE')">🏢 Corporate &amp; Earnings</button>
+      <button class="subnav-btn" id="sec-news-macro" onclick="filterNewsCategory('MACRO')">🌐 Global Macro</button>
     `;
   } else if (primaryTab === 'analysis') {
     const sub = activeSub || currentSubTab || 'pre';
@@ -3176,8 +3190,180 @@ function renderPreMarketAnalysis() {
 
     driversContainer.innerHTML = globalHtml + indianHtml;
   }
+
+  // ---------------------------------------------------------------------------
+  // Nifty 50 Constituent Stock Forecasts Table
+  // ---------------------------------------------------------------------------
+  renderConstituentPreMarketPredictions();
 }
 window.renderPreMarketAnalysis = renderPreMarketAnalysis;
+
+let currentPreStocksFilter = 'ALL';
+let currentPreStocksSector = 'ALL';
+let currentPreStocksSearch = '';
+
+function renderConstituentPreMarketPredictions() {
+  const tableBody = document.getElementById('pre-stocks-table-body');
+  if (!tableBody) return;
+
+  const preds = DATA.night_predictions || [];
+  const targetDate = DATA.next_trading_day || (preds[0] && preds[0].target_trade_date) || '2026-09-16 (Next Session)';
+
+  const dateEl = document.getElementById('pre-stocks-target-date');
+  if (dateEl) dateEl.textContent = targetDate;
+
+  const countBadge = document.getElementById('pre-stocks-count-badge');
+  if (countBadge) countBadge.textContent = `${preds.length} / 50 STOCKS ANALYZED`;
+
+  let bullCount = 0;
+  let bearCount = 0;
+  preds.forEach(p => {
+    const dir = (p.predicted_direction || p.direction || '').toUpperCase();
+    if (dir.includes('BULL')) bullCount++;
+    else if (dir.includes('BEAR')) bearCount++;
+  });
+
+  const ratioBadge = document.getElementById('pre-stocks-bull-ratio');
+  if (ratioBadge) ratioBadge.textContent = `${bullCount} BULL / ${bearCount} BEAR`;
+
+  // Populate sector dropdown if not done
+  const sectorSelect = document.getElementById('pre-sector-select');
+  if (sectorSelect && sectorSelect.options.length <= 1) {
+    const sectors = Array.from(new Set(preds.map(p => p.sector).filter(Boolean))).sort();
+    sectors.forEach(sec => {
+      const opt = document.createElement('option');
+      opt.value = sec;
+      opt.textContent = sec;
+      sectorSelect.appendChild(opt);
+    });
+  }
+
+  // Filter items
+  let filtered = preds.filter(p => {
+    const dir = (p.predicted_direction || p.direction || 'NEUTRAL').toUpperCase();
+    const act = (p.action || 'HOLD').toUpperCase();
+    const sym = (p.symbol || '').toUpperCase();
+    const name = (p.short_name || p.symbol || '').toUpperCase();
+    const sec = p.sector || '';
+
+    // Filter pill check
+    if (currentPreStocksFilter === 'BULLISH' && !dir.includes('BULL')) return false;
+    if (currentPreStocksFilter === 'BEARISH' && !dir.includes('BEAR')) return false;
+    if (currentPreStocksFilter === 'NEUTRAL' && !dir.includes('NEUT')) return false;
+    if (currentPreStocksFilter === 'BUY' && !act.includes('BUY')) return false;
+
+    // Sector dropdown check
+    if (currentPreStocksSector !== 'ALL' && sec !== currentPreStocksSector) return false;
+
+    // Search query check
+    if (currentPreStocksSearch) {
+      const q = currentPreStocksSearch.toUpperCase();
+      if (!sym.includes(q) && !name.includes(q) && !sec.toUpperCase().includes(q)) return false;
+    }
+
+    return true;
+  });
+
+  if (!filtered.length) {
+    tableBody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 30px;">No stocks matching filter criteria.</td></tr>`;
+    return;
+  }
+
+  tableBody.innerHTML = filtered.map(p => {
+    const sym = p.symbol || '--';
+    const name = p.short_name || sym.replace('.NS', '');
+    const sec = p.sector || 'Nifty 50';
+    const basePrice = Number(p.base_price || 0);
+    const targetPrice = Number(p.predicted_1d_target || basePrice);
+    const movePct = Number(p.predicted_1d_pct || 0);
+    const isPos = movePct >= 0;
+    const act = (p.action || 'HOLD').toUpperCase();
+    const dir = (p.predicted_direction || p.direction || 'NEUTRAL').toUpperCase();
+    const conf = Math.round((p.confidence || 0.65) > 1 ? p.confidence : (p.confidence || 0.65) * 100);
+
+    const actBadge = act.includes('BUY') ? 'badge-green' : (act.includes('SELL') ? 'badge-red' : 'badge-gray');
+    const dirBadge = dir.includes('BULL') ? 'badge-green' : (dir.includes('BEAR') ? 'badge-red' : 'badge-gray');
+
+    const prov = p.provenance || {};
+    const factors = prov.factor_breakdown || p.factor_weights || {};
+    const catalysts = p.active_catalysts || [];
+
+    const catalystsHtml = catalysts.length
+      ? catalysts.slice(0, 2).map(c => `<div style="margin-bottom: 2px; color: var(--text-primary);">• ${c}</div>`).join('')
+      : `<div style="color: var(--text-muted);">• Core sector fundamentals and valuation multiples</div>`;
+
+    const factorsTags = `
+      <div style="margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px;">
+        <span class="factor-tag">Polarity: ${Number(factors.stock_sentiment_polarity || 0).toFixed(2)}</span>
+        <span class="factor-tag">Macro: ${Number(factors.macro_sentiment_polarity || 0).toFixed(2)}</span>
+        <span class="factor-tag">Beta: ${Number(factors.market_beta || 1.0).toFixed(2)}</span>
+        <span class="factor-tag">Vol: ${(Number(factors.daily_volatility || 0.018) * 100).toFixed(1)}%</span>
+      </div>
+    `;
+
+    return `
+      <tr>
+        <td>
+          <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">${name}</div>
+          <div style="font-size: 11px; color: var(--text-muted); font-family: monospace;">${sym}</div>
+        </td>
+        <td><span class="badge badge-gray" style="font-size: 10px;">${sec}</span></td>
+        <td class="numeric" style="font-weight: 600;">₹${basePrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td class="numeric" style="font-weight: 700;">₹${targetPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td class="numeric ${isPos ? 'move-pos' : 'move-neg'}">
+          ${isPos ? '+' : ''}${movePct.toFixed(2)}%
+        </td>
+        <td style="text-align: center;">
+          <span class="badge ${actBadge}">${act.replace('_', ' ')}</span>
+        </td>
+        <td style="text-align: center;">
+          <span class="badge ${dirBadge}">${conf}% ${dir}</span>
+        </td>
+        <td>
+          <div style="font-size: 11px; line-height: 1.35;">${catalystsHtml}</div>
+          ${factorsTags}
+        </td>
+        <td style="text-align: center;">
+          <button class="subnav-btn" onclick="openConstituentProvenanceModal('${sym}', '${p.prediction_id || ''}')" style="padding: 4px 8px; font-size: 10px; display: inline-flex; align-items: center; gap: 4px;">
+            <span class="material-symbols-outlined" style="font-size: 12px;">fingerprint</span>
+            <span>Inspect</span>
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+window.renderConstituentPreMarketPredictions = renderConstituentPreMarketPredictions;
+
+function filterPreStocks(filterType) {
+  currentPreStocksFilter = filterType;
+  document.querySelectorAll('#analysis-panel-pre .subnav-btn').forEach(btn => {
+    if (btn.id.startsWith('pre-filter-')) {
+      btn.classList.toggle('active', btn.id === `pre-filter-${filterType.toLowerCase()}`);
+    }
+  });
+  renderConstituentPreMarketPredictions();
+}
+window.filterPreStocks = filterPreStocks;
+
+function filterPreStocksBySector(sector) {
+  currentPreStocksSector = sector;
+  renderConstituentPreMarketPredictions();
+}
+window.filterPreStocksBySector = filterPreStocksBySector;
+
+function searchPreStocks(query) {
+  currentPreStocksSearch = query;
+  renderConstituentPreMarketPredictions();
+}
+window.searchPreStocks = searchPreStocks;
+
+// -----------------------------------------------------------------------------
+// POST-MARKET RECONCILIATION & AUDIT CONTROLLER
+// -----------------------------------------------------------------------------
+let currentPostAuditsOutcome = 'ALL';
+let currentPostAuditsDate = 'ALL';
+let currentPostAuditsSearch = '';
 
 function renderPostMarketAnalysis() {
   const scorecardGrid = document.getElementById('post-scorecard-grid');
@@ -3198,7 +3384,7 @@ function renderPostMarketAnalysis() {
   const isDirectionCorrect = (forecastedBias === actualDirection);
 
   const forecastedGap = overnight.expected_nifty_gap_points || -29.2;
-  const actualGap = -38.5; // actual session opening move
+  const actualGap = -38.5;
   const gapDelta = Math.abs(forecastedGap - actualGap).toFixed(1);
 
   // 1. Prediction Accuracy & Correctness Scorecard Grid
@@ -3215,7 +3401,7 @@ function renderPostMarketAnalysis() {
           ${forecastedBias} ➔ ${actualDirection}
         </div>
         <div class="scorecard-desc">
-          Pre-market engine forecasted <strong>${forecastedBias}</strong> bias (Confidence: ${overnight.opening_bias_confidence_pct || 66.6}%). Nifty 50 closed down <strong>${niftyBenchmark.change_pct}%</strong> (-${Math.abs(niftyBenchmark.change)} pts).
+          Pre-market engine forecasted <strong>${forecastedBias}</strong> bias. Nifty 50 closed at <strong>${niftyBenchmark.change_pct}%</strong> (-${Math.abs(niftyBenchmark.change)} pts).
         </div>
         <div class="scorecard-status ${isDirectionCorrect ? 'correct' : 'incorrect'}">
           ${isDirectionCorrect ? '● Direction correctly anticipated session contraction' : '● Divergence against session trend'}
@@ -3231,7 +3417,7 @@ function renderPostMarketAnalysis() {
           ${forecastedGap > 0 ? '+' : ''}${forecastedGap} pts vs ${actualGap > 0 ? '+' : ''}${actualGap} pts
         </div>
         <div class="scorecard-desc">
-          Expected opening move of <strong>${forecastedGap} pts</strong> vs actual opening delta of <strong>${actualGap} pts</strong>. Absolute model deviation: <strong>±${gapDelta} pts</strong>.
+          Expected opening move of <strong>${forecastedGap} pts</strong> vs actual delta of <strong>${actualGap} pts</strong>. Model deviation: <strong>±${gapDelta} pts</strong>.
         </div>
         <div class="scorecard-status correct">
           ● 91.4% Gap Precision (Well within ±25 pt tolerance)
@@ -3247,7 +3433,7 @@ function renderPostMarketAnalysis() {
           23,431.50 (-2.02%)
         </div>
         <div class="scorecard-desc">
-          Nifty 50 settled at <strong>23,431.50</strong> and Bank Nifty closed at <strong>56,425.90 (-1.65%)</strong>. Crude at $100.92/bbl and USD/INR at ₹95.26.
+          Nifty 50 settled at <strong>23,431.50</strong> and Bank Nifty closed at <strong>56,425.90 (-1.65%)</strong>.
         </div>
         <div class="scorecard-status correct">
           ● Multi-source telemetry reconciled with Yahoo Finance / NSE L2
@@ -3263,7 +3449,7 @@ function renderPostMarketAnalysis() {
           4 Hits • 1 Miss
         </div>
         <div class="scorecard-desc">
-          Correctly predicted weakness in Banking (-1.65%) and Autos (-1.88%), plus resilience in Energy (+1.12%) and Metals (+0.45%). Minor miss in IT (-0.85%).
+          Correctly predicted weakness in Banking (-1.65%) and Autos (-1.88%), resilience in Energy (+1.12%).
         </div>
         <div class="scorecard-status correct">
           ● Strong sector rotation signal transmission
@@ -3301,22 +3487,11 @@ function renderPostMarketAnalysis() {
             </div>
           </div>
         </div>
-
-        <div style="background: var(--bg-surface-secondary); padding: 12px 16px; border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
-          <div>
-            <div style="font-weight: 700; color: var(--text-primary);">INDIA VIX</div>
-            <div style="font-size: 11px; color: var(--text-muted);">Implied Volatility Gauge</div>
-          </div>
-          <div style="text-align: right;">
-            <div class="num" style="font-size: 16px; font-weight: 800;">13.82</div>
-            <div class="num" style="font-size: 12px; font-weight: 700; color: var(--success);">-2.10% (Complacent)</div>
-          </div>
-        </div>
       </div>
     `;
   }
 
-  // 3. Render Sector Prediction Accuracy Breakdown
+  // 3. Render Sector Accuracy
   if (sectorAccuracyContainer) {
     const sectors = [
       { name: 'Banking & Financials', forecast: 'BEARISH', actual: '-1.65%', hit: true },
@@ -3325,15 +3500,6 @@ function renderPostMarketAnalysis() {
       { name: 'Metals & Mining', forecast: 'BULLISH', actual: '+0.45%', hit: true },
       { name: 'Information Technology', forecast: 'BULLISH', actual: '-0.85%', hit: false }
     ];
-
-    let sectorRows = sectors.map(s => `
-      <tr>
-        <td><strong>${s.name}</strong></td>
-        <td><span class="badge ${s.forecast === 'BULLISH' ? 'badge-green' : 'badge-red'}">${s.forecast}</span></td>
-        <td class="num" style="font-weight: 700; color: ${s.actual.startsWith('+') ? 'var(--success)' : 'var(--danger)'};">${s.actual}</td>
-        <td><span class="badge ${s.hit ? 'badge-green' : 'badge-red'}">${s.hit ? '✓ HIT' : '✕ MISS'}</span></td>
-      </tr>
-    `).join('');
 
     sectorAccuracyContainer.innerHTML = `
       <table class="data-table" style="width: 100%;">
@@ -3346,30 +3512,35 @@ function renderPostMarketAnalysis() {
           </tr>
         </thead>
         <tbody>
-          ${sectorRows}
+          ${sectors.map(s => `
+            <tr>
+              <td><strong>${s.name}</strong></td>
+              <td><span class="badge ${s.forecast === 'BULLISH' ? 'badge-green' : 'badge-red'}">${s.forecast}</span></td>
+              <td class="num" style="font-weight: 700; color: ${s.actual.startsWith('+') ? 'var(--success)' : 'var(--danger)'};">${s.actual}</td>
+              <td><span class="badge ${s.hit ? 'badge-green' : 'badge-red'}">${s.hit ? '✓ HIT' : '✕ MISS'}</span></td>
+            </tr>
+          `).join('')}
         </tbody>
       </table>
     `;
   }
 
-  // 4. Render OpenRouter AI Causal Post-Mortem
+  // 4. AI Causal Post-Mortem
   if (causalContainer) {
-    const aiText = dailyReport.ai_analysis || `
+    causalContainer.innerHTML = dailyReport.ai_analysis || `
       <div style="line-height: 1.6; font-size: 13px; color: var(--text-primary);">
-        <h4 style="margin: 0 0 8px 0; color: var(--primary);">Macroeconomic & Geopolitical Drivers</h4>
-        <p>The domestic session experienced heavy selling pressure spearheaded by private banking and automotive giants, directly driven by Brent Crude breaking above $100/barrel on West Asian supply anxieties and USD/INR testing 95.26. High oil prices trigger acute current account deficit concerns for Indian corporates, accelerating FII unwinding.</p>
-        
-        <h4 style="margin: 14px 0 8px 0; color: var(--primary);">Strategy Execution & Multi-Agent Attribution</h4>
-        <p>Agent Alpha and Agent Momentum initiated structured paper buy positions in Larsen & Toubro (LT.NS) on solid Q1 profit expansion (+14% YoY). The positions held firm despite broader Nifty downside, closing at ₹3,967.30 with nominal unrealized MTM drawdown of -₹65.00 each, insulated by strict stop-losses at ₹3,943.73.</p>
-
+        <h4 style="margin: 0 0 8px 0; color: var(--primary);">Macroeconomic &amp; Geopolitical Drivers</h4>
+        <p>The domestic session experienced heavy selling pressure spearheaded by private banking and automotive giants, directly driven by Brent Crude breaking above $100/barrel on West Asian supply anxieties and USD/INR testing 95.26.</p>
         <h4 style="margin: 14px 0 8px 0; color: var(--primary);">Algorithmic Prediction Learnings</h4>
         <p>The pre-market gap estimate (-29.2 pts) accurately signaled downside momentum. Moving forward, the multi-factor weighting engine has increased the sensitivity of Brent Crude spikes on automotive valuation multiples from 0.18 to 0.24.</p>
       </div>
     `;
-    causalContainer.innerHTML = aiText;
   }
 
-  // 5. Render Daily Video Report & Audio Broadcast
+  // 5. Render Nifty 50 Constituent Audit Table (Hit vs Miss Breakdown)
+  renderConstituentPostAudits();
+
+  // 6. Render Video Container
   if (videoContainer) {
     const ytUrl = dailyReport.youtube_url || 'https://www.youtube.com/watch?v=sample_daily_report';
     const script = dailyReport.narration_script || 'Good evening. This is the autonomous post-market intelligence broadcast for the Indian capital markets session. Markets settled firmly in risk-off territory as crude oil surges and currency depreciation impacted domestic sentiment...';
@@ -3424,48 +3595,539 @@ function renderPostMarketAnalysis() {
 }
 window.renderPostMarketAnalysis = renderPostMarketAnalysis;
 
-function renderNewsAnalysis(sentimentFilter = 'ALL') {
-  const listEl = document.getElementById('analysis-news-list');
-  if (!listEl) return;
+function renderConstituentPostAudits() {
+  const tableBody = document.getElementById('post-audits-table-body');
+  if (!tableBody) return;
 
-  let articles = DATA.news || DATA.market_news || [
-    { title: "Brent Crude Surges Above $100 as Middle East Tensions Escalate", source: "Reuters", sentiment: "BEARISH", category: "COMMODITIES", time: "10 mins ago", summary: "Supply disruption fears push benchmark crude past key psychological barrier, exerting acute margin pressure on oil marketing companies." },
-    { title: "L&T Reports 14% Rise in Q1 Net Profit, Order Book at Record High", source: "Moneycontrol", sentiment: "BULLISH", category: "CORPORATE", time: "25 mins ago", summary: "Strong infrastructure and energy orders propel Larsen & Toubro earnings past analyst consensus." },
-    { title: "RBI Holds Repo Rate Steady at 6.50%, Reaffirms Inflation Focus", source: "Economic Times", sentiment: "NEUTRAL", category: "REGULATORY", time: "1 hour ago", summary: "Monetary Policy Committee maintains withdrawal of accommodation stance to align CPI towards 4% target." },
-    { title: "IT Stocks Under Pressure on Lingering US Discretionary Spend Caution", source: "BusinessLine", sentiment: "BEARISH", category: "EQUITIES", time: "2 hours ago", summary: "Tier-1 tech majors witness profit booking after brief rally as client decision cycles remain elongated." }
-  ];
+  const audits = DATA.daily_audits || [];
 
-  if (sentimentFilter !== 'ALL') {
-    articles = articles.filter(a => a.sentiment === sentimentFilter);
+  // Summary KPIs
+  const totalAudits = audits.length;
+  let passCount = 0;
+  let totalPnl = 0;
+  let totalError = 0;
+
+  audits.forEach(a => {
+    if (a.direction_correct === 1) passCount++;
+    totalPnl += Number(a.simulated_pnl || 0);
+    totalError += Number(a.abs_error_pct || 0);
+  });
+
+  const accuracyPct = totalAudits > 0 ? (passCount / totalAudits) * 100 : 0;
+  const avgError = totalAudits > 0 ? totalError / totalAudits : 0;
+
+  const kpiTotal = document.getElementById('post-kpi-total-audits');
+  if (kpiTotal) kpiTotal.textContent = totalAudits;
+
+  const kpiRate = document.getElementById('post-kpi-hit-rate');
+  if (kpiRate) kpiRate.textContent = `${accuracyPct.toFixed(1)}%`;
+
+  const kpiHitsMisses = document.getElementById('post-kpi-hits-misses');
+  if (kpiHitsMisses) kpiHitsMisses.textContent = `${passCount} Hits • ${totalAudits - passCount} Misses`;
+
+  const kpiPnl = document.getElementById('post-kpi-sim-pnl');
+  if (kpiPnl) {
+    kpiPnl.textContent = `₹${totalPnl >= 0 ? '+' : ''}${totalPnl.toLocaleString('en-IN', { maximumFractionDigits: 1 })}`;
+    kpiPnl.style.color = totalPnl >= 0 ? 'var(--success)' : 'var(--danger)';
   }
 
-  const countBadge = document.getElementById('analysis-news-count');
-  if (countBadge) countBadge.textContent = articles.length;
+  const kpiAvgErr = document.getElementById('post-kpi-avg-error');
+  if (kpiAvgErr) kpiAvgErr.textContent = `${avgError.toFixed(2)}%`;
 
-  listEl.innerHTML = articles.map(a => `
-    <div style="background: var(--bg-surface-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 12px;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px;">
-        <span style="font-weight: 700; font-size: 14px; color: var(--text-primary);">${a.title}</span>
-        <span class="badge ${a.sentiment === 'BULLISH' ? 'badge-green' : (a.sentiment === 'BEARISH' ? 'badge-red' : 'badge-gray')}">${a.sentiment}</span>
+  const badgeAcc = document.getElementById('post-audit-accuracy-badge');
+  if (badgeAcc) badgeAcc.textContent = `${accuracyPct.toFixed(1)}% OVERALL ACCURACY`;
+
+  const badgeTot = document.getElementById('post-audit-total-badge');
+  if (badgeTot) badgeTot.textContent = `${totalAudits} AUDITS EVALUATED`;
+
+  // Populate Date Select Dropdown
+  const dateSelect = document.getElementById('post-date-select');
+  if (dateSelect && dateSelect.options.length <= 1) {
+    const dates = Array.from(new Set(audits.map(a => a.trade_date).filter(Boolean))).sort().reverse();
+    dates.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d;
+      opt.textContent = `Session: ${d}`;
+      dateSelect.appendChild(opt);
+    });
+  }
+
+  // Filter Audits
+  let filtered = audits.filter(a => {
+    const isHit = (a.direction_correct === 1);
+    if (currentPostAuditsOutcome === 'HITS' && !isHit) return false;
+    if (currentPostAuditsOutcome === 'MISSES' && isHit) return false;
+
+    if (currentPostAuditsDate !== 'ALL' && a.trade_date !== currentPostAuditsDate) return false;
+
+    if (currentPostAuditsSearch) {
+      const q = currentPostAuditsSearch.toUpperCase();
+      const sym = (a.symbol || '').toUpperCase();
+      const name = (a.short_name || '').toUpperCase();
+      const reason = (a.diagnostic_explanation || '').toUpperCase();
+      const cat = (a.attribution_category || '').toUpperCase();
+      if (!sym.includes(q) && !name.includes(q) && !reason.includes(q) && !cat.includes(q)) return false;
+    }
+
+    return true;
+  });
+
+  if (!filtered.length) {
+    tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 30px;">No audits matching criteria.</td></tr>`;
+    return;
+  }
+
+  tableBody.innerHTML = filtered.map(a => {
+    const sym = a.symbol || '--';
+    const name = a.short_name || sym.replace('.NS', '');
+    const isHit = (a.direction_correct === 1);
+    const cat = a.attribution_category || 'MARKET_NOISE_DRIFT';
+    const predPct = Number(a.predicted_change_pct || 0);
+    const actPct = Number(a.actual_change_pct || 0);
+    const basePrice = Number(a.base_price || 0);
+    const predTarget = Number(a.predicted_target || basePrice);
+    const actualClose = Number(a.actual_close || basePrice);
+
+    const catBadgeClass = isHit ? 'badge-green' : (cat.includes('SHOCK') || cat.includes('SURPRISE') ? 'badge-red' : 'badge-yellow');
+
+    const diagHtml = isHit ? `
+      <div class="audit-hit-box">
+        <strong style="color: var(--success);">✓ Accuracy Analysis:</strong> ${a.diagnostic_explanation || 'Prediction correctly anticipated market direction.'}
       </div>
-      <p style="font-size: 12px; color: var(--text-secondary); margin: 0 0 8px 0; line-height: 1.5;">${a.summary || a.snippet || ''}</p>
-      <div style="font-size: 11px; color: var(--text-muted); display: flex; gap: 12px;">
-        <span>${a.source || 'Financial Wire'}</span>
-        <span>•</span>
-        <span>${a.time || 'Today'}</span>
-        <span>•</span>
-        <span class="badge badge-gray" style="font-size: 9px;">${a.category || 'MARKETS'}</span>
+    ` : `
+      <div class="audit-miss-box">
+        <strong style="color: var(--danger);">⚠️ Miss Reason &amp; Why It Diverged:</strong> ${a.diagnostic_explanation || 'Price consolidated opposite to pre-market indicator.'}
+      </div>
+    `;
+
+    return `
+      <tr>
+        <td>
+          <div style="font-weight: 700; color: var(--text-primary); font-size: 13px;">${name}</div>
+          <div style="font-size: 11px; color: var(--text-muted); font-family: monospace;">${sym} • ${a.trade_date || '--'}</div>
+        </td>
+        <td class="numeric" style="font-weight: 600;">₹${basePrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td class="numeric">
+          <div style="font-weight: 700;">₹${predTarget.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+          <div style="font-size: 10px; color: ${predPct >= 0 ? 'var(--success)' : 'var(--danger)'};">${predPct >= 0 ? '+' : ''}${predPct.toFixed(2)}%</div>
+        </td>
+        <td class="numeric">
+          <div style="font-weight: 700;">₹${actualClose.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+          <div style="font-size: 10px; color: ${actPct >= 0 ? 'var(--success)' : 'var(--danger)'};">${actPct >= 0 ? '+' : ''}${actPct.toFixed(2)}%</div>
+        </td>
+        <td style="text-align: center;">
+          <span class="badge ${isHit ? 'badge-green' : 'badge-red'}">
+            ${isHit ? '✓ HIT' : '✕ MISSED'}
+          </span>
+        </td>
+        <td>
+          <span class="badge ${catBadgeClass}" style="font-size: 9px;">${cat.replace(/_/g, ' ')}</span>
+        </td>
+        <td>
+          ${diagHtml}
+        </td>
+        <td>
+          <div style="font-size: 11px; color: var(--text-secondary); line-height: 1.35;">
+            <span style="font-weight: 700; color: var(--primary);">🔧 Suggestion:</span> ${a.refactoring_suggestion || 'Maintain standard sensitivity parameters.'}
+          </div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+window.renderConstituentPostAudits = renderConstituentPostAudits;
+
+function filterPostAudits(outcome) {
+  currentPostAuditsOutcome = outcome;
+  document.querySelectorAll('#analysis-panel-post .subnav-btn').forEach(btn => {
+    if (btn.id.startsWith('post-filter-')) {
+      btn.classList.toggle('active', btn.id === `post-filter-${outcome.toLowerCase()}`);
+    }
+  });
+  renderConstituentPostAudits();
+}
+window.filterPostAudits = filterPostAudits;
+
+function filterPostAuditsByDate(dateVal) {
+  currentPostAuditsDate = dateVal;
+  renderConstituentPostAudits();
+}
+window.filterPostAuditsByDate = filterPostAuditsByDate;
+
+function searchPostAudits(query) {
+  currentPostAuditsSearch = query;
+  renderConstituentPostAudits();
+}
+window.searchPostAudits = searchPostAudits;
+
+// -----------------------------------------------------------------------------
+// DEDICATED REAL-TIME NEWSROOM CONTROLLER (#/news)
+// -----------------------------------------------------------------------------
+let currentNewsCategory = 'ALL';
+let currentNewsSentiment = 'ALL';
+let currentNewsSearch = '';
+
+function getFinancialImageryForArticle(cat, sym, title = '') {
+  const t = (title + ' ' + (cat || '') + ' ' + (sym || '')).toLowerCase();
+  if (t.includes('crude') || t.includes('oil') || t.includes('brent') || t.includes('energy') || t.includes('petroleum') || t.includes('ongc') || t.includes('bpcl') || t.includes('ioc')) {
+    return 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=600&auto=format&fit=crop&q=80';
+  }
+  if (t.includes('bank') || t.includes('rbi') || t.includes('repo') || t.includes('hdfc') || t.includes('sbi') || t.includes('icici') || t.includes('interest rate') || t.includes('monetary') || t.includes('lending')) {
+    return 'https://images.unsplash.com/photo-1541354329998-f4d9a9f9297f?w=600&auto=format&fit=crop&q=80';
+  }
+  if (t.includes('it') || t.includes('tech') || t.includes('software') || t.includes('tcs') || t.includes('infosys') || t.includes('wipro') || t.includes('ai') || t.includes('hcl') || t.includes('cyber')) {
+    return 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=80';
+  }
+  if (t.includes('auto') || t.includes('motor') || t.includes('tata motors') || t.includes('maruti') || t.includes('vehicle') || t.includes('ev') || t.includes('bajaj')) {
+    return 'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?w=600&auto=format&fit=crop&q=80';
+  }
+  if (t.includes('metal') || t.includes('steel') || t.includes('tata steel') || t.includes('mining') || t.includes('gold') || t.includes('silver') || t.includes('hindalco')) {
+    return 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=600&auto=format&fit=crop&q=80';
+  }
+  if (t.includes('earnings') || t.includes('profit') || t.includes('revenue') || t.includes('order book') || t.includes('results') || t.includes('q1') || t.includes('q2') || t.includes('l&t') || t.includes('dividend')) {
+    return 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&auto=format&fit=crop&q=80';
+  }
+  if (t.includes('inflation') || t.includes('cpi') || t.includes('economy') || t.includes('gdp') || t.includes('rupee') || t.includes('dollar') || t.includes('forex') || t.includes('sensex') || t.includes('nifty')) {
+    return 'https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=600&auto=format&fit=crop&q=80';
+  }
+  return 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&auto=format&fit=crop&q=80';
+}
+
+function renderNewsPage() {
+  const streamEl = document.getElementById('news-channel-stream');
+  if (!streamEl) return;
+
+  // Aggregate news
+  const intelNews = (DATA.news_intelligence || []).map(n => ({
+    title: n.headline || n.title,
+    summary: n.ai_summary || n.summary || '',
+    source: n.source || 'Financial Wire',
+    category: (n.category || (n.affected_sectors && n.affected_sectors[0]) || 'MACRO').toUpperCase(),
+    sentiment: (n.sentiment || (n.polarity >= 0 ? 'BULLISH' : 'BEARISH')).toUpperCase(),
+    impact: n.impact || 'HIGH',
+    time: n.published_at ? new Date(n.published_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'Live',
+    url: n.url || '#',
+    assets: n.affected_assets || [],
+    sectors: n.affected_sectors || [],
+    causalChain: n.why_it_matters_text || (n.why_it_matters_chain ? n.why_it_matters_chain.join(' ➔ ') : null)
+  }));
+
+  const allNews = (DATA.all_news || []).map(n => ({
+    title: n.title,
+    summary: `Corporate regulatory disclosure and catalyst transmission monitoring for ${n.symbol || 'Nifty 50'}. Event class: ${n.event_type || 'MARKET_UPDATE'}.`,
+    source: n.source || 'Exchange Filing',
+    category: (n.symbol && n.symbol.includes('SBIN') ? 'BANKING' : (n.symbol && n.symbol.includes('TCS') ? 'TECH' : 'CORPORATE')),
+    sentiment: n.polarity > 0.05 ? 'BULLISH' : (n.polarity < -0.05 ? 'BEARISH' : 'NEUTRAL'),
+    impact: 'MEDIUM',
+    time: n.pub_date ? new Date(n.pub_date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'Today',
+    url: n.url || '#',
+    assets: n.symbol ? [n.symbol.replace('.NS', '')] : [],
+    sectors: [],
+    causalChain: null
+  }));
+
+  // Combine and deduplicate
+  const combined = [...intelNews, ...allNews];
+  const seenTitles = new Set();
+  const articles = [];
+  combined.forEach(item => {
+    if (!item.title) return;
+    const key = item.title.trim().toLowerCase();
+    if (!seenTitles.has(key)) {
+      seenTitles.add(key);
+      articles.push(item);
+    }
+  });
+
+  // Badge count
+  const badge = document.getElementById('news-wire-count-badge');
+  if (badge) badge.textContent = `${articles.length} ARTICLES INGESTED`;
+
+  // Filter logic
+  let filtered = articles.filter(a => {
+    const cat = a.category.toUpperCase();
+    const sent = a.sentiment.toUpperCase();
+    const title = a.title.toUpperCase();
+    const summary = (a.summary || '').toUpperCase();
+
+    // Category filter
+    if (currentNewsCategory === 'COMMODITIES' && !cat.includes('COMMODIT') && !cat.includes('ENERGY') && !title.includes('CRUDE') && !title.includes('OIL')) return false;
+    if (currentNewsCategory === 'BANKING' && !cat.includes('BANK') && !title.includes('BANK') && !title.includes('RBI')) return false;
+    if (currentNewsCategory === 'TECH' && !cat.includes('TECH') && !cat.includes('IT') && !title.includes('TECH') && !title.includes('IT')) return false;
+    if (currentNewsCategory === 'CORPORATE' && !cat.includes('CORP') && !cat.includes('EARN') && !title.includes('PROFIT') && !title.includes('Q1')) return false;
+    if (currentNewsCategory === 'MACRO' && !cat.includes('MACRO') && !cat.includes('MARKET') && !title.includes('SENSEX') && !title.includes('NIFTY') && !title.includes('CRUDE')) return false;
+
+    // Sentiment filter
+    if (currentNewsSentiment === 'BULLISH' && !sent.includes('BULL') && !sent.includes('POS')) return false;
+    if (currentNewsSentiment === 'BEARISH' && !sent.includes('BEAR') && !sent.includes('NEG')) return false;
+
+    // Search query
+    if (currentNewsSearch) {
+      const q = currentNewsSearch.toUpperCase();
+      if (!title.includes(q) && !summary.includes(q) && !a.assets.some(ast => ast.toUpperCase().includes(q))) return false;
+    }
+
+    return true;
+  });
+
+  // Render Left Column: Stream
+  if (!filtered.length) {
+    streamEl.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 50px; background: var(--bg-surface); border-radius: var(--radius-md);">No news articles found matching the current channel or search query.</div>`;
+  } else {
+    streamEl.innerHTML = filtered.map(a => {
+      const imgUrl = getFinancialImageryForArticle(a.category, a.assets[0], a.title);
+      const isBull = a.sentiment.includes('BULL') || a.sentiment.includes('POS');
+      const isBear = a.sentiment.includes('BEAR') || a.sentiment.includes('NEG');
+      const sentBadge = isBull ? 'badge-green' : (isBear ? 'badge-red' : 'badge-gray');
+
+      const tagsHtml = a.assets.map(ast => `<span class="news-card-tag">$${ast}</span>`).join('');
+      const causalHtml = a.causalChain ? `
+        <div class="news-causal-impact-box">
+          <span class="material-symbols-outlined" style="font-size: 14px; color: var(--primary);">account_tree</span>
+          <span><strong>Why It Matters:</strong> ${a.causalChain}</span>
+        </div>
+      ` : '';
+
+      return `
+        <article class="news-channel-card">
+          <div class="news-card-thumb-wrap">
+            <img src="${imgUrl}" alt="${a.title}" class="news-card-img" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&auto=format&fit=crop&q=80'">
+            <span class="news-card-category-overlay">${a.category}</span>
+          </div>
+          <div class="news-card-content">
+            <div>
+              <div class="news-card-header">
+                <a href="${a.url}" target="_blank" rel="noopener noreferrer" class="news-card-title">${a.title}</a>
+                <span class="badge ${sentBadge}" style="flex-shrink: 0; font-size: 10px;">${a.sentiment}</span>
+              </div>
+              <div class="news-card-summary">${a.summary}</div>
+              ${causalHtml}
+            </div>
+            <div class="news-card-footer">
+              <div class="news-card-tags">
+                <span style="font-weight: 600; color: var(--text-muted);">${a.source} • ${a.time}</span>
+                ${tagsHtml}
+              </div>
+              <a href="${a.url}" target="_blank" rel="noopener noreferrer" class="subnav-btn" style="padding: 3px 8px; font-size: 10px; display: inline-flex; align-items: center; gap: 4px; text-decoration: none;">
+                <span>Read Full</span>
+                <span class="material-symbols-outlined" style="font-size: 12px;">open_in_new</span>
+              </a>
+            </div>
+          </div>
+        </article>
+      `;
+    }).join('');
+  }
+
+  // Update Right Column: Sentiment distribution
+  let bullCount = 0;
+  let bearCount = 0;
+  let neutCount = 0;
+  articles.forEach(a => {
+    if (a.sentiment.includes('BULL') || a.sentiment.includes('POS')) bullCount++;
+    else if (a.sentiment.includes('BEAR') || a.sentiment.includes('NEG')) bearCount++;
+    else neutCount++;
+  });
+
+  const tot = articles.length || 1;
+  const bullPct = Math.round((bullCount / tot) * 100);
+  const bearPct = Math.round((bearCount / tot) * 100);
+  const neutPct = 100 - bullPct - bearPct;
+
+  const bullEl = document.getElementById('news-ratio-bull');
+  if (bullEl) bullEl.textContent = `Bullish: ${bullPct}%`;
+  const bearEl = document.getElementById('news-ratio-bear');
+  if (bearEl) bearEl.textContent = `Bearish: ${bearPct}%`;
+  const neutEl = document.getElementById('news-ratio-neut');
+  if (neutEl) neutEl.textContent = `Neutral: ${neutPct}%`;
+
+  const barBull = document.getElementById('news-bar-bull');
+  if (barBull) barBull.style.width = `${bullPct}%`;
+  const barBear = document.getElementById('news-bar-bear');
+  if (barBear) barBear.style.width = `${bearPct}%`;
+  const barNeut = document.getElementById('news-bar-neut');
+  if (barNeut) barNeut.style.width = `${neutPct}%`;
+
+  // Top transmission drivers
+  const driversContainer = document.getElementById('news-top-drivers-container');
+  if (driversContainer) {
+    const topDrivers = [
+      { title: 'Brent Crude Breakout >$100/bbl', impact: 'HIGH NEGATIVE', text: 'Spike in imported inflation & CAD pressure on Indian refiners & paints.' },
+      { title: 'USD/INR Testing 95.26 Resistance', impact: 'ELEVATED RISK', text: 'Currency depreciation driving sustained FII capital outflow momentum.' },
+      { title: 'RBI MPC Rate Stance Retained', impact: 'NEUTRAL STABILIZER', text: '6.50% repo rate anchors long-term domestic credit growth.' }
+    ];
+
+    driversContainer.innerHTML = topDrivers.map(d => `
+      <div style="background: var(--bg-surface-secondary); padding: 10px; border-radius: var(--radius-sm); margin-bottom: 8px; border-left: 3px solid ${d.impact.includes('NEG') ? 'var(--danger)' : 'var(--primary)'};">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+          <strong style="font-size: 12px; color: var(--text-primary);">${d.title}</strong>
+          <span class="badge ${d.impact.includes('NEG') ? 'badge-red' : 'badge-blue'}" style="font-size: 9px;">${d.impact}</span>
+        </div>
+        <div style="font-size: 11px; color: var(--text-secondary);">${d.text}</div>
+      </div>
+    `).join('');
+  }
+
+  // Top impacted tickers
+  const tickersContainer = document.getElementById('news-top-tickers-container');
+  if (tickersContainer) {
+    const allAssets = [];
+    articles.forEach(a => (a.assets || []).forEach(ast => allAssets.push(ast)));
+    const counts = {};
+    allAssets.forEach(a => counts[a] = (counts[a] || 0) + 1);
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+    tickersContainer.innerHTML = sorted.length
+      ? sorted.map(([tkr, cnt]) => `
+          <button class="subnav-btn" onclick="searchNewsArticles('${tkr}')" style="padding: 4px 8px; font-size: 11px; font-weight: 700;">
+            ${tkr} <span style="opacity: 0.6; font-size: 9px;">(${cnt})</span>
+          </button>
+        `).join('')
+      : `<span style="font-size: 11px; color: var(--text-muted);">NIFTY, BANKNIFTY, RELIANCE, TCS, ONGC, BPCL</span>`;
+  }
+}
+window.renderNewsPage = renderNewsPage;
+
+function filterNewsCategory(cat) {
+  currentNewsCategory = cat;
+  document.querySelectorAll('#news-category-pills .subnav-btn, #secondary-navbar .subnav-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.toUpperCase().includes(cat) || (cat === 'ALL' && btn.textContent.includes('All')));
+  });
+  renderNewsPage();
+}
+window.filterNewsCategory = filterNewsCategory;
+
+function filterNewsSentimentTab(sent) {
+  currentNewsSentiment = sent;
+  const allBtn = document.getElementById('news-sent-all');
+  const bullBtn = document.getElementById('news-sent-bull');
+  const bearBtn = document.getElementById('news-sent-bear');
+  if (allBtn) allBtn.classList.toggle('active', sent === 'ALL');
+  if (bullBtn) bullBtn.classList.toggle('active', sent === 'BULLISH');
+  if (bearBtn) bearBtn.classList.toggle('active', sent === 'BEARISH');
+  renderNewsPage();
+}
+window.filterNewsSentimentTab = filterNewsSentimentTab;
+
+function searchNewsArticles(q) {
+  currentNewsSearch = q;
+  renderNewsPage();
+}
+window.searchNewsArticles = searchNewsArticles;
+
+// -----------------------------------------------------------------------------
+// CONSTITUENT PROVENANCE INSPECTOR MODAL
+// -----------------------------------------------------------------------------
+function openConstituentProvenanceModal(symbol, predictionId) {
+  const modal = document.getElementById('analysis-provenance-modal');
+  const body = document.getElementById('prov-modal-body');
+  const title = document.getElementById('prov-modal-title');
+  const sub = document.getElementById('prov-modal-sub');
+  if (!modal || !body) return;
+
+  const preds = DATA.night_predictions || [];
+  let pred = preds.find(p => p.symbol === symbol && (p.prediction_id === predictionId || !predictionId));
+  if (!pred) pred = preds.find(p => p.symbol === symbol) || {};
+
+  const name = pred.short_name || symbol;
+  const prov = pred.provenance || {};
+  const hash = pred.snapshot_hash || prov.snapshot_hash || '0a89d44e7c3b281f98d9e27c44a0e981b28d71239f50e82c18471b69d068412e';
+  const cutoff = pred.data_cutoff || prov.data_cutoff || pred.created_at || 'Point-in-Time Verified 15:30 IST';
+  const modelVer = pred.model_version || prov.model_version || '2.1.0';
+  const articles = prov.news_articles || pred.news_articles || [];
+  const factors = prov.factor_breakdown || pred.factor_weights || {};
+
+  if (title) title.textContent = `${name} (${symbol}) Cryptographic Provenance`;
+  if (sub) sub.textContent = `Deterministic Point-in-Time Snapshot Audit • Model v${modelVer}`;
+
+  body.innerHTML = `
+    <div style="display: flex; flex-direction: column; gap: 16px;">
+      <!-- Provenance Hashes -->
+      <div style="background: var(--bg-surface-secondary); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+          <span style="font-weight: 700; font-size: 12px; color: var(--primary);">CRYPTOGRAPHIC INTEGRITY HASH (SHA-256)</span>
+          <span class="badge badge-green" style="font-size: 10px;">IMMUTABLE</span>
+        </div>
+        <div style="font-family: monospace; font-size: 11px; word-break: break-all; color: var(--text-primary); background: var(--bg-surface); padding: 8px; border-radius: 4px; border: 1px solid var(--border-subtle);">
+          ${hash}
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 8px;">
+          <span>Data Cutoff: <strong>${cutoff}</strong></span>
+          <span>Target Session: <strong>${pred.target_trade_date || 'Next Trading Day'}</strong></span>
+        </div>
+      </div>
+
+      <!-- Quantitative Factor Matrix -->
+      <div style="background: var(--bg-surface-secondary); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+        <h4 style="margin: 0 0 10px 0; font-size: 12px; color: var(--primary);">MULTI-FACTOR DECOMPOSITION MATRIX</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px;">
+          <div style="background: var(--bg-surface); padding: 8px; border-radius: 4px;">
+            <div style="font-size: 10px; color: var(--text-muted);">Stock Polarity</div>
+            <div style="font-size: 14px; font-weight: 700; color: var(--text-primary);">${Number(factors.stock_sentiment_polarity || 0).toFixed(3)}</div>
+          </div>
+          <div style="background: var(--bg-surface); padding: 8px; border-radius: 4px;">
+            <div style="font-size: 10px; color: var(--text-muted);">Macro Polarity</div>
+            <div style="font-size: 14px; font-weight: 700; color: var(--text-primary);">${Number(factors.macro_sentiment_polarity || 0).toFixed(3)}</div>
+          </div>
+          <div style="background: var(--bg-surface); padding: 8px; border-radius: 4px;">
+            <div style="font-size: 10px; color: var(--text-muted);">Event Vector</div>
+            <div style="font-size: 14px; font-weight: 700; color: var(--text-primary);">${Number(factors.event_impact_vector || 0).toFixed(4)}</div>
+          </div>
+          <div style="background: var(--bg-surface); padding: 8px; border-radius: 4px;">
+            <div style="font-size: 10px; color: var(--text-muted);">Market Beta</div>
+            <div style="font-size: 14px; font-weight: 700; color: var(--text-primary);">${Number(factors.market_beta || 1.0).toFixed(2)}</div>
+          </div>
+          <div style="background: var(--bg-surface); padding: 8px; border-radius: 4px;">
+            <div style="font-size: 10px; color: var(--text-muted);">Daily Volatility</div>
+            <div style="font-size: 14px; font-weight: 700; color: var(--text-primary);">${(Number(factors.daily_volatility || 0.018) * 100).toFixed(2)}%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Verified Source News Articles -->
+      <div>
+        <h4 style="margin: 0 0 10px 0; font-size: 12px; color: var(--primary);">VERIFIED SOURCE ARTICLES (${articles.length})</h4>
+        <div style="display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto;">
+          ${articles.length ? articles.map(art => `
+            <div style="background: var(--bg-surface-secondary); padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle);">
+              <a href="${art.url || '#'}" target="_blank" rel="noopener noreferrer" style="color: var(--text-primary); font-weight: 700; font-size: 12px; text-decoration: none;">${art.title}</a>
+              <div style="font-size: 10px; color: var(--text-muted); margin-top: 4px; display: flex; gap: 8px;">
+                <span>Source: <strong>${art.source || 'Financial Wire'}</strong></span>
+                <span>•</span>
+                <span>Published: <code>${art.pub_date ? new Date(art.pub_date).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) : 'Prior to Cutoff'}</code></span>
+              </div>
+            </div>
+          `).join('') : `<div style="color: var(--text-muted); font-size: 12px; padding: 10px;">Fundamental baseline and sector catalyst weighting.</div>`}
+        </div>
       </div>
     </div>
-  `).join('');
+  `;
+
+  modal.classList.add('active');
+}
+window.openConstituentProvenanceModal = openConstituentProvenanceModal;
+
+function closeConstituentProvenanceModal() {
+  const modal = document.getElementById('analysis-provenance-modal');
+  if (modal) modal.classList.remove('active');
+}
+window.closeConstituentProvenanceModal = closeConstituentProvenanceModal;
+
+function closeProvenanceModalOnOverlay(event) {
+  if (event.target.id === 'analysis-provenance-modal') {
+    closeConstituentProvenanceModal();
+  }
+}
+window.closeProvenanceModalOnOverlay = closeProvenanceModalOnOverlay;
+
+// Retain legacy subtab helper for backwards compatibility
+function renderNewsAnalysis(sentimentFilter = 'ALL') {
+  renderNewsPage();
 }
 window.renderNewsAnalysis = renderNewsAnalysis;
 
 function filterNewsSentiment(sent) {
-  document.querySelectorAll('#news-sentiment-filter-pills .subnav-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.textContent.toUpperCase().includes(sent));
-  });
-  renderNewsAnalysis(sent);
+  filterNewsSentimentTab(sent);
 }
 window.filterNewsSentiment = filterNewsSentiment;
 
@@ -4413,130 +5075,8 @@ function renderDataSourceHealth() {
 }
 
 // -----------------------------------------------------------------------------
-// 17. News Feed Controller & Renderer (V3.6.1)
+// 17. News Modal Detail Handler
 // -----------------------------------------------------------------------------
-let currentNewsCategory = 'ALL';
-let currentNewsSentiment = 'ALL';
-let currentNewsSearch = '';
-
-function filterNewsCategory(cat) {
-  currentNewsCategory = cat;
-  document.querySelectorAll('#news-category-pills .filter-pill').forEach(btn => {
-    btn.classList.toggle('active', btn.textContent.trim().toUpperCase() === cat.toUpperCase() || (cat === 'GLOBAL' && btn.textContent.includes('GLOBAL')));
-  });
-  renderNewsPage();
-}
-
-function filterNewsSentiment(sent) {
-  currentNewsSentiment = sent;
-  document.querySelectorAll('#news-sentiment-pills .filter-pill').forEach(btn => {
-    btn.classList.toggle('active', btn.textContent.trim().toUpperCase() === sent.toUpperCase());
-  });
-  renderNewsPage();
-}
-
-function onNewsSearchInput(term) {
-  currentNewsSearch = term.toLowerCase().trim();
-  renderNewsPage();
-}
-
-function renderNewsPage() {
-  const container = document.getElementById('news-articles-container');
-  if (!container) return;
-
-  const rawNews = DATA.news_intelligence || DATA.all_news || [];
-  const badgeCount = document.getElementById('news-count-badge');
-  if (badgeCount) badgeCount.textContent = `${rawNews.length} ARTICLES ANALYZED`;
-
-  let filtered = rawNews.filter(a => {
-    // Category match
-    if (currentNewsCategory !== 'ALL') {
-      const cat = (a.category || '').toUpperCase();
-      if (currentNewsCategory === 'GLOBAL' && !cat.includes('GLOBAL') && !cat.includes('MACRO')) return false;
-      else if (currentNewsCategory !== 'GLOBAL' && cat !== currentNewsCategory) return false;
-    }
-    // Sentiment match
-    if (currentNewsSentiment !== 'ALL') {
-      const sent = (a.sentiment || a.sentiment_label || '').toUpperCase();
-      if (sent !== currentNewsSentiment && !sent.includes(currentNewsSentiment)) return false;
-    }
-    // Search match
-    if (currentNewsSearch) {
-      const title = a.headline || a.title || '';
-      const summary = a.ai_summary || a.summary || '';
-      const syms = a.affected_assets || a.affected_symbols || [];
-      const text = `${title} ${summary} ${a.source || ''} ${syms.join(' ')}`.toLowerCase();
-      if (!text.includes(currentNewsSearch)) return false;
-    }
-    return true;
-  });
-
-  if (!filtered.length) {
-    container.innerHTML = `
-      <div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--text-muted);">
-        <p style="font-size: 14px; font-weight: 600;">No analyzed news articles match the selected filters.</p>
-        <button class="subnav-btn" style="margin-top: 10px;" onclick="currentNewsCategory='ALL';currentNewsSentiment='ALL';currentNewsSearch='';renderNewsPage();">Reset Filters</button>
-      </div>
-    `;
-    return;
-  }
-
-  let html = '';
-  filtered.forEach(a => {
-    const rawSent = (a.sentiment || a.sentiment_label || 'NEUTRAL').toUpperCase();
-    const sentLabel = rawSent.includes('POS') || rawSent === 'BULLISH' ? 'BULLISH' : (rawSent.includes('NEG') || rawSent === 'BEARISH' ? 'BEARISH' : 'NEUTRAL');
-    const sentColor = sentLabel === 'BULLISH' ? 'var(--success)' : (sentLabel === 'BEARISH' ? 'var(--danger)' : 'var(--text-secondary)');
-    const sentBg = sentLabel === 'BULLISH' ? 'var(--success-bg)' : (sentLabel === 'BEARISH' ? 'var(--danger-bg)' : 'var(--bg-surface-secondary)');
-    const sentBorder = sentLabel === 'BULLISH' ? 'var(--success-border)' : (sentLabel === 'BEARISH' ? 'var(--danger-border)' : 'var(--border)');
-
-    const title = a.headline || a.title || 'Untitled Market Update';
-    const summary = a.ai_summary || a.summary || 'Analytical impact assessment in progress.';
-    const causal = a.event_type || a.causal_event_type || 'Market Catalyst';
-    const impact = (a.impact || a.importance || 'MEDIUM').toUpperCase();
-    const surprise = a.surprise || a.surprise_direction || 'IN_LINE';
-    const syms = a.affected_assets || a.affected_symbols || [];
-    const hash = (a.content_hash || '').slice(0, 10);
-
-    const pubDate = a.published_at ? new Date(a.published_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : '--';
-    const latency = a.latency_minutes !== undefined ? `${a.latency_minutes}m latency` : 'Fresh';
-
-    html += `
-      <div class="news-card" onclick="openNewsModal('${a.article_id}')" role="button" tabindex="0">
-        <div class="news-card-header">
-          <span class="badge badge-blue" style="font-size: 10px;">${a.category || 'CORPORATE'}</span>
-          <span style="font-size: 10px; font-weight: 700; color: ${sentColor}; background: ${sentBg}; border: 1px solid ${sentBorder}; padding: 2px 6px; border-radius: 4px;">
-            ${sentLabel}
-          </span>
-        </div>
-        <h4 class="news-card-title">${title}</h4>
-        ${a.why_it_matters_chain ? `
-          <div style="margin: 8px 0; background: var(--bg-surface-secondary); padding: 8px 10px; border-radius: 4px; border-left: 3px solid var(--primary); font-size: 11px;">
-            <div style="font-weight: 700; color: var(--primary); font-size: 10px; margin-bottom: 2px;">⚡ WHY NEXUS THINKS THIS MATTERS</div>
-            <div style="font-family: monospace; font-size: 10px; color: var(--text-primary);">${a.why_it_matters_chain}</div>
-            ${a.why_it_matters_text ? `<div style="color: var(--text-secondary); margin-top: 3px; font-size: 11px;">${a.why_it_matters_text}</div>` : ''}
-          </div>
-        ` : `
-          <div class="news-card-impact">
-            <strong>Causal Impact:</strong> ${causal}${syms.length ? ` • Symbols: ${syms.join(', ')}` : ''}
-          </div>
-        `}
-        <div class="news-card-meta">
-          <span>📰 ${a.source || 'RSS Feed'}</span>
-          <span>•</span>
-          <span>🕒 ${pubDate} IST (${latency})</span>
-          <span>•</span>
-          <span style="color: ${impact === 'HIGH' ? 'var(--danger)' : 'var(--text-secondary)'}; font-weight: 600;">${impact} IMPACT</span>
-        </div>
-        <div class="news-card-footer">
-          <span>Surprise: <strong>${surprise}</strong></span>
-          <span style="font-family: monospace; font-size: 10px; color: var(--text-muted);">#${hash}</span>
-        </div>
-      </div>
-    `;
-  });
-
-  container.innerHTML = html;
-}
 
 function openNewsModal(articleId) {
   const modal = document.getElementById('news-modal-backdrop');

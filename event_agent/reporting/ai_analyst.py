@@ -174,7 +174,7 @@ Produce a JSON object with these exact keys:
             ],
             "response_format": {"type": "json_object"},
             "temperature": 0.2,
-            "max_tokens": 2000,
+            "max_tokens": 1200,
         }).encode("utf-8")
 
         start_time = time.perf_counter()

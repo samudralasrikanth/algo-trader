@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2026-09-15T17:09:27.200166+00:00",
+    "generated_at": "2026-09-15T18:10:16.050467+00:00",
     "system_name": "NEXUS AI \u2014 ENTERPRISE MULTI-ASSET INVESTMENT INTELLIGENCE",
     "subtitle": "Equities \u2022 Derivatives (Paper Options & Futures) \u2022 \u20b91 Crore AI Arena \u2022 Real-time Risk Gate",
     "version_record": {
@@ -377,8 +377,8 @@
       "is_market_open": false,
       "can_accept_orders": true,
       "status_reason": "PRE_MARKET_STAGED: Order staged for market open auction.",
-      "ist_timestamp": "2026-09-15 22:39:27 IST",
-      "ist_time": "22:39 IST",
+      "ist_timestamp": "2026-09-15 23:40:16 IST",
+      "ist_time": "23:40 IST",
       "market_date": "2026-09-15",
       "order_cutoff_time": "15:30 IST",
       "forecast_run_time": "20:30 IST",
@@ -2307,7 +2307,7 @@
     ],
     "implied_volatility_pct": 13.8,
     "price_source": "MODELLED_BLACK_SCHOLES",
-    "as_of": "2026-09-15T17:09:27.160320+00:00"
+    "as_of": "2026-09-15T18:10:16.008914+00:00"
   },
   "recommended_options_strategies": [
     {
@@ -2408,7 +2408,7 @@
         "strategy_version": "OPT-1.0",
         "pricing_model": "BLACK_SCHOLES_VIX",
         "pricing_version": "BS-1.0",
-        "entry_time": "2026-09-15T17:09:27.160382+00:00",
+        "entry_time": "2026-09-15T18:10:16.008941+00:00",
         "closed_time": null,
         "exit_reason": ""
       },
@@ -2602,7 +2602,7 @@
         "strategy_version": "OPT-1.0",
         "pricing_model": "BLACK_SCHOLES_VIX",
         "pricing_version": "BS-1.0",
-        "entry_time": "2026-09-15T17:09:27.160404+00:00",
+        "entry_time": "2026-09-15T18:10:16.008958+00:00",
         "closed_time": null,
         "exit_reason": ""
       },
@@ -2797,7 +2797,7 @@
         "strategy_version": "OPT-1.0",
         "pricing_model": "BLACK_SCHOLES_VIX",
         "pricing_version": "BS-1.0",
-        "entry_time": "2026-09-15T17:09:27.160421+00:00",
+        "entry_time": "2026-09-15T18:10:16.008975+00:00",
         "closed_time": null,
         "exit_reason": ""
       },
@@ -2958,7 +2958,7 @@
         "strategy_version": "OPT-1.0",
         "pricing_model": "BLACK_SCHOLES_VIX",
         "pricing_version": "BS-1.0",
-        "entry_time": "2026-09-15T17:09:27.160433+00:00",
+        "entry_time": "2026-09-15T18:10:16.008986+00:00",
         "closed_time": null,
         "exit_reason": ""
       },
@@ -3844,7 +3844,7 @@
     "audit": {
       "provenance_mode": "SHA-256 Cryptographic Snapshot Lock",
       "snapshot_id": "e9b772f798803367833f6cc856845d08029beb39deddcb8cf4f988eeb543c916",
-      "market_timestamp": "2026-09-15T17:09:27.200166+00:00",
+      "market_timestamp": "2026-09-15T18:10:16.050467+00:00",
       "integrity_status": "VERIFIED"
     }
   },
@@ -3856,7 +3856,7 @@
       "EVENT_DATA": "DEGRADED",
       "OPTION_CHAIN": "UNAVAILABLE"
     },
-    "last_checked": "2026-09-15T17:09:27.200166+00:00"
+    "last_checked": "2026-09-15T18:10:16.050467+00:00"
   },
   "execution_telemetry": {
     "data_quality": "GOOD",
@@ -3875,8 +3875,8 @@
       "is_market_open": false,
       "can_accept_orders": true,
       "status_reason": "PRE_MARKET_STAGED: Order staged for market open auction.",
-      "ist_timestamp": "2026-09-15 22:39:27 IST",
-      "ist_time": "22:39 IST",
+      "ist_timestamp": "2026-09-15 23:40:16 IST",
+      "ist_time": "23:40 IST",
       "market_date": "2026-09-15",
       "order_cutoff_time": "15:30 IST",
       "forecast_run_time": "20:30 IST",
@@ -6413,7 +6413,7 @@
       ]
     }
   },
-  "generated_at": "2026-09-15T22:39:31.719528",
+  "generated_at": "2026-09-15T23:40:18.977278",
   "next_trading_day": "2026-09-16",
   "scorecard": {
     "total_evaluations": 670,
@@ -21254,10 +21254,10 @@
       "CAPTURED_SUCCESS": 12
     },
     "refactoring_priorities": [
-      "Tighten HOLD threshold bands to avoid false trigger entries on low conviction setups.",
-      "Increase macro/Nifty broader index weight relative to single-stock headline score.",
+      "Incorporate intra-day live news polling and broaden sector peer contagion weights.",
       "Weights and sensitivity for this sector/event type are well-calibrated. Maintain current parameter matrix.",
-      "Incorporate intra-day live news polling and broaden sector peer contagion weights."
+      "Tighten HOLD threshold bands to avoid false trigger entries on low conviction setups.",
+      "Increase macro/Nifty broader index weight relative to single-stock headline score."
     ]
   },
   "job_logs": [
@@ -26842,6 +26842,219 @@
       "content_generated_at": "2026-09-13T13:03:51.176468+00:00",
       "youtube_upload_status": "SUCCESS",
       "youtube_thumbnail_status": "SUCCESS",
+      "data_mode": "TEST_FIXTURE"
+    },
+    {
+      "id": 57,
+      "report_date": "2026-09-15",
+      "job_run_id": "RUN-20260915-180733-7c2ed1a0",
+      "status": "FAILED",
+      "total_trades": 3,
+      "winning_trades": 2,
+      "losing_trades": 1,
+      "win_rate": 66.67,
+      "gross_pnl": 4760.0,
+      "charges": 370.0,
+      "net_pnl": 4390.0,
+      "realized_pnl": 4390.0,
+      "unrealized_pnl": 0.0,
+      "best_trade": {
+        "trade_id": "TRD-TEST-RELIANCE",
+        "symbol": "RELIANCE.NS",
+        "direction": "BUY",
+        "quantity": 80,
+        "entry_price": 2510.0,
+        "exit_price": 2562.0,
+        "net_pnl": 3980.0,
+        "agent_id": "ALPHA",
+        "strategy": "Event_Arbitrage_V1",
+        "reason": "Pre-market catalyst beat street estimates"
+      },
+      "worst_trade": {
+        "trade_id": "TRD-TEST-TCS",
+        "symbol": "TCS.NS",
+        "direction": "BUY",
+        "quantity": 30,
+        "entry_price": 3820.0,
+        "exit_price": 3790.0,
+        "net_pnl": -980.0,
+        "agent_id": "GAMMA",
+        "strategy": "Mean_Reversion_V1",
+        "reason": "Tech spend hesitation trigger"
+      },
+      "best_strategy": "Event_Arbitrage_V1",
+      "best_agent": "ALPHA",
+      "prediction_direction": "NEUTRAL",
+      "actual_direction": "NEUTRAL",
+      "prediction_correct": 1,
+      "ai_provider": "openrouter",
+      "ai_model": "openai/gpt-4o-mini",
+      "ai_request_id": "gen-1789495654-POzfkwckOgdQFE1TvQbU",
+      "ai_latency_ms": 3689,
+      "ai_tokens": {
+        "input_tokens": 1246,
+        "output_tokens": 874,
+        "total_tokens": 2120
+      },
+      "ai_status": "SUCCESS",
+      "voice_provider": "elevenlabs",
+      "voice_status": "SUCCESS",
+      "voice_duration_ms": 78187,
+      "video_provider": "creatomate",
+      "video_render_id": null,
+      "video_status": "VIDEO_RENDER_FAILED",
+      "video_url": null,
+      "youtube_video_id": null,
+      "youtube_url": null,
+      "youtube_status": "SKIPPED",
+      "email_status": "EMAIL_FAILED",
+      "email_sent_at": null,
+      "created_at": "2026-09-15T23:33:28.858282",
+      "updated_at": "2026-09-15T23:38:15.455277",
+      "provenance_hash": "PRV-2026-09-15-a19156a4bc40c76e",
+      "report_payload_json": {
+        "data_mode": "TEST_FIXTURE",
+        "reconciliation": {
+          "report_date": "2026-09-15",
+          "trading_status": "ACTIVE_TRADING",
+          "total_trades": 3,
+          "buy_orders": 3,
+          "sell_orders": 0,
+          "winning_trades": 2,
+          "losing_trades": 1,
+          "break_even_trades": 0,
+          "win_rate": 66.67,
+          "gross_pnl": 4760.0,
+          "charges": 370.0,
+          "net_pnl": 4390.0,
+          "realized_pnl": 4390.0,
+          "unrealized_pnl": 0.0,
+          "total_pnl": 4390.0,
+          "exposure": 0.0,
+          "open_positions_count": 0,
+          "best_trade": {
+            "trade_id": "TRD-TEST-RELIANCE",
+            "symbol": "RELIANCE.NS",
+            "direction": "BUY",
+            "quantity": 80,
+            "entry_price": 2510.0,
+            "exit_price": 2562.0,
+            "net_pnl": 3980.0,
+            "agent_id": "ALPHA",
+            "strategy": "Event_Arbitrage_V1",
+            "reason": "Pre-market catalyst beat street estimates"
+          },
+          "worst_trade": {
+            "trade_id": "TRD-TEST-TCS",
+            "symbol": "TCS.NS",
+            "direction": "BUY",
+            "quantity": 30,
+            "entry_price": 3820.0,
+            "exit_price": 3790.0,
+            "net_pnl": -980.0,
+            "agent_id": "GAMMA",
+            "strategy": "Mean_Reversion_V1",
+            "reason": "Tech spend hesitation trigger"
+          },
+          "avg_win_trade": 2685.0,
+          "avg_loss_trade": -980.0,
+          "profit_factor": 5.48,
+          "max_drawdown_pct": 0.0,
+          "strategy_pnl": {
+            "Event_Arbitrage_V1": 3980.0,
+            "Momentum_V1": 1390.0,
+            "Mean_Reversion_V1": -980.0
+          },
+          "agent_pnl": {
+            "ALPHA": 3980.0,
+            "BETA": 1390.0,
+            "GAMMA": -980.0
+          },
+          "rejected_trades_count": 0,
+          "risk_rejected_count": 0,
+          "broker_rejected_count": 0,
+          "reconciled_orders": [],
+          "reconciliation_warnings": [],
+          "is_authoritative": true,
+          "data_sufficiency": "SUFFICIENT"
+        },
+        "stage_statuses": {
+          "DATA_COLLECTION": "ACTIVE_TRADING",
+          "AI_ANALYSIS": "SUCCESS",
+          "CONTENT_INTELLIGENCE": "SUCCESS",
+          "VOICE": "SUCCESS",
+          "VIDEO": "VIDEO_RENDER_FAILED",
+          "THUMBNAIL": "THUMBNAIL_RENDER_FAILED",
+          "YOUTUBE": "SKIPPED",
+          "EMAIL": "EMAIL_FAILED",
+          "WEB_SYNC": "PENDING"
+        },
+        "ai_summary": "Today's session on the Indian equity markets was characterized by a neutral consolidation phase, with the Nifty index showing stability amidst normal volatility conditions. The portfolio executed a total of three trades, achieving a net profit of \u20b94,390, all of which was realized. The performance reflects a win rate of 66.67%, indicating effective trading strategies in a balanced market environment.",
+        "narration_script": "What did NEXUS discover today? Our pre-market event intelligence identified an asymmetric catalyst in RELIANCE, and the algorithm moved decisively. Alpha Agent triggered entry right at key institutional support, riding price momentum into the morning high. The result was an exceptional standalone gain of +\u20b93,980, leading our overall session to close at +\u20b94,390. Why did the trade work? Pre-market volume spikes signaled heavy accumulation before the broader market caught on. Our thirty-four-gate TradeGuard verified liquidity and maximum drawdown bounds before routing the order. The key systematic takeaway: disciplined catalyst identification consistently delivers alpha. NEXUS is now screening order books and momentum indicators for Key sectors to monitor include technology and consumer goods, with pivotal price levels for RELIANCE.NS and TCS.NS under observation. Upcoming economic data releases and corporate earnings reports will serve as potential catalysts for market movement. ahead of tomorrow's open. Trade smarter, live better. Reconciled paper trading report. Not financial advice.",
+        "lessons_learned": "Future sessions should focus on refining the Mean Reversion strategy to better anticipate market sentiment shifts, particularly in the technology sector. Additionally, enhancing predictive analytics for event-driven trades could further capitalize on market inefficiencies.",
+        "tomorrow_watchlist": "Key sectors to monitor include technology and consumer goods, with pivotal price levels for RELIANCE.NS and TCS.NS under observation. Upcoming economic data releases and corporate earnings reports will serve as potential catalysts for market movement.",
+        "content_package": {
+          "report_date": "2026-09-15",
+          "content_theme": "STANDOUT_TRADE",
+          "content_score": 96.0,
+          "content_reason": "Exceptional trade in RELIANCE delivering +\u20b93,980.00 gain.",
+          "hook": "NEXUS SPOTTED SOMETHING",
+          "result_headline": "+\u20b94,390",
+          "result_subheadline": "3 Trades \u2022 67% Win Rate",
+          "trade_headline": "RELIANCE WINNING SIGNAL",
+          "trade_subheadline": "Generated +\u20b93,980 \u2022 Event Momentum",
+          "agent_headline": "5 AI AGENTS. 1 DECISION.",
+          "agent_subheadline": "Alpha \u00b7 Momentum \u00b7 Macro \u00b7 Defensive \u00b7 Contrarian",
+          "risk_headline": "34 GATES VERIFIED",
+          "risk_subheadline": "Position size, spread & session limits confirmed",
+          "why_headline": "QUANTITATIVE ATTRIBUTION",
+          "why_subheadline": "Today's session on the Indian equity markets was characterized by a neutral consolidation ...",
+          "next_headline": "WHAT'S NEXT FOR NEXUS?",
+          "next_subheadline": "Tracking: Key sectors to monitor include technology and consumer goods",
+          "close_headline": "TRADE SMARTER. LIVE BETTER.",
+          "video_script": "What did NEXUS discover today? Our pre-market event intelligence identified an asymmetric catalyst in RELIANCE, and the algorithm moved decisively. Alpha Agent triggered entry right at key institutional support, riding price momentum into the morning high. The result was an exceptional standalone gain of +\u20b93,980, leading our overall session to close at +\u20b94,390. Why did the trade work? Pre-market volume spikes signaled heavy accumulation before the broader market caught on. Our thirty-four-gate TradeGuard verified liquidity and maximum drawdown bounds before routing the order. The key systematic takeaway: disciplined catalyst identification consistently delivers alpha. NEXUS is now screening order books and momentum indicators for Key sectors to monitor include technology and consumer goods, with pivotal price levels for RELIANCE.NS and TCS.NS under observation. Upcoming economic data releases and corporate earnings reports will serve as potential catalysts for market movement. ahead of tomorrow's open. Trade smarter, live better. Reconciled paper trading report. Not financial advice.",
+          "thumbnail_template": "SIGNAL",
+          "thumbnail_headline": "THE WINNING SIGNAL",
+          "thumbnail_subheadline": "RELIANCE +\u20b93,980",
+          "thumbnail_accent_color": "#00F0FF",
+          "thumbnail_badge_text": "SNIPER TRADE",
+          "net_pnl": 4390.0,
+          "total_trades": 3,
+          "win_rate": 66.67,
+          "best_trade_symbol": "RELIANCE.NS",
+          "best_trade_pnl": 3980.0,
+          "data_hash": "0287ef9cde569d5857719383c14b4e18708d67bc7b41f4f32ce0022f2b5d4f3b",
+          "data_mode": "TEST_FIXTURE",
+          "generated_at": "2026-09-15T18:07:52.023641+00:00"
+        },
+        "thumbnail": {
+          "status": "THUMBNAIL_RENDER_FAILED",
+          "render_id": null,
+          "image_url": null,
+          "output_format": "jpg",
+          "width": 1280,
+          "height": 720,
+          "template": "SIGNAL",
+          "headline": "THE WINNING SIGNAL",
+          "latency_ms": 1225,
+          "error_message": "HTTP 402: {\"hint\":\"Insufficient credits. Please check your subscription usage.\"}",
+          "created_at": "2026-09-15T18:08:15.422474+00:00",
+          "completed_at": null,
+          "template_id": "SIGNAL"
+        }
+      },
+      "thumbnail_url": null,
+      "thumbnail_render_id": null,
+      "thumbnail_status": "THUMBNAIL_RENDER_FAILED",
+      "thumbnail_template": "SIGNAL",
+      "thumbnail_headline": "THE WINNING SIGNAL",
+      "video_duration_seconds": 70.0,
+      "content_theme": "STANDOUT_TRADE",
+      "content_score": 96.0,
+      "content_data_hash": "0287ef9cde569d5857719383c14b4e18708d67bc7b41f4f32ce0022f2b5d4f3b",
+      "content_generated_at": "2026-09-15T18:07:52.023641+00:00",
+      "youtube_upload_status": "SKIPPED",
+      "youtube_thumbnail_status": "SKIPPED",
       "data_mode": "TEST_FIXTURE"
     },
     {
@@ -41265,7 +41478,7 @@
         "category": "GOVERNANCE"
       }
     ],
-    "evaluated_at": "2026-09-15T17:09:31.719994+00:00"
+    "evaluated_at": "2026-09-15T18:10:18.977734+00:00"
   },
   "v4_six_month_calendar": {
     "is_clock_started": false,
@@ -41365,7 +41578,7 @@
     "p95_max_drawdown_pct": 0.8,
     "p99_max_drawdown_pct": 1.0,
     "expected_recovery_trades": 14,
-    "evaluated_at": "2026-09-15T17:09:31.759389+00:00"
+    "evaluated_at": "2026-09-15T18:10:19.017276+00:00"
   },
   "v4_stress_test_summary": {
     "total_scenarios": 30,

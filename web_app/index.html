@@ -61,13 +61,17 @@
           <span class="material-symbols-outlined">insights</span>
           <span class="sidebar-tooltip">[03] Market Analysis</span>
         </a>
-        <a class="sidebar-nav-btn" data-tab="jobs" onclick="navigate('jobs')" href="#/jobs" aria-label="Jobs & Scheduler [04]">
-          <span class="material-symbols-outlined">schedule</span>
-          <span class="sidebar-tooltip">[04] Jobs & Ledger</span>
+        <a class="sidebar-nav-btn" data-tab="news" onclick="navigate('news')" href="#/news" aria-label="Real-Time News Wire [04]">
+          <span class="material-symbols-outlined">newspaper</span>
+          <span class="sidebar-tooltip">[04] Live News Feed</span>
         </a>
-        <a class="sidebar-nav-btn" data-tab="settings" onclick="navigate('settings', 'risk')" href="#/settings/risk" aria-label="Risk & Settings [05]">
+        <a class="sidebar-nav-btn" data-tab="jobs" onclick="navigate('jobs')" href="#/jobs" aria-label="Jobs & Scheduler [05]">
+          <span class="material-symbols-outlined">schedule</span>
+          <span class="sidebar-tooltip">[05] Jobs & Ledger</span>
+        </a>
+        <a class="sidebar-nav-btn" data-tab="settings" onclick="navigate('settings', 'risk')" href="#/settings/risk" aria-label="Risk & Settings [06]">
           <span class="material-symbols-outlined">shield</span>
-          <span class="sidebar-tooltip">[05] Risk & Settings</span>
+          <span class="sidebar-tooltip">[06] Risk & Settings</span>
         </a>
       </nav>
 
@@ -1125,6 +1129,63 @@
               <!-- Injected via app.js -->
             </div>
           </section>
+
+          <!-- NIFTY 50 CONSTITUENT STOCKS PRE-MARKET PREDICTIONS (TOMORROW'S RUN) -->
+          <section class="section-panel" style="margin-top: 20px;">
+            <div class="section-header" style="flex-wrap: wrap; gap: 12px;">
+              <div class="section-title-group">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                  <span class="material-symbols-outlined" style="font-size: 24px; color: var(--primary);">analytics</span>
+                  <h3 style="margin: 0; font-size: 18px;">Nifty 50 Constituent Stock Forecasts (Tomorrow's Run: <span id="pre-stocks-target-date">Next Session</span>)</h3>
+                </div>
+                <p>Constituent-level multi-factor algorithmic predictions generated prior to market open. Detailed catalyst attribution, directional conviction, and data provenance.</p>
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <span class="badge badge-blue" id="pre-stocks-count-badge">50 / 50 STOCKS ANALYZED</span>
+                <span class="badge badge-green" id="pre-stocks-bull-ratio">-- BULL / -- BEAR</span>
+              </div>
+            </div>
+
+            <!-- Filters Bar -->
+            <div style="padding: 12px 18px; background: var(--bg-surface-secondary); border-bottom: 1px solid var(--border-subtle); display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;">
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Filter:</span>
+                <button class="subnav-btn active" id="pre-filter-all" onclick="filterPreStocks('ALL')">All (50)</button>
+                <button class="subnav-btn" id="pre-filter-bullish" onclick="filterPreStocks('BULLISH')">Bullish</button>
+                <button class="subnav-btn" id="pre-filter-bearish" onclick="filterPreStocks('BEARISH')">Bearish</button>
+                <button class="subnav-btn" id="pre-filter-neutral" onclick="filterPreStocks('NEUTRAL')">Neutral</button>
+                <button class="subnav-btn" id="pre-filter-buy" onclick="filterPreStocks('BUY')">Buy Signals</button>
+              </div>
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <select id="pre-sector-select" class="dropdown-filter" onchange="filterPreStocksBySector(this.value)" style="background: var(--bg-surface); color: var(--text-primary); border: 1px solid var(--border-subtle); padding: 6px 12px; border-radius: var(--radius-sm); font-size: 12px;">
+                  <option value="ALL">All Sectors</option>
+                </select>
+                <input type="text" id="pre-stock-search" placeholder="Search stock (e.g. RELIANCE, TCS)..." oninput="searchPreStocks(this.value)" style="background: var(--bg-surface); color: var(--text-primary); border: 1px solid var(--border-subtle); padding: 6px 12px; border-radius: var(--radius-sm); font-size: 12px; min-width: 220px;">
+              </div>
+            </div>
+
+            <!-- Table Container -->
+            <div style="overflow-x: auto; padding: 0;">
+              <table class="data-table constituent-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                  <tr>
+                    <th style="min-width: 170px;">STOCK / COMPANY</th>
+                    <th>SECTOR</th>
+                    <th class="numeric">BASE PRICE</th>
+                    <th class="numeric">TARGET PRICE</th>
+                    <th class="numeric">EXPECTED MOVE</th>
+                    <th style="text-align: center;">ACTION</th>
+                    <th style="text-align: center;">CONVICTION</th>
+                    <th style="min-width: 280px;">WHAT KIND OF ANALYSIS WAS MADE (CATALYSTS & FACTORS)</th>
+                    <th style="text-align: center;">PROVENANCE</th>
+                  </tr>
+                </thead>
+                <tbody id="pre-stocks-table-body">
+                  <!-- Populated dynamically via app.js -->
+                </tbody>
+              </table>
+            </div>
+          </section>
         </div>
 
         <!-- 2. SUBTAB: POST-MARKET & PREDICTION CORRECTNESS SCORECARD -->
@@ -1191,6 +1252,84 @@
             </div>
             <div style="padding: 20px;" id="post-causal-container">
               <!-- Injected via app.js -->
+            </div>
+          </section>
+
+          <!-- NIFTY 50 POST-MARKET RECONCILIATION & ACCURACY AUDIT TABLE -->
+          <section class="section-panel" style="margin-bottom: 20px;">
+            <div class="section-header" style="flex-wrap: wrap; gap: 12px;">
+              <div class="section-title-group">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                  <span class="material-symbols-outlined" style="font-size: 24px; color: var(--primary);">fact_check</span>
+                  <h3 style="margin: 0; font-size: 18px;">Nifty 50 Constituent Prediction Audit (Hit vs Miss Breakdown)</h3>
+                </div>
+                <p>Empirical verification comparing 08:30 IST forecasts against 15:30 IST NSE closing prices. Detailed attribution and root-cause analysis for any missed predictions.</p>
+              </div>
+              <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <span class="badge badge-green" id="post-audit-accuracy-badge">--% OVERALL ACCURACY</span>
+                <span class="badge badge-blue" id="post-audit-total-badge">-- AUDITS EVALUATED</span>
+              </div>
+            </div>
+
+            <!-- Stats Ribbon -->
+            <div class="portfolio-summary-bar" style="margin: 14px 18px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+              <div class="portfolio-kpi-card accent-primary" style="padding: 12px 14px;">
+                <span class="kpi-label">TOTAL AUDITED PREDICTIONS</span>
+                <div class="kpi-value" id="post-kpi-total-audits" style="font-size: 20px;">--</div>
+                <div class="kpi-sub">Constituent stock level</div>
+              </div>
+              <div class="portfolio-kpi-card accent-success" style="padding: 12px 14px;">
+                <span class="kpi-label">PREDICTION HIT-RATE</span>
+                <div class="kpi-value" id="post-kpi-hit-rate" style="font-size: 20px; color: var(--success);">--%</div>
+                <div class="kpi-sub" id="post-kpi-hits-misses">-- Hits • -- Misses</div>
+              </div>
+              <div class="portfolio-kpi-card accent-warning" style="padding: 12px 14px;">
+                <span class="kpi-label">SIMULATED NET PnL</span>
+                <div class="kpi-value" id="post-kpi-sim-pnl" style="font-size: 20px;">₹--</div>
+                <div class="kpi-sub">Directional execution</div>
+              </div>
+              <div class="portfolio-kpi-card accent-purple" style="padding: 12px 14px;">
+                <span class="kpi-label">AVG ABSOLUTE ERROR</span>
+                <div class="kpi-value" id="post-kpi-avg-error" style="font-size: 20px;">--%</div>
+                <div class="kpi-sub">Price target tolerance</div>
+              </div>
+            </div>
+
+            <!-- Filter Controls Bar -->
+            <div style="padding: 12px 18px; background: var(--bg-surface-secondary); border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between;">
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;">
+                <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Outcome:</span>
+                <button class="subnav-btn active" id="post-filter-all" onclick="filterPostAudits('ALL')">All Audits</button>
+                <button class="subnav-btn" id="post-filter-hits" onclick="filterPostAudits('HITS')">✓ Accurate / Hits</button>
+                <button class="subnav-btn" id="post-filter-misses" onclick="filterPostAudits('MISSES')">✕ Missed Predictions</button>
+              </div>
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <select id="post-date-select" class="dropdown-filter" onchange="filterPostAuditsByDate(this.value)" style="background: var(--bg-surface); color: var(--text-primary); border: 1px solid var(--border-subtle); padding: 6px 12px; border-radius: var(--radius-sm); font-size: 12px;">
+                  <option value="ALL">All Trading Sessions</option>
+                </select>
+                <input type="text" id="post-audit-search" placeholder="Search stock or reason..." oninput="searchPostAudits(this.value)" style="background: var(--bg-surface); color: var(--text-primary); border: 1px solid var(--border-subtle); padding: 6px 12px; border-radius: var(--radius-sm); font-size: 12px; min-width: 220px;">
+              </div>
+            </div>
+
+            <!-- Table Container -->
+            <div style="overflow-x: auto; padding: 0;">
+              <table class="data-table constituent-table" style="width: 100%; border-collapse: collapse;">
+                <thead>
+                  <tr>
+                    <th style="min-width: 160px;">STOCK / DATE</th>
+                    <th class="numeric">BASE PRICE</th>
+                    <th class="numeric">MODEL TARGET</th>
+                    <th class="numeric">ACTUAL CLOSE</th>
+                    <th style="text-align: center;">RESULT</th>
+                    <th>ATTRIBUTION CATEGORY</th>
+                    <th style="min-width: 320px;">DIAGNOSTIC EXPLANATION (WHY ACCURATE / WHY MISSED)</th>
+                    <th style="min-width: 240px;">ALGO TUNING / SUGGESTION</th>
+                  </tr>
+                </thead>
+                <tbody id="post-audits-table-body">
+                  <!-- Populated dynamically via app.js -->
+                </tbody>
+              </table>
             </div>
           </section>
 
@@ -1861,8 +2000,125 @@
         </section>
       </div>
       
-      <!-- Legacy View Panels for Deep Links & Regression Suite Compatibility -->
-      <div id="view-news" class="view-panel" style="display:none;" aria-hidden="true"></div>
+      <!-- ================================================================= -->
+      <!-- VIEW: REAL-TIME NEWS INTELLIGENCE (DEDICATED NEWSROOM STREAM)     -->
+      <!-- ================================================================= -->
+      <div id="view-news" class="view-panel">
+        <!-- Hero Header -->
+        <section class="section-panel" style="margin-bottom: 20px;">
+          <div class="section-header" style="flex-wrap: wrap; gap: 12px;">
+            <div class="section-title-group">
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                <span class="material-symbols-outlined" style="font-size: 24px; color: var(--primary);">newspaper</span>
+                <h3 style="margin: 0; font-size: 18px;">Live Institutional News Wire &amp; Macro Intelligence Feed</h3>
+              </div>
+              <p>Continuous financial news ingestion cross-referenced against Nifty 50 constituents. Multi-source verified with causal AI impact transmission chains.</p>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <span class="badge badge-green" style="display: inline-flex; align-items: center; gap: 6px;">
+                <span class="pulse-indicator"></span>
+                <span>REAL-TIME STREAM ACTIVE</span>
+              </span>
+              <span class="badge badge-blue" id="news-wire-count-badge">-- ARTICLES INGESTED</span>
+            </div>
+          </div>
+
+          <!-- Live Wire Ticker Ribbon -->
+          <div style="background: var(--bg-surface-secondary); border-radius: var(--radius-sm); padding: 8px 14px; margin-top: 14px; display: flex; align-items: center; gap: 12px; border: 1px solid var(--border-subtle); overflow: hidden;">
+            <span class="badge badge-red" style="font-size: 10px; font-weight: 800; letter-spacing: 0.5px; flex-shrink: 0;">FLASH WIRE</span>
+            <div id="news-flash-ticker" style="font-size: 12px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              Brent crude surges above $100/bbl on Middle East supply risk • L&amp;T reports +14% Q1 profit • RBI holds repo rate steady at 6.50%
+            </div>
+          </div>
+        </section>
+
+        <!-- Category & Sentiment Filter Bar -->
+        <div class="section-panel" style="margin-bottom: 20px; padding: 12px 18px;">
+          <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: center; justify-content: space-between;">
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;" id="news-category-pills">
+              <span style="font-size: 12px; font-weight: 700; color: var(--text-secondary); margin-right: 4px;">Channel:</span>
+              <button class="subnav-btn active" id="news-cat-all" onclick="filterNewsCategory('ALL')">All Channels</button>
+              <button class="subnav-btn" id="news-cat-comm" onclick="filterNewsCategory('COMMODITIES')">🛢️ Commodities &amp; Energy</button>
+              <button class="subnav-btn" id="news-cat-bank" onclick="filterNewsCategory('BANKING')">🏦 Banking &amp; Financials</button>
+              <button class="subnav-btn" id="news-cat-tech" onclick="filterNewsCategory('TECH')">💻 IT &amp; Tech</button>
+              <button class="subnav-btn" id="news-cat-corp" onclick="filterNewsCategory('CORPORATE')">🏢 Corporate &amp; Earnings</button>
+              <button class="subnav-btn" id="news-cat-macro" onclick="filterNewsCategory('MACRO')">🌐 Global Macro</button>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+              <div style="display: flex; gap: 4px; align-items: center;">
+                <button class="subnav-btn active" id="news-sent-all" onclick="filterNewsSentimentTab('ALL')">All</button>
+                <button class="subnav-btn" id="news-sent-bull" onclick="filterNewsSentimentTab('BULLISH')">🟢 Bullish</button>
+                <button class="subnav-btn" id="news-sent-bear" onclick="filterNewsSentimentTab('BEARISH')">🔴 Bearish</button>
+              </div>
+              <input type="text" id="news-search-input" placeholder="Search headlines or tickers..." oninput="searchNewsArticles(this.value)" style="background: var(--bg-surface-secondary); color: var(--text-primary); border: 1px solid var(--border-subtle); padding: 6px 12px; border-radius: var(--radius-sm); font-size: 12px; min-width: 240px;">
+            </div>
+          </div>
+        </div>
+
+        <!-- Newsroom Stream & Intelligence Rail Grid -->
+        <div class="news-room-layout">
+          <!-- Left Column: Scrollable Visual Media News Stream -->
+          <div>
+            <div class="news-scroll-feed" id="news-channel-stream">
+              <!-- Dynamically populated via app.js -->
+            </div>
+          </div>
+
+          <!-- Right Column: Market Intelligence Radar -->
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            <!-- Sentiment Radar Widget -->
+            <section class="section-panel" style="margin-bottom: 0;">
+              <div class="section-header">
+                <div class="section-title-group">
+                  <h3>📊 News Sentiment Ratio</h3>
+                  <p>Algorithmic polarity distribution</p>
+                </div>
+              </div>
+              <div style="padding: 16px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 12px;">
+                  <span style="color: var(--success); font-weight: 700;" id="news-ratio-bull">Bullish: 35%</span>
+                  <span style="color: var(--danger); font-weight: 700;" id="news-ratio-bear">Bearish: 50%</span>
+                  <span style="color: var(--text-muted); font-weight: 700;" id="news-ratio-neut">Neutral: 15%</span>
+                </div>
+                <div style="height: 8px; border-radius: 4px; overflow: hidden; display: flex; background: var(--border-subtle);">
+                  <div id="news-bar-bull" style="width: 35%; background: var(--success);"></div>
+                  <div id="news-bar-bear" style="width: 50%; background: var(--danger);"></div>
+                  <div id="news-bar-neut" style="width: 15%; background: var(--text-muted);"></div>
+                </div>
+                <div style="margin-top: 14px; font-size: 11px; color: var(--text-secondary); line-height: 1.5;" id="news-sentiment-summary-text">
+                  Sentiment is tilted defensive/bearish due to crude oil pressure on Indian refiners and rupee currency depreciation.
+                </div>
+              </div>
+            </section>
+
+            <!-- Top Impact Macro Drivers -->
+            <section class="section-panel" style="margin-bottom: 0;">
+              <div class="section-header">
+                <div class="section-title-group">
+                  <h3>⚡ Critical Transmission Drivers</h3>
+                  <p>Highest systemic impact events</p>
+                </div>
+              </div>
+              <div style="padding: 16px;" id="news-top-drivers-container">
+                <!-- Dynamically populated via app.js -->
+              </div>
+            </section>
+
+            <!-- Most Mentioned Nifty Constituents -->
+            <section class="section-panel" style="margin-bottom: 0;">
+              <div class="section-header">
+                <div class="section-title-group">
+                  <h3>🎯 Most Impacted Constituents</h3>
+                  <p>Stocks with highest catalyst frequency</p>
+                </div>
+              </div>
+              <div style="padding: 16px; display: flex; flex-wrap: wrap; gap: 6px;" id="news-top-tickers-container">
+                <!-- Dynamically populated via app.js -->
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
       <div id="view-overnight" class="view-panel" style="display:none;" aria-hidden="true"></div>
       <div id="view-arena" class="view-panel" style="display:none;" aria-hidden="true"><div id="arena-agent-card-container"></div></div>
       <div id="view-intelligence" class="view-panel" style="display:none;" aria-hidden="true"></div>
@@ -2278,6 +2534,10 @@
         <span class="material-symbols-outlined">insights</span>
         <span>Analysis</span>
       </a>
+      <a class="mobile-nav-btn" data-tab="news" onclick="navigate('news')" href="#/news">
+        <span class="material-symbols-outlined">newspaper</span>
+        <span>News</span>
+      </a>
       <a class="mobile-nav-btn" data-tab="jobs" onclick="navigate('jobs')" href="#/jobs">
         <span class="material-symbols-outlined">schedule</span>
         <span>Jobs</span>
@@ -2288,6 +2548,25 @@
       </a>
     </div>
   </nav>
+
+  <!-- Interactive Cryptographic Provenance & Factor Inspector Modal -->
+  <div id="analysis-provenance-modal" class="custom-modal-overlay" onclick="closeProvenanceModalOnOverlay(event)">
+    <div class="custom-modal-dialog">
+      <div class="custom-modal-header">
+        <div>
+          <h3 style="margin: 0; font-size: 16px; color: var(--text-primary);" id="prov-modal-title">Stock Provenance Snapshot</h3>
+          <span style="font-size: 11px; color: var(--text-muted);" id="prov-modal-sub">Point-in-Time Verified Snapshot</span>
+        </div>
+        <button class="subnav-btn" onclick="closeConstituentProvenanceModal()" style="font-size: 16px; padding: 4px 10px;">✕</button>
+      </div>
+      <div class="custom-modal-body" id="prov-modal-body">
+        <!-- Injected via app.js -->
+      </div>
+      <div class="custom-modal-footer">
+        <button class="btn-action primary" onclick="closeConstituentProvenanceModal()">Close Inspector</button>
+      </div>
+    </div>
+  </div>
 
 </body>
 </html>
