@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2026-09-15T18:10:16.050467+00:00",
+    "generated_at": "2026-09-15T18:59:12.538548+00:00",
     "system_name": "NEXUS AI \u2014 ENTERPRISE MULTI-ASSET INVESTMENT INTELLIGENCE",
     "subtitle": "Equities \u2022 Derivatives (Paper Options & Futures) \u2022 \u20b91 Crore AI Arena \u2022 Real-time Risk Gate",
     "version_record": {
@@ -306,8 +306,8 @@
     },
     "decisions": [
       {
-        "market_date": "2026-09-15",
-        "snapshot_id": "e9b772f798803367833f6cc856845d08029beb39deddcb8cf4f988eeb543c916",
+        "market_date": "2026-09-16",
+        "snapshot_id": "c31997ceb16101b380fed34ded630944351ebe9202e832b1feb816ef48cc1b7d",
         "agent_id": "ALPHA",
         "strategy_version": "ALPHA-1.0",
         "symbol": "NIFTY50",
@@ -319,8 +319,8 @@
         "reason": "No high-conviction corporate news or earnings catalysts detected in current market cutoff."
       },
       {
-        "market_date": "2026-09-15",
-        "snapshot_id": "e9b772f798803367833f6cc856845d08029beb39deddcb8cf4f988eeb543c916",
+        "market_date": "2026-09-16",
+        "snapshot_id": "c31997ceb16101b380fed34ded630944351ebe9202e832b1feb816ef48cc1b7d",
         "agent_id": "MOMENTUM",
         "strategy_version": "MOMENTUM-1.0",
         "symbol": "NIFTY50",
@@ -332,8 +332,8 @@
         "reason": "Market breadth is in choppy sideways consolidation. No clean breakout trends exceed momentum hurdle."
       },
       {
-        "market_date": "2026-09-15",
-        "snapshot_id": "e9b772f798803367833f6cc856845d08029beb39deddcb8cf4f988eeb543c916",
+        "market_date": "2026-09-16",
+        "snapshot_id": "c31997ceb16101b380fed34ded630944351ebe9202e832b1feb816ef48cc1b7d",
         "agent_id": "MACRO",
         "strategy_version": "MACRO-1.0",
         "symbol": "NIFTY50",
@@ -345,8 +345,8 @@
         "reason": "Macro risk premium does not justify equity exposure across interest-rate and currency sensitive sectors."
       },
       {
-        "market_date": "2026-09-15",
-        "snapshot_id": "e9b772f798803367833f6cc856845d08029beb39deddcb8cf4f988eeb543c916",
+        "market_date": "2026-09-16",
+        "snapshot_id": "c31997ceb16101b380fed34ded630944351ebe9202e832b1feb816ef48cc1b7d",
         "agent_id": "DEFENSIVE",
         "strategy_version": "DEFENSIVE-1.0",
         "symbol": "NIFTY50",
@@ -358,8 +358,8 @@
         "reason": "No low-beta defensive assets meet minimum risk-adjusted margin of safety."
       },
       {
-        "market_date": "2026-09-15",
-        "snapshot_id": "e9b772f798803367833f6cc856845d08029beb39deddcb8cf4f988eeb543c916",
+        "market_date": "2026-09-16",
+        "snapshot_id": "c31997ceb16101b380fed34ded630944351ebe9202e832b1feb816ef48cc1b7d",
         "agent_id": "CONTRARIAN",
         "strategy_version": "CONTRARIAN-1.0",
         "symbol": "NIFTY50",
@@ -377,9 +377,9 @@
       "is_market_open": false,
       "can_accept_orders": true,
       "status_reason": "PRE_MARKET_STAGED: Order staged for market open auction.",
-      "ist_timestamp": "2026-09-15 23:40:16 IST",
-      "ist_time": "23:40 IST",
-      "market_date": "2026-09-15",
+      "ist_timestamp": "2026-09-16 00:29:12 IST",
+      "ist_time": "00:29 IST",
+      "market_date": "2026-09-16",
       "order_cutoff_time": "15:30 IST",
       "forecast_run_time": "20:30 IST",
       "audit_run_time": "15:45 IST",
@@ -389,8 +389,8 @@
     }
   },
   "market_analytics": {
-    "snapshot_id": "e9b772f798803367833f6cc856845d08029beb39deddcb8cf4f988eeb543c916",
-    "market_date": "2026-09-15",
+    "snapshot_id": "c31997ceb16101b380fed34ded630944351ebe9202e832b1feb816ef48cc1b7d",
+    "market_date": "2026-09-16",
     "stocks": [
       {
         "symbol": "APOLLOHOSP.NS",
@@ -2307,12 +2307,12 @@
     ],
     "implied_volatility_pct": 13.8,
     "price_source": "MODELLED_BLACK_SCHOLES",
-    "as_of": "2026-09-15T18:10:16.008914+00:00"
+    "as_of": "2026-09-15T18:59:12.500961+00:00"
   },
   "recommended_options_strategies": [
     {
       "strategy": {
-        "strategy_id": "STRAT-BCS-NIFTY 50-25500-25600-e9b772",
+        "strategy_id": "STRAT-BCS-NIFTY 50-25500-25600-c31997",
         "strategy_type": "BULL_CALL_SPREAD",
         "underlying": "NIFTY 50",
         "expiry": "7D",
@@ -2404,11 +2404,11 @@
         "realized_pnl": 0.0,
         "stop_loss_amount": 1614.2,
         "target_profit_amount": 2155.2,
-        "snapshot_id": "e9b772f798803367833f6cc856845d08029beb39deddcb8cf4f988eeb543c916",
+        "snapshot_id": "c31997ceb16101b380fed34ded630944351ebe9202e832b1feb816ef48cc1b7d",
         "strategy_version": "OPT-1.0",
         "pricing_model": "BLACK_SCHOLES_VIX",
         "pricing_version": "BS-1.0",
-        "entry_time": "2026-09-15T18:10:16.008941+00:00",
+        "entry_time": "2026-09-15T18:59:12.500987+00:00",
         "closed_time": null,
         "exit_reason": ""
       },
@@ -2506,7 +2506,7 @@
     },
     {
       "strategy": {
-        "strategy_id": "STRAT-BPS-NIFTY 50-25500-25400-e9b772",
+        "strategy_id": "STRAT-BPS-NIFTY 50-25500-25400-c31997",
         "strategy_type": "BEAR_PUT_SPREAD",
         "underlying": "NIFTY 50",
         "expiry": "7D",
@@ -2598,11 +2598,11 @@
         "realized_pnl": 0.0,
         "stop_loss_amount": 1600.2,
         "target_profit_amount": 2171.2,
-        "snapshot_id": "e9b772f798803367833f6cc856845d08029beb39deddcb8cf4f988eeb543c916",
+        "snapshot_id": "c31997ceb16101b380fed34ded630944351ebe9202e832b1feb816ef48cc1b7d",
         "strategy_version": "OPT-1.0",
         "pricing_model": "BLACK_SCHOLES_VIX",
         "pricing_version": "BS-1.0",
-        "entry_time": "2026-09-15T18:10:16.008958+00:00",
+        "entry_time": "2026-09-15T18:59:12.501005+00:00",
         "closed_time": null,
         "exit_reason": ""
       },
@@ -2700,7 +2700,7 @@
     },
     {
       "strategy": {
-        "strategy_id": "STRAT-STRD-NIFTY 50-25500-e9b772",
+        "strategy_id": "STRAT-STRD-NIFTY 50-25500-c31997",
         "strategy_type": "LONG_STRADDLE",
         "underlying": "NIFTY 50",
         "expiry": "7D",
@@ -2793,11 +2793,11 @@
         "realized_pnl": 0.0,
         "stop_loss_amount": 9851.75,
         "target_profit_amount": 15762.8,
-        "snapshot_id": "e9b772f798803367833f6cc856845d08029beb39deddcb8cf4f988eeb543c916",
+        "snapshot_id": "c31997ceb16101b380fed34ded630944351ebe9202e832b1feb816ef48cc1b7d",
         "strategy_version": "OPT-1.0",
         "pricing_model": "BLACK_SCHOLES_VIX",
         "pricing_version": "BS-1.0",
-        "entry_time": "2026-09-15T18:10:16.008975+00:00",
+        "entry_time": "2026-09-15T18:59:12.501023+00:00",
         "closed_time": null,
         "exit_reason": ""
       },
@@ -2895,7 +2895,7 @@
     },
     {
       "strategy": {
-        "strategy_id": "STRAT-PROT-NIFTY 50-25400-e9b772",
+        "strategy_id": "STRAT-PROT-NIFTY 50-25400-c31997",
         "strategy_type": "PROTECTIVE_PUT",
         "underlying": "NIFTY 50",
         "expiry": "7D",
@@ -2954,11 +2954,11 @@
         "realized_pnl": 0.0,
         "stop_loss_amount": 11450.5,
         "target_profit_amount": 127406.5,
-        "snapshot_id": "e9b772f798803367833f6cc856845d08029beb39deddcb8cf4f988eeb543c916",
+        "snapshot_id": "c31997ceb16101b380fed34ded630944351ebe9202e832b1feb816ef48cc1b7d",
         "strategy_version": "OPT-1.0",
         "pricing_model": "BLACK_SCHOLES_VIX",
         "pricing_version": "BS-1.0",
-        "entry_time": "2026-09-15T18:10:16.008986+00:00",
+        "entry_time": "2026-09-15T18:59:12.501038+00:00",
         "closed_time": null,
         "exit_reason": ""
       },
@@ -3843,8 +3843,8 @@
     },
     "audit": {
       "provenance_mode": "SHA-256 Cryptographic Snapshot Lock",
-      "snapshot_id": "e9b772f798803367833f6cc856845d08029beb39deddcb8cf4f988eeb543c916",
-      "market_timestamp": "2026-09-15T18:10:16.050467+00:00",
+      "snapshot_id": "c31997ceb16101b380fed34ded630944351ebe9202e832b1feb816ef48cc1b7d",
+      "market_timestamp": "2026-09-15T18:59:12.538548+00:00",
       "integrity_status": "VERIFIED"
     }
   },
@@ -3856,7 +3856,7 @@
       "EVENT_DATA": "DEGRADED",
       "OPTION_CHAIN": "UNAVAILABLE"
     },
-    "last_checked": "2026-09-15T18:10:16.050467+00:00"
+    "last_checked": "2026-09-15T18:59:12.538548+00:00"
   },
   "execution_telemetry": {
     "data_quality": "GOOD",
@@ -3875,9 +3875,9 @@
       "is_market_open": false,
       "can_accept_orders": true,
       "status_reason": "PRE_MARKET_STAGED: Order staged for market open auction.",
-      "ist_timestamp": "2026-09-15 23:40:16 IST",
-      "ist_time": "23:40 IST",
-      "market_date": "2026-09-15",
+      "ist_timestamp": "2026-09-16 00:29:12 IST",
+      "ist_time": "00:29 IST",
+      "market_date": "2026-09-16",
       "order_cutoff_time": "15:30 IST",
       "forecast_run_time": "20:30 IST",
       "audit_run_time": "15:45 IST",
@@ -6413,8 +6413,8 @@
       ]
     }
   },
-  "generated_at": "2026-09-15T23:40:18.977278",
-  "next_trading_day": "2026-09-16",
+  "generated_at": "2026-09-16T00:29:15.148100",
+  "next_trading_day": "2026-09-17",
   "scorecard": {
     "total_evaluations": 670,
     "directional_accuracy_pct": 45.8,
@@ -21254,10 +21254,10 @@
       "CAPTURED_SUCCESS": 12
     },
     "refactoring_priorities": [
-      "Incorporate intra-day live news polling and broaden sector peer contagion weights.",
-      "Weights and sensitivity for this sector/event type are well-calibrated. Maintain current parameter matrix.",
       "Tighten HOLD threshold bands to avoid false trigger entries on low conviction setups.",
-      "Increase macro/Nifty broader index weight relative to single-stock headline score."
+      "Incorporate intra-day live news polling and broaden sector peer contagion weights.",
+      "Increase macro/Nifty broader index weight relative to single-stock headline score.",
+      "Weights and sensitivity for this sector/event type are well-calibrated. Maintain current parameter matrix."
     ]
   },
   "job_logs": [
@@ -22360,7 +22360,7 @@
         1283.5,
         1278.5,
         1267.0,
-        1252.5
+        NaN
       ],
       "high": [
         1325.0,
@@ -22428,7 +22428,7 @@
         1294.7,
         1285.3,
         1267.4,
-        1259.4
+        NaN
       ],
       "low": [
         1303.3,
@@ -22496,7 +22496,7 @@
         1277.2,
         1266.3,
         1253.0,
-        1235.3
+        NaN
       ],
       "close": [
         1307.0,
@@ -22564,7 +22564,7 @@
         1279.0,
         1274.0,
         1257.5,
-        1235.3
+        NaN
       ],
       "volume": [
         18633321,
@@ -22770,7 +22770,7 @@
         698.0,
         687.1,
         683.9,
-        722.4
+        NaN
       ],
       "high": [
         780.59,
@@ -22838,7 +22838,7 @@
         700.0,
         694.5,
         709.0,
-        730.75
+        NaN
       ],
       "low": [
         762.98,
@@ -22906,7 +22906,7 @@
         687.1,
         686.2,
         681.9,
-        715.05
+        NaN
       ],
       "close": [
         764.7,
@@ -22974,7 +22974,7 @@
         687.1,
         693.8,
         708.25,
-        716.55
+        NaN
       ],
       "volume": [
         39990334,
@@ -23180,7 +23180,7 @@
         1395.9,
         1385.9,
         1371.6,
-        1379.3
+        NaN
       ],
       "high": [
         1351.31,
@@ -23248,7 +23248,7 @@
         1402.5,
         1393.0,
         1389.0,
-        1390.0
+        NaN
       ],
       "low": [
         1314.22,
@@ -23316,7 +23316,7 @@
         1385.5,
         1373.9,
         1367.6,
-        1350.4
+        NaN
       ],
       "close": [
         1316.5,
@@ -23384,7 +23384,7 @@
         1389.1,
         1384.5,
         1379.3,
-        1350.4
+        NaN
       ],
       "volume": [
         16172921,
@@ -23590,7 +23590,7 @@
         2237.0,
         2199.0,
         2185.5,
-        2275.5
+        NaN
       ],
       "high": [
         2180.05,
@@ -23658,7 +23658,7 @@
         2237.0,
         2232.0,
         2232.6,
-        2323.0
+        NaN
       ],
       "low": [
         2147.53,
@@ -23726,7 +23726,7 @@
         2193.2,
         2190.6,
         2185.5,
-        2251.0
+        NaN
       ],
       "close": [
         2150.21,
@@ -23794,7 +23794,7 @@
         2208.0,
         2204.1,
         2200.8,
-        2251.0
+        NaN
       ],
       "volume": [
         3337083,
@@ -24000,7 +24000,7 @@
         1059.0,
         1039.6,
         1032.0,
-        1085.0
+        NaN
       ],
       "high": [
         1151.0,
@@ -24068,7 +24068,7 @@
         1059.0,
         1046.6,
         1047.3,
-        1097.7
+        NaN
       ],
       "low": [
         1123.0,
@@ -24136,7 +24136,7 @@
         1026.5,
         1027.3,
         1029.7,
-        1071.7
+        NaN
       ],
       "close": [
         1134.9,
@@ -24204,7 +24204,7 @@
         1035.0,
         1036.5,
         1037.7,
-        1077.0
+        NaN
       ],
       "volume": [
         7856192,
@@ -24410,7 +24410,7 @@
         1830.5,
         1815.1,
         1832.0,
-        1844.0
+        NaN
       ],
       "high": [
         1833.92,
@@ -24478,7 +24478,7 @@
         1834.8,
         1849.0,
         1852.0,
-        1844.0
+        NaN
       ],
       "low": [
         1793.43,
@@ -24546,7 +24546,7 @@
         1813.0,
         1814.0,
         1830.5,
-        1819.6
+        NaN
       ],
       "close": [
         1818.32,
@@ -24614,7 +24614,7 @@
         1814.7,
         1839.0,
         1831.1,
-        1830.4
+        NaN
       ],
       "volume": [
         5307277,
@@ -24820,7 +24820,7 @@
         999.0,
         1002.0,
         1000.0,
-        994.0
+        NaN
       ],
       "high": [
         1034.0,
@@ -24888,7 +24888,7 @@
         1012.2,
         1011.9,
         1001.9,
-        999.8
+        NaN
       ],
       "low": [
         1018.5,
@@ -24956,7 +24956,7 @@
         992.4,
         1001.0,
         993.0,
-        968.0
+        NaN
       ],
       "close": [
         1020.85,
@@ -25024,7 +25024,7 @@
         1000.5,
         1009.7,
         995.7,
-        968.0
+        NaN
       ],
       "volume": [
         12463437,
@@ -25230,7 +25230,7 @@
         3935.3,
         3949.4,
         3926.0,
-        3959.0
+        NaN
       ],
       "high": [
         4214.9,
@@ -25298,7 +25298,7 @@
         4020.2,
         3965.5,
         3948.0,
-        3959.0
+        NaN
       ],
       "low": [
         4130.0,
@@ -25366,7 +25366,7 @@
         3922.6,
         3910.0,
         3880.7,
-        3835.7
+        NaN
       ],
       "close": [
         4169.8,
@@ -25434,7 +25434,7 @@
         3922.6,
         3955.0,
         3930.7,
-        3850.7
+        NaN
       ],
       "volume": [
         3978153,
@@ -25640,7 +25640,7 @@
         263.65,
         261.0,
         258.0,
-        261.0
+        NaN
       ],
       "high": [
         288.85,
@@ -25708,7 +25708,7 @@
         264.5,
         263.9,
         261.65,
-        264.2
+        NaN
       ],
       "low": [
         286.7,
@@ -25776,7 +25776,7 @@
         260.2,
         259.1,
         257.7,
-        258.0
+        NaN
       ],
       "close": [
         287.9,
@@ -25844,7 +25844,7 @@
         260.8,
         259.3,
         259.85,
-        258.0
+        NaN
       ],
       "volume": [
         11194950,
@@ -26050,7 +26050,7 @@
         12609.0,
         12679.0,
         12520.0,
-        12470.0
+        NaN
       ],
       "high": [
         13822.18,
@@ -26118,7 +26118,7 @@
         12692.0,
         12693.0,
         12541.0,
-        12470.0
+        NaN
       ],
       "low": [
         13385.57,
@@ -26186,7 +26186,7 @@
         12537.0,
         12517.0,
         12381.0,
-        12231.0
+        NaN
       ],
       "close": [
         13667.73,
@@ -26254,7 +26254,7 @@
         12618.0,
         12590.0,
         12400.0,
-        12231.0
+        NaN
       ],
       "volume": [
         613280,
@@ -26334,7 +26334,7 @@
           "type": "ANNUAL_GENERAL_MEET",
           "title": "Reliance 49th AGM \u2014 Jio IPO Timeline & New Energy Updates",
           "impact": "HIGH",
-          "days_away": -18,
+          "days_away": -19,
           "date_str": "2026-08-28",
           "status": "OCCURRED_RECENTLY"
         }
@@ -26357,7 +26357,7 @@
           "type": "EARNINGS_RELEASE",
           "title": "Q2 FY27 Results & North American Client Demand",
           "impact": "HIGH",
-          "days_away": 24,
+          "days_away": 23,
           "date_str": "2026-10-09",
           "status": "UPCOMING"
         }
@@ -26371,7 +26371,7 @@
           "type": "EARNINGS_RELEASE",
           "title": "Q2 FY27 Results & Deal Wins Pipeline Review",
           "impact": "HIGH",
-          "days_away": 30,
+          "days_away": 29,
           "date_str": "2026-10-15",
           "status": "UPCOMING"
         }
@@ -26408,7 +26408,7 @@
         "affected_sectors": [
           "ALL"
         ],
-        "days_away": -3,
+        "days_away": -4,
         "date_str": "2026-09-12",
         "status": "OCCURRED_RECENTLY"
       }
@@ -26423,7 +26423,7 @@
           "Banking",
           "Automobile"
         ],
-        "days_away": 23,
+        "days_away": 22,
         "date_str": "2026-10-08",
         "status": "UPCOMING"
       }
@@ -26842,6 +26842,219 @@
       "content_generated_at": "2026-09-13T13:03:51.176468+00:00",
       "youtube_upload_status": "SUCCESS",
       "youtube_thumbnail_status": "SUCCESS",
+      "data_mode": "TEST_FIXTURE"
+    },
+    {
+      "id": 59,
+      "report_date": "2026-09-16",
+      "job_run_id": "RUN-20260915-185624-ae8bdd5f",
+      "status": "PARTIAL_SUCCESS",
+      "total_trades": 3,
+      "winning_trades": 2,
+      "losing_trades": 1,
+      "win_rate": 66.67,
+      "gross_pnl": 4760.0,
+      "charges": 370.0,
+      "net_pnl": 4390.0,
+      "realized_pnl": 4390.0,
+      "unrealized_pnl": 0.0,
+      "best_trade": {
+        "trade_id": "TRD-TEST-RELIANCE",
+        "symbol": "RELIANCE.NS",
+        "direction": "BUY",
+        "quantity": 80,
+        "entry_price": 2510.0,
+        "exit_price": 2562.0,
+        "net_pnl": 3980.0,
+        "agent_id": "ALPHA",
+        "strategy": "Event_Arbitrage_V1",
+        "reason": "Pre-market catalyst beat street estimates"
+      },
+      "worst_trade": {
+        "trade_id": "TRD-TEST-TCS",
+        "symbol": "TCS.NS",
+        "direction": "BUY",
+        "quantity": 30,
+        "entry_price": 3820.0,
+        "exit_price": 3790.0,
+        "net_pnl": -980.0,
+        "agent_id": "GAMMA",
+        "strategy": "Mean_Reversion_V1",
+        "reason": "Tech spend hesitation trigger"
+      },
+      "best_strategy": "Event_Arbitrage_V1",
+      "best_agent": "ALPHA",
+      "prediction_direction": "NEUTRAL",
+      "actual_direction": "NEUTRAL",
+      "prediction_correct": 1,
+      "ai_provider": "openrouter",
+      "ai_model": "openai/gpt-4o-mini",
+      "ai_request_id": "gen-1789498585-uAtcX3s7m6q33V6j0tm7",
+      "ai_latency_ms": 1285,
+      "ai_tokens": {
+        "input_tokens": 1246,
+        "output_tokens": 814,
+        "total_tokens": 2060
+      },
+      "ai_status": "SUCCESS",
+      "voice_provider": "elevenlabs",
+      "voice_status": "SUCCESS",
+      "voice_duration_ms": 76698,
+      "video_provider": "nexus_local_engine",
+      "video_render_id": "LOCAL-VID-2026-09-16",
+      "video_status": "SUCCESS",
+      "video_url": "/reports/videos/nexus_daily_report_2026-09-16.mp4",
+      "youtube_video_id": "NXbNiDs8RYg",
+      "youtube_url": "https://youtu.be/NXbNiDs8RYg",
+      "youtube_status": "SUCCESS",
+      "email_status": "EMAIL_FAILED",
+      "email_sent_at": null,
+      "created_at": "2026-09-16T00:18:43.548559",
+      "updated_at": "2026-09-16T00:27:45.415032",
+      "provenance_hash": "PRV-2026-09-16-54e8626b00e89f47",
+      "report_payload_json": {
+        "data_mode": "TEST_FIXTURE",
+        "reconciliation": {
+          "report_date": "2026-09-16",
+          "trading_status": "ACTIVE_TRADING",
+          "total_trades": 3,
+          "buy_orders": 3,
+          "sell_orders": 0,
+          "winning_trades": 2,
+          "losing_trades": 1,
+          "break_even_trades": 0,
+          "win_rate": 66.67,
+          "gross_pnl": 4760.0,
+          "charges": 370.0,
+          "net_pnl": 4390.0,
+          "realized_pnl": 4390.0,
+          "unrealized_pnl": 0.0,
+          "total_pnl": 4390.0,
+          "exposure": 0.0,
+          "open_positions_count": 0,
+          "best_trade": {
+            "trade_id": "TRD-TEST-RELIANCE",
+            "symbol": "RELIANCE.NS",
+            "direction": "BUY",
+            "quantity": 80,
+            "entry_price": 2510.0,
+            "exit_price": 2562.0,
+            "net_pnl": 3980.0,
+            "agent_id": "ALPHA",
+            "strategy": "Event_Arbitrage_V1",
+            "reason": "Pre-market catalyst beat street estimates"
+          },
+          "worst_trade": {
+            "trade_id": "TRD-TEST-TCS",
+            "symbol": "TCS.NS",
+            "direction": "BUY",
+            "quantity": 30,
+            "entry_price": 3820.0,
+            "exit_price": 3790.0,
+            "net_pnl": -980.0,
+            "agent_id": "GAMMA",
+            "strategy": "Mean_Reversion_V1",
+            "reason": "Tech spend hesitation trigger"
+          },
+          "avg_win_trade": 2685.0,
+          "avg_loss_trade": -980.0,
+          "profit_factor": 5.48,
+          "max_drawdown_pct": 0.0,
+          "strategy_pnl": {
+            "Event_Arbitrage_V1": 3980.0,
+            "Momentum_V1": 1390.0,
+            "Mean_Reversion_V1": -980.0
+          },
+          "agent_pnl": {
+            "ALPHA": 3980.0,
+            "BETA": 1390.0,
+            "GAMMA": -980.0
+          },
+          "rejected_trades_count": 0,
+          "risk_rejected_count": 0,
+          "broker_rejected_count": 0,
+          "reconciled_orders": [],
+          "reconciliation_warnings": [],
+          "is_authoritative": true,
+          "data_sufficiency": "SUFFICIENT"
+        },
+        "stage_statuses": {
+          "DATA_COLLECTION": "ACTIVE_TRADING",
+          "AI_ANALYSIS": "SUCCESS",
+          "CONTENT_INTELLIGENCE": "SUCCESS",
+          "VOICE": "SUCCESS",
+          "VIDEO": "SUCCESS",
+          "THUMBNAIL": "SUCCESS",
+          "YOUTUBE": "SUCCESS",
+          "EMAIL": "EMAIL_FAILED",
+          "WEB_SYNC": "PENDING"
+        },
+        "ai_summary": "Today's session was characterized by a neutral market context with the Nifty index consolidating. The portfolio executed three trades, achieving a net P&L of \u20b94,390, with a win rate of 66.67%. The performance reflects effective strategy execution, particularly in event arbitrage, despite one underperforming trade.",
+        "narration_script": "What did NEXUS discover today? Our pre-market event intelligence identified an asymmetric catalyst in RELIANCE, and the algorithm moved decisively. Alpha Agent triggered entry right at key institutional support, riding price momentum into the morning high. The result was an exceptional standalone gain of +\u20b93,980, leading our overall session to close at +\u20b94,390. Why did the trade work? Pre-market volume spikes signaled heavy accumulation before the broader market caught on. Our thirty-four-gate TradeGuard verified liquidity and maximum drawdown bounds before routing the order. The key systematic takeaway: disciplined catalyst identification consistently delivers alpha. NEXUS is now screening order books and momentum indicators for Key sectors to monitor include technology and consumer discretionary, with pivotal price levels for RELIANCE.NS and TCS.NS. Upcoming economic data releases and corporate earnings reports will serve as catalysts for market movement. ahead of tomorrow's open. Trade smarter, live better. Reconciled paper trading report. Not financial advice.",
+        "lessons_learned": "Future sessions should focus on refining the Mean Reversion strategy, particularly in sectors with volatile sentiment. Additionally, enhancing predictive analytics for tech sector trades could mitigate risks associated with unexpected market shifts.",
+        "tomorrow_watchlist": "Key sectors to monitor include technology and consumer discretionary, with pivotal price levels for RELIANCE.NS and TCS.NS. Upcoming economic data releases and corporate earnings reports will serve as catalysts for market movement.",
+        "content_package": {
+          "report_date": "2026-09-16",
+          "content_theme": "STANDOUT_TRADE",
+          "content_score": 96.0,
+          "content_reason": "Exceptional trade in RELIANCE delivering +\u20b93,980.00 gain.",
+          "hook": "NEXUS SPOTTED SOMETHING",
+          "result_headline": "+\u20b94,390",
+          "result_subheadline": "3 Trades \u2022 67% Win Rate",
+          "trade_headline": "RELIANCE WINNING SIGNAL",
+          "trade_subheadline": "Generated +\u20b93,980 \u2022 Event Momentum",
+          "agent_headline": "5 AI AGENTS. 1 DECISION.",
+          "agent_subheadline": "Alpha \u00b7 Momentum \u00b7 Macro \u00b7 Defensive \u00b7 Contrarian",
+          "risk_headline": "34 GATES VERIFIED",
+          "risk_subheadline": "Position size, spread & session limits confirmed",
+          "why_headline": "QUANTITATIVE ATTRIBUTION",
+          "why_subheadline": "Today's session was characterized by a neutral market context with the Nifty index consoli...",
+          "next_headline": "WHAT'S NEXT FOR NEXUS?",
+          "next_subheadline": "Tracking: Key sectors to monitor include technology and consumer discr",
+          "close_headline": "TRADE SMARTER. LIVE BETTER.",
+          "video_script": "What did NEXUS discover today? Our pre-market event intelligence identified an asymmetric catalyst in RELIANCE, and the algorithm moved decisively. Alpha Agent triggered entry right at key institutional support, riding price momentum into the morning high. The result was an exceptional standalone gain of +\u20b93,980, leading our overall session to close at +\u20b94,390. Why did the trade work? Pre-market volume spikes signaled heavy accumulation before the broader market caught on. Our thirty-four-gate TradeGuard verified liquidity and maximum drawdown bounds before routing the order. The key systematic takeaway: disciplined catalyst identification consistently delivers alpha. NEXUS is now screening order books and momentum indicators for Key sectors to monitor include technology and consumer discretionary, with pivotal price levels for RELIANCE.NS and TCS.NS. Upcoming economic data releases and corporate earnings reports will serve as catalysts for market movement. ahead of tomorrow's open. Trade smarter, live better. Reconciled paper trading report. Not financial advice.",
+          "thumbnail_template": "SIGNAL",
+          "thumbnail_headline": "THE WINNING SIGNAL",
+          "thumbnail_subheadline": "RELIANCE +\u20b93,980",
+          "thumbnail_accent_color": "#00F0FF",
+          "thumbnail_badge_text": "SNIPER TRADE",
+          "net_pnl": 4390.0,
+          "total_trades": 3,
+          "win_rate": 66.67,
+          "best_trade_symbol": "RELIANCE.NS",
+          "best_trade_pnl": 3980.0,
+          "data_hash": "e902a7aa381878454748044261c3e97c0ac14fbafd17bc3a36c1e0a4a0303fec",
+          "data_mode": "TEST_FIXTURE",
+          "generated_at": "2026-09-15T18:56:31.282372+00:00"
+        },
+        "thumbnail": {
+          "status": "SUCCESS",
+          "render_id": "LOCAL-THUMB-2026-09-16",
+          "image_url": "/reports/thumbnails/nexus_daily_thumbnail_2026-09-16.jpg",
+          "output_format": "jpg",
+          "width": 1280,
+          "height": 720,
+          "template": "SIGNAL",
+          "headline": "THE WINNING SIGNAL",
+          "latency_ms": 28,
+          "error_message": null,
+          "created_at": "2026-09-15T18:57:39.337675+00:00",
+          "completed_at": "2026-09-15T18:57:39.337660+00:00",
+          "template_id": "SIGNAL"
+        }
+      },
+      "thumbnail_url": "/reports/thumbnails/nexus_daily_thumbnail_2026-09-16.jpg",
+      "thumbnail_render_id": "LOCAL-THUMB-2026-09-16",
+      "thumbnail_status": "SUCCESS",
+      "thumbnail_template": "SIGNAL",
+      "thumbnail_headline": "THE WINNING SIGNAL",
+      "video_duration_seconds": 70.0,
+      "content_theme": "STANDOUT_TRADE",
+      "content_score": 96.0,
+      "content_data_hash": "e902a7aa381878454748044261c3e97c0ac14fbafd17bc3a36c1e0a4a0303fec",
+      "content_generated_at": "2026-09-15T18:56:31.282372+00:00",
+      "youtube_upload_status": "SUCCESS",
+      "youtube_thumbnail_status": "FAILED",
       "data_mode": "TEST_FIXTURE"
     },
     {
@@ -41478,7 +41691,7 @@
         "category": "GOVERNANCE"
       }
     ],
-    "evaluated_at": "2026-09-15T18:10:18.977734+00:00"
+    "evaluated_at": "2026-09-15T18:59:15.148393+00:00"
   },
   "v4_six_month_calendar": {
     "is_clock_started": false,
@@ -41578,7 +41791,7 @@
     "p95_max_drawdown_pct": 0.8,
     "p99_max_drawdown_pct": 1.0,
     "expected_recovery_trades": 14,
-    "evaluated_at": "2026-09-15T18:10:19.017276+00:00"
+    "evaluated_at": "2026-09-15T18:59:15.182948+00:00"
   },
   "v4_stress_test_summary": {
     "total_scenarios": 30,

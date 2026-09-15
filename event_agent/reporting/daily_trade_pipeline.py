@@ -256,10 +256,17 @@ class DailyTradeReportPipeline:
         logger.info("[7/9] Uploading video and thumbnail to YouTube (mode=%s)...", self.youtube_service.publish_mode)
         youtube_res = None
         if video_res.status == "SUCCESS" and video_res.video_url:
+            v_path = video_res.video_url
+            if v_path.startswith("/reports/") and os.path.exists(os.path.join("web_app", v_path.lstrip("/"))):
+                v_path = os.path.abspath(os.path.join("web_app", v_path.lstrip("/")))
+            t_path = thumbnail_res.image_url if thumbnail_res.status == "SUCCESS" else None
+            if t_path and t_path.startswith("/reports/") and os.path.exists(os.path.join("web_app", t_path.lstrip("/"))):
+                t_path = os.path.abspath(os.path.join("web_app", t_path.lstrip("/")))
+
             youtube_res = self.youtube_service.upload_daily_report_video(
-                video_url_or_path=video_res.video_url,
+                video_url_or_path=v_path,
                 report_data=rec.to_dict(),
-                thumbnail_url_or_path=thumbnail_res.image_url if thumbnail_res.status == "SUCCESS" else None,
+                thumbnail_url_or_path=t_path,
             )
             stage_statuses["YOUTUBE"] = youtube_res.status
         else:
