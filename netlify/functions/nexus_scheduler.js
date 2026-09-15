@@ -73,7 +73,7 @@ function generateDeterministicInvocationId(scheduledForUtc, scheduleName = "NEXU
 function getSupabaseClient() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
-  if (!url || !key || url.includes("htcgeupzkxxxplqtvxue")) {
+  if (!url || !key || url.includes("your-project-ref") || key.includes("your-service-role-key")) {
     return null;
   }
   return createClient(url, key, {

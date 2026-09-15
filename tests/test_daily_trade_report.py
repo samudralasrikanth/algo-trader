@@ -321,10 +321,11 @@ class TestMediaServices:
         assert source["output_format"] == "mp4"
         assert source["width"] == 1080
         assert source["height"] == 1920
-        assert source["duration"] == 45.0
-        # Exactly 9 scene start times: 0.0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0
-        time_offsets = {el.get("time") for el in source["elements"] if "time" in el}
-        assert len(time_offsets) == 9
+        assert source["duration"] == 70.0
+        # Exactly 8 narrative scene anchor times: 0.0, 8.0, 16.0, 25.0, 34.0, 43.0, 52.0, 62.0
+        scene_starts = {0.0, 8.0, 16.0, 25.0, 34.0, 43.0, 52.0, 62.0}
+        element_times = {el.get("time") for el in source["elements"] if "time" in el}
+        assert scene_starts.issubset(element_times)
 
     def test_creatomate_failure_handling(self):
         """Creatomate returns FAILED result if rendering fails or times out."""

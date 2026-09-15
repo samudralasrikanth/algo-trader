@@ -49,6 +49,8 @@ class ReportProvenanceEngine:
         voice_data: Optional[Dict[str, Any]] = None,
         video_data: Optional[Dict[str, Any]] = None,
         youtube_data: Optional[Dict[str, Any]] = None,
+        thumbnail_data: Optional[Dict[str, Any]] = None,
+        content_data: Optional[Dict[str, Any]] = None,
         code_commit: Optional[str] = None,
         config_hash: str = "nexus_v37_cfg_7f91a2e",
     ) -> Dict[str, Any]:
@@ -105,6 +107,16 @@ class ReportProvenanceEngine:
                 "render_id": video_data.get("render_id") if video_data else None,
                 "status": video_data.get("status") if video_data else None,
             },
+            "thumbnail_metadata": {
+                "render_id": thumbnail_data.get("render_id") if thumbnail_data else None,
+                "status": thumbnail_data.get("status") if thumbnail_data else None,
+                "template": (thumbnail_data.get("template") or thumbnail_data.get("template_id")) if thumbnail_data else None,
+            } if thumbnail_data else None,
+            "content_metadata": {
+                "theme": content_data.get("theme") if content_data else None,
+                "score": content_data.get("content_score") if content_data else None,
+                "data_hash": content_data.get("data_hash") if content_data else None,
+            } if content_data else None,
             "youtube_metadata": {
                 "video_id": youtube_data.get("video_id") if youtube_data else None,
                 "status": youtube_data.get("status") if youtube_data else None,

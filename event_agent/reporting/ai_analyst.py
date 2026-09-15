@@ -82,10 +82,16 @@ class DailyAIAnalyst:
                 status="NOT_CONFIGURED",
             )
 
-        # Build factual data context
+        # Build factual data context with enriched market benchmarks
+        market_benchmarks = market_context or {
+            "nifty_move": "Neutral / Consolidation",
+            "vix": "Normal",
+        }
+
         data_context = {
             "date": reconciliation.report_date,
             "status": reconciliation.trading_status,
+            "market_context": market_benchmarks,
             "trades": {
                 "total": reconciliation.total_trades,
                 "buys": reconciliation.buy_orders,
@@ -115,19 +121,16 @@ class DailyAIAnalyst:
                 "broker_rejections": reconciliation.broker_rejected_count,
             },
             "reconciliation_warnings": reconciliation.reconciliation_warnings,
-            "market_context": market_context or {
-                "nifty_move": "Neutral / Consolidation",
-                "vix": "Normal",
-            },
         }
 
         system_prompt = (
-            "You are the Lead Quantitative Portfolio Analyst for NEXUS AI Investment Intelligence.\n"
+            "You are the Senior Chief Quantitative Market Strategist & Executive Anchor for NEXUS AI Investment Intelligence.\n"
             "Analyze today's recorded Indian equity session based strictly on the factual JSON provided.\n"
+            "Produce an authoritative, highly articulated, institutional-grade financial analysis.\n"
             "STRICT RULES:\n"
-            "1. NEVER invent or extrapolate any financial numbers. All figures must match the input JSON.\n"
-            "2. This is PAPER TRADING only. Never claim live or real-money execution.\n"
-            "3. If trades are 0, state clearly: 'Trades: 0, P&L: ₹0, Status: NO TRADES'.\n"
+            "1. NEVER invent or extrapolate numerical facts. All figures (P&L, trades, prices, percentages) must match the input JSON.\n"
+            "2. This is PAPER TRADING and MODELLED DERIVATIVES execution. Clearly state this in the broadcast.\n"
+            "3. If trades are 0, state clearly: 'Trades: 0, P&L: ₹0, Status: NO TRADES' and focus on risk preservation and why the engine stayed in cash.\n"
             "4. Clearly distinguish REALIZED and UNREALIZED P&L.\n"
             "5. Respond with a JSON object containing the exact keys below."
         )
@@ -136,19 +139,25 @@ class DailyAIAnalyst:
 {json.dumps(data_context, indent=2)}
 
 Produce a JSON object with these exact keys:
-- executive_summary: High-level overview of what happened today (2-3 sentences).
-- performance_analysis: Detailed explanation of why P&L moved as it did.
-- strategy_analysis: Breakdown of top performing vs lagging strategies.
-- agent_analysis: Breakdown of agent contribution (Alpha, Beta, Gamma, etc.).
-- risk_analysis: Were any losses caused by regime, execution slippage, or prediction error? Note rejections.
-- prediction_accuracy: Compare predicted stance vs actual market outcome.
-- best_trade_analysis: Concrete reason why the best trade succeeded.
-- worst_trade_analysis: Forensic analysis of why the worst trade failed.
-- lessons_learned: Actionable systematic improvements for NEXUS algorithms.
-- tomorrow_watchlist: Evidence-based watchlist observations for the next session.
-- narration_script: A professional, polished 60 to 120-second financial-news style narration script.
-  Must start with: 'Welcome to the NEXUS Daily Trade Report for {reconciliation.report_date}. This report reflects algorithmic paper trading and modelled derivatives.'
-  Must clearly state trades, net P&L, best trade, worst trade, risk stance, and concluding thoughts.
+- executive_summary: High-level overview of the session, market regime, and portfolio performance (3-4 concise sentences).
+- performance_analysis: In-depth causal explanation of portfolio P&L movement, attribution across gross vs net returns, and fee impact.
+- strategy_analysis: Breakdown of top performing vs lagging systematic strategies (e.g. Event Arbitrage, Momentum Breakout).
+- agent_analysis: Comparative evaluation of autonomous agents (Alpha, Momentum, Macro, Defensive, Contrarian) and their capital efficiency.
+- risk_analysis: Detailed audit of risk gates, position limits, drawdown thresholds, and broker order rejections.
+- prediction_accuracy: Deep comparison between pre-market predicted bias/gap vs actual session outcome and close.
+- best_trade_analysis: Technical and fundamental rationale for why the best trade succeeded.
+- worst_trade_analysis: Forensic post-mortem of why the worst trade incurred loss or friction.
+- lessons_learned: Actionable systematic optimizations and Bayesian calibrations for future sessions.
+- tomorrow_watchlist: Key sector themes, pivotal price levels, and catalysts under active observation for tomorrow's open.
+- narration_script: A professional, broadcast-quality financial news narration script formatted for a 75-90 second report.
+  STRUCTURE:
+  1. Opening Anchor: 'Welcome to the NEXUS Daily Market Intelligence & Trade Report for {reconciliation.report_date}. This report reflects algorithmic paper trading and modelled derivatives across the Indian equity markets.'
+  2. Macro & Benchmark Context: Review the day's market tone, Nifty/Bank Nifty movement, and volatility regime.
+  3. Execution & P&L Scorecard: Announce total trades, win rate, net P&L, and realized/unrealized split.
+  4. Best & Worst Trade Spotlight: Walk through specific symbol executions, entry/exit logic, and causal reasons.
+  5. Multi-Agent Performance: Highlight leading vs lagging autonomous agents.
+  6. Central Risk Review: Confirm status of risk gates, drawdown limits, and portfolio invariants.
+  7. Forward Outlook: Conclude with tomorrow's expected bias, key sector catalysts, and closing institutional sign-off.
 """
 
         headers = {
@@ -165,7 +174,7 @@ Produce a JSON object with these exact keys:
             ],
             "response_format": {"type": "json_object"},
             "temperature": 0.2,
-            "max_tokens": 1200,
+            "max_tokens": 2000,
         }).encode("utf-8")
 
         start_time = time.perf_counter()

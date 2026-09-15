@@ -193,7 +193,21 @@ CREATE TABLE IF NOT EXISTS public.daily_trade_reports (
     youtube_video_id TEXT,
     youtube_url TEXT,
     youtube_status TEXT,
+    youtube_upload_status TEXT,
+    youtube_thumbnail_status TEXT,
 
+    thumbnail_url TEXT,
+    thumbnail_render_id TEXT,
+    thumbnail_status TEXT,
+    thumbnail_template TEXT,
+    thumbnail_headline TEXT,
+    video_duration_seconds NUMERIC,
+    content_theme TEXT,
+    content_score NUMERIC,
+    content_data_hash TEXT,
+    content_generated_at TIMESTAMPTZ,
+
+    data_mode TEXT NOT NULL DEFAULT 'PAPER_RECONCILED',
     email_status TEXT,
     email_sent_at TIMESTAMPTZ,
 

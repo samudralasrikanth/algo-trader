@@ -43,6 +43,8 @@ class YouTubeUploadResult:
     video_url: Optional[str]
     title: str
     privacy_status: str
+    thumbnail_status: str = "SKIPPED"    # 'SUCCESS' | 'FAILED' | 'SKIPPED'
+    thumbnail_error: Optional[str] = None
     upload_timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     latency_ms: int = 0
     error_message: Optional[str] = None
@@ -130,6 +132,7 @@ class YouTubePublishService:
         self,
         video_url_or_path: str,
         report_data: Dict[str, Any],
+        thumbnail_url_or_path: Optional[str] = None,
     ) -> YouTubeUploadResult:
         """
         Uploads video to YouTube with privacy status private/public.
@@ -260,12 +263,24 @@ Tags:
                 youtube_url = f"https://youtu.be/{video_id}"
                 logger.info("YouTube upload SUCCESS: ID=%s URL=%s in %dms", video_id, youtube_url, latency_ms)
 
+                # Optional: Upload custom thumbnail if provided
+                thumb_status = "SKIPPED"
+                thumb_err = None
+                if thumbnail_url_or_path:
+                    logger.info("Setting YouTube custom thumbnail for video %s...", video_id)
+                    thumb_ok, thumb_err = self.upload_thumbnail(video_id, thumbnail_url_or_path)
+                    thumb_status = "SUCCESS" if thumb_ok else "FAILED"
+                    if not thumb_ok:
+                        logger.warning("YouTube thumbnail upload warning: %s", thumb_err)
+
                 return YouTubeUploadResult(
                     status="SUCCESS",
                     video_id=video_id,
                     video_url=youtube_url,
                     title=title,
                     privacy_status=self.publish_mode,
+                    thumbnail_status=thumb_status,
+                    thumbnail_error=thumb_err,
                     latency_ms=latency_ms,
                 )
 
@@ -294,3 +309,83 @@ Tags:
                 latency_ms=latency_ms,
                 error_message=str(e),
             )
+
+    def upload_thumbnail(
+        self,
+        video_id: str,
+        thumbnail_url_or_path: str,
+    ) -> Tuple[bool, Optional[str]]:
+        """
+        Uploads custom thumbnail via YouTube Data API v3:
+        POST https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId={video_id}&uploadType=media
+        """
+        if not video_id or not thumbnail_url_or_path:
+            return False, "Missing video_id or thumbnail_url_or_path"
+
+        token, token_err = self.get_access_token()
+        if not token:
+            return False, token_err or "OAUTH_AUTHENTICATION_REQUIRED"
+
+        # Obtain image bytes
+        image_bytes = None
+        if thumbnail_url_or_path.startswith("http://") or thumbnail_url_or_path.startswith("https://"):
+            try:
+                dl_req = urllib.request.Request(thumbnail_url_or_path, headers={"User-Agent": "NEXUS-AI/1.0"})
+                with urllib.request.urlopen(dl_req, timeout=30) as resp:
+                    image_bytes = resp.read()
+            except Exception as e:
+                return False, f"Failed to download thumbnail: {e}"
+        else:
+            p = Path(thumbnail_url_or_path)
+            if p.exists():
+                image_bytes = p.read_bytes()
+            else:
+                return False, f"Local thumbnail path does not exist: {thumbnail_url_or_path}"
+
+        if not image_bytes:
+            return False, "Thumbnail image payload is empty"
+
+        # Ensure YouTube native resolution standard (1280x720, minimum width 640px)
+        try:
+            from PIL import Image
+            import io
+            with Image.open(io.BytesIO(image_bytes)) as img:
+                w, h = img.size
+                if w < 1280 or h < 720:
+                    logger.info("Rescaling thumbnail from (%dx%d) to YouTube native standard (1280x720)...", w, h)
+                    img_rgb = img.convert("RGB")
+                    img_resized = img_rgb.resize((1280, 720), Image.Resampling.LANCZOS)
+                    out_buf = io.BytesIO()
+                    img_resized.save(out_buf, format="JPEG", quality=95)
+                    image_bytes = out_buf.getvalue()
+        except Exception as img_err:
+            logger.debug("Thumbnail PIL dimension verification note: %s", img_err)
+
+        url = f"https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId={video_id}&uploadType=media"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "image/jpeg",
+            "Content-Length": str(len(image_bytes)),
+        }
+
+        try:
+            req = urllib.request.Request(url, data=image_bytes, headers=headers, method="POST")
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                logger.info("YouTube custom thumbnail set successfully for video %s", video_id)
+                return True, None
+        except urllib.error.HTTPError as e:
+            err_body = e.read().decode("utf-8", errors="ignore")
+            if e.code == 403:
+                diagnostic = (
+                    f"HTTP 403: Custom thumbnail permission denied. "
+                    f"YouTube Data API v3 requires phone verification on the channel at "
+                    f"https://www.youtube.com/verify to unlock the custom thumbnails API: {err_body[:200]}"
+                )
+                logger.warning(diagnostic)
+                return False, diagnostic
+            logger.warning("YouTube set thumbnail HTTP %d: %s", e.code, err_body[:200])
+            return False, f"HTTP {e.code}: {err_body[:200]}"
+        except Exception as e:
+            logger.warning("YouTube set thumbnail exception: %s", e)
+            return False, str(e)

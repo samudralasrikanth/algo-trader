@@ -4118,6 +4118,57 @@ body.sidebar-mobile-locked {
   background: #000000;
 }
 
+.media-showcase-grid {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: 14px;
+  width: 100%;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .media-showcase-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.short-video-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #050B14;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #1E293B;
+}
+
+.short-video-wrapper video {
+  width: 100%;
+  max-width: 170px;
+  aspect-ratio: 9/16;
+  border-radius: 4px;
+  background: #000000;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+}
+
+.thumbnail-preview-wrapper {
+  display: flex;
+  flex-direction: column;
+  background: #050B14;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #1E293B;
+}
+
+.thumbnail-preview-wrapper img {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: 4px;
+  object-fit: cover;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+  border: 1px solid #334155;
+}
+
 .ai-summary-box {
   background: #FFFFFF;
   border: 1px solid var(--border);
@@ -4448,5 +4499,415 @@ body.sidebar-mobile-locked {
   margin-left: 4px;
 }
 
+/* ==========================================================================
+   NEXUS REDESIGN: 5-TAB SIMPLIFIED TERMINAL DESIGN SYSTEM
+   ========================================================================== */
 
+/* Subtab Navigation Pills (Analysis, Settings, Holdings) */
+.subtab-navigation-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  padding: 4px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  width: fit-content;
+  box-shadow: var(--shadow-sm);
+}
 
+.subtab-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  font-family: 'Hanken Grotesk', 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.subtab-pill-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface-secondary);
+}
+
+.subtab-pill-btn.active {
+  color: #FFFFFF;
+  background: var(--primary);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.subtab-pill-btn .badge-count {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  color: inherit;
+}
+
+/* HOLDINGS: Portfolio Summary Bar */
+.portfolio-summary-bar {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.portfolio-kpi-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+}
+
+.portfolio-kpi-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: transparent;
+}
+
+.portfolio-kpi-card.accent-primary::after { background: #3B82F6; }
+.portfolio-kpi-card.accent-success::after { background: #069669; }
+.portfolio-kpi-card.accent-warning::after { background: #D97706; }
+.portfolio-kpi-card.accent-purple::after { background: #8B5CF6; }
+
+.portfolio-kpi-card .kpi-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+.portfolio-kpi-card .kpi-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 6px 0 2px 0;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.portfolio-kpi-card .kpi-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* HOLDINGS: 5-Agent Performance Cards Grid */
+.agent-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.agent-perf-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.agent-perf-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-dark);
+}
+
+.agent-perf-card.selected {
+  border-color: #3B82F6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.agent-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.agent-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.agent-avatar-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  background: var(--bg-surface-secondary);
+}
+
+.agent-title-box .agent-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.agent-title-box .agent-role {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.agent-pnl-banner {
+  background: var(--bg-surface-secondary);
+  border-radius: var(--radius-md);
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.agent-pnl-banner .pnl-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.agent-pnl-banner .pnl-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.agent-pnl-banner .pnl-num {
+  font-size: 16px;
+  font-weight: 800;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.agent-stats-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.agent-stat-box {
+  background: var(--bg-app);
+  padding: 8px;
+  border-radius: var(--radius-sm);
+}
+
+.agent-stat-box .lbl {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  display: block;
+}
+
+.agent-stat-box .val {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.agent-card-footer {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* ANALYSIS: Prediction Accuracy & Correctness Scorecard */
+.prediction-scorecard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.scorecard-box {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.scorecard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.scorecard-comparison-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: var(--bg-surface-secondary);
+  border-radius: var(--radius-md);
+}
+
+.comparison-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.comparison-col .col-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.comparison-col .col-val {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  margin-top: 4px;
+}
+
+.comparison-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.accuracy-badge-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.accuracy-badge-tag.verified {
+  background: rgba(6, 150, 105, 0.12);
+  color: #069669;
+  border: 1px solid rgba(6, 150, 105, 0.3);
+}
+
+.accuracy-badge-tag.diverged {
+  background: rgba(186, 26, 26, 0.12);
+  color: #BA1A1A;
+  border: 1px solid rgba(186, 26, 26, 0.3);
+}
+
+/* JOBS: Ad-Hoc Trigger Action Buttons */
+.adhoc-trigger-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.adhoc-trigger-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.adhoc-trigger-btn:hover {
+  border-color: #3B82F6;
+  background: #F0F7FF;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.adhoc-trigger-btn:active {
+  transform: translateY(0);
+}
+
+.adhoc-trigger-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--bg-surface-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.adhoc-trigger-info .btn-heading {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: block;
+}
+
+.adhoc-trigger-info .btn-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: block;
+  margin-top: 2px;
+}
+
+/* Status Pulsing Indicator */
+.pulse-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--success);
+  box-shadow: 0 0 0 0 rgba(6, 150, 105, 0.7);
+  animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(6, 150, 105, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(6, 150, 105, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(6, 150, 105, 0); }
+}

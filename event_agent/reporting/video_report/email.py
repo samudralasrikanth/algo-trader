@@ -63,9 +63,10 @@ class DailyReportEmailService:
         report_data: Dict[str, Any],
         youtube_url: Optional[str] = None,
         system_status: Optional[Dict[str, str]] = None,
+        thumbnail_url: Optional[str] = None,
     ) -> EmailSendResult:
         """
-        Formats and dispatches the daily report email.
+        Formats and dispatches the daily report email with optional YouTube thumbnail preview.
         """
         start_time = time.perf_counter()
         target_date = report_data.get("report_date", datetime.now().strftime("%Y-%m-%d"))
@@ -74,8 +75,8 @@ class DailyReportEmailService:
 
         subject = f"NEXUS Daily Trade Report — {target_date} — {pnl_str}"
 
-        plain_text = self._build_plain_text(report_data, youtube_url, system_status, pnl_str)
-        html_content = self._build_html(report_data, youtube_url, system_status, pnl_str)
+        plain_text = self._build_plain_text(report_data, youtube_url, system_status, pnl_str, thumbnail_url)
+        html_content = self._build_html(report_data, youtube_url, system_status, pnl_str, thumbnail_url)
 
         # Dispatch via selected provider
         if self.provider == "resend":
@@ -270,6 +271,7 @@ class DailyReportEmailService:
         youtube_url: Optional[str],
         sys_status: Optional[Dict[str, str]],
         pnl_str: str,
+        thumbnail_url: Optional[str] = None,
     ) -> str:
         date = rep.get("report_date", "TODAY")
         best_t = rep.get("best_trade") or {}
@@ -330,6 +332,7 @@ KEY LESSON
 
 YOUTUBE VIDEO
 {youtube_url or 'VIDEO LINK PENDING / AUTH REQUIRED'}
+Thumbnail: {thumbnail_url or 'NONE'}
 
 SYSTEM STATUS
 Data:    {sys_s.get('Data', 'HEALTHY')}
@@ -345,6 +348,7 @@ Email:   {sys_s.get('Email', 'SUCCESS')}
         youtube_url: Optional[str],
         sys_status: Optional[Dict[str, str]],
         pnl_str: str,
+        thumbnail_url: Optional[str] = None,
     ) -> str:
         date = rep.get("report_date", "TODAY")
         net_pnl = float(rep.get("net_pnl", 0.0))
@@ -363,7 +367,8 @@ Email:   {sys_s.get('Email', 'SUCCESS')}
             "Email": "PROCESSING",
         }
 
-        yt_button = f'<a href="{youtube_url}" style="display:inline-block; background:#38bdf8; color:#0d1117; padding:12px 24px; border-radius:6px; font-weight:800; text-decoration:none; margin:15px 0;">▶ WATCH REPORT ON YOUTUBE</a>' if youtube_url else '<p style="color:#94a3b8; font-style:italic;">YouTube link pending / OAuth token required.</p>'
+        thumb_block = f'<div style="margin:16px 0;"><a href="{youtube_url or "#"}" target="_blank"><img src="{thumbnail_url}" alt="NEXUS YouTube Short Thumbnail" style="width:100%; max-width:560px; border-radius:8px; border:1px solid #334155; box-shadow:0 8px 24px rgba(0,0,0,0.6);" /></a></div>' if thumbnail_url else ''
+        yt_button = f'<a href="{youtube_url}" style="display:inline-block; background:#38bdf8; color:#0d1117; padding:12px 24px; border-radius:6px; font-weight:800; text-decoration:none; margin:10px 0;">▶ WATCH REPORT ON YOUTUBE</a>' if youtube_url else '<p style="color:#94a3b8; font-style:italic;">YouTube link pending / OAuth token required.</p>'
 
         return f"""<!DOCTYPE html>
 <html>
@@ -417,6 +422,7 @@ Email:   {sys_s.get('Email', 'SUCCESS')}
   <div class="section">
     <h3>YouTube Video Report</h3>
     <div style="text-align:center;">
+      {thumb_block}
       {yt_button}
     </div>
 

@@ -6,9 +6,10 @@ Cloud Orchestrator Entrypoint for NEXUS Daily Trade Report:
 - Validates environment: strictly asserts PAPER environment.
 - Validates production secrets with structured diagnostics (no secret leakage).
 - Updates durable scheduler heartbeat in Supabase (`scheduler_invocations`).
-- Executes the 7-stage post-market reporting pipeline:
-  Data Collection -> AI Analysis -> Voice Narration -> Video Render ->
-  YouTube Upload -> Email Dispatch -> Deterministic Provenance.
+- Executes the 9-stage post-market reporting pipeline:
+  [1/9] Trade Reconciliation -> [2/9] AI Analysis -> [3/9] Content Intelligence ->
+  [4/9] Voice Narration -> [5/9] 8-Scene Video -> [6/9] Adaptive Thumbnail ->
+  [7/9] YouTube Upload -> [8/9] Executive Email -> [9/9] Web Sync & Provenance.
 - Reflects truthful parent/child status aggregation and persists to Supabase.
 """
 

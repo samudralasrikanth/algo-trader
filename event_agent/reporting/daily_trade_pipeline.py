@@ -26,8 +26,9 @@ from typing import Any, Dict, List, Optional
 
 from .trade_reconciliation import TradeReconciliationEngine, DailyReconciliationReport
 from .ai_analyst import DailyAIAnalyst, DailyAIAnalysisResult
+from .content_strategy import ContentIntelligenceEngine, DailyContentPackage
 from .video_report.elevenlabs import ElevenLabsVoiceService, VoiceGenerationResult
-from .video_report.creatomate import CreatomateVideoService, VideoRenderResult
+from .video_report.creatomate import CreatomateVideoService, VideoRenderResult, ThumbnailRenderResult
 from .video_report.youtube import YouTubePublishService, YouTubeUploadResult
 from .video_report.email import DailyReportEmailService, EmailSendResult
 from .provenance import ReportProvenanceEngine
@@ -50,15 +51,18 @@ class PipelineExecutionReport:
     report_date: str
     idempotency_key: str
     overall_status: str                 # 'SUCCESS' | 'PARTIAL_SUCCESS' | 'FAILED' | 'SKIPPED'
-    stage_statuses: Dict[str, str]      # DATA_COLLECTION, AI, VOICE, VIDEO, YOUTUBE, EMAIL
+    stage_statuses: Dict[str, str]      # DATA_COLLECTION, AI, VOICE, VIDEO, THUMBNAIL, YOUTUBE, EMAIL
     reconciliation: Dict[str, Any]
     ai_analysis: Optional[Dict[str, Any]]
     voice_result: Optional[Dict[str, Any]]
     video_result: Optional[Dict[str, Any]]
-    youtube_result: Optional[Dict[str, Any]]
-    email_result: Optional[Dict[str, Any]]
-    provenance: Dict[str, Any]
-    duration_ms: int
+    thumbnail_result: Optional[Dict[str, Any]] = None
+    content_package: Optional[Dict[str, Any]] = None
+    youtube_result: Optional[Dict[str, Any]] = None
+    email_result: Optional[Dict[str, Any]] = None
+    provenance: Dict[str, Any] = field(default_factory=dict)
+    data_mode: str = "PAPER_RECONCILED"  # 'PAPER_RECONCILED' | 'TEST_FIXTURE'
+    duration_ms: int = 0
     executed_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
     def to_dict(self) -> Dict[str, Any]:
@@ -143,13 +147,24 @@ class DailyTradeReportPipeline:
                     duration_ms=duration_ms,
                 )
 
+        # Strict Safety Invariant: PAPER TRADING ONLY
+        env = os.environ.get("TRADING_ENVIRONMENT", "PAPER").upper()
+        if env not in ("PAPER", "SANDBOX", "SIMULATION"):
+            raise RuntimeError(f"Strict Institutional Invariant: Daily trade reporting pipeline permitted in PAPER/SANDBOX mode only, got: {env}")
+
+        is_fixture = bool(custom_trades_fixture is not None)
+        data_mode = "TEST_FIXTURE" if is_fixture else "PAPER_RECONCILED"
+
         stage_statuses = {
             "DATA_COLLECTION": "PENDING",
             "AI_ANALYSIS": "PENDING",
+            "CONTENT_INTELLIGENCE": "PENDING",
             "VOICE": "PENDING",
             "VIDEO": "PENDING",
+            "THUMBNAIL": "PENDING",
             "YOUTUBE": "PENDING",
             "EMAIL": "PENDING",
+            "WEB_SYNC": "PENDING",
         }
 
         # Create parent JobRunRecord in JobLedger
@@ -163,7 +178,7 @@ class DailyTradeReportPipeline:
         # ---------------------------------------------------------------------
         # Stage 1: Data Collection & Reconciliation
         # ---------------------------------------------------------------------
-        logger.info("[1/7] Reconciling recorded trades & calculating authoritative P&L...")
+        logger.info("[1/9] Reconciling recorded trades & calculating authoritative P&L (data_mode=%s)...", data_mode)
         rec = TradeReconciliationEngine.reconcile_date(
             target_date=target_date,
             custom_trades_fixture=custom_trades_fixture,
@@ -174,26 +189,40 @@ class DailyTradeReportPipeline:
         # ---------------------------------------------------------------------
         # Stage 2: OpenRouter AI Analysis & Script Generation
         # ---------------------------------------------------------------------
-        logger.info("[2/7] Generating factual performance analysis via OpenRouter...")
+        logger.info("[2/9] Generating factual performance analysis via OpenRouter...")
         ai_res = self.ai_analyst.analyze_daily_performance(rec)
         stage_statuses["AI_ANALYSIS"] = ai_res.ai_status
         logger.info("      AI Status: %s | Model: %s | Tokens: %d", ai_res.ai_status, ai_res.ai_model, ai_res.ai_tokens.get("total_tokens", 0))
 
         # ---------------------------------------------------------------------
-        # Stage 3: ElevenLabs Voice Narration
+        # Stage 3: Content Intelligence & Dynamic Narrative Engine
         # ---------------------------------------------------------------------
-        logger.info("[3/7] Generating narration audio via ElevenLabs...")
+        logger.info("[3/9] Assembling narrative DailyContentPackage & 16:9 Thumbnail Spec...")
+        content_pkg: DailyContentPackage = ContentIntelligenceEngine.build_content_package(
+            reconciliation=rec,
+            ai_analysis=ai_res,
+            data_mode=data_mode,
+        )
+        stage_statuses["CONTENT_INTELLIGENCE"] = "SUCCESS"
+        logger.info("      Content Theme: %s | Score: %.2f | Hash: %s | Mode: %s",
+                    content_pkg.content_theme, content_pkg.content_score, content_pkg.data_hash[:12], data_mode)
+
+        # ---------------------------------------------------------------------
+        # Stage 4: ElevenLabs Voice Narration (High-Retention Paced Script)
+        # ---------------------------------------------------------------------
+        logger.info("[4/9] Generating narration audio via ElevenLabs...")
+        script_to_narrate = content_pkg.video_script or ai_res.narration_script
         voice_res = self.voice_service.generate_narration_audio(
-            script_text=ai_res.narration_script,
+            script_text=script_to_narrate,
             filename_prefix=f"nexus_report_{target_date}",
         )
         stage_statuses["VOICE"] = voice_res.status
         logger.info("      Voice Status: %s | Duration: ~%d ms | Bytes: %d", voice_res.status, voice_res.duration_ms, voice_res.file_size_bytes)
 
         # ---------------------------------------------------------------------
-        # Stage 4: Creatomate Video Generation
+        # Stage 5: Creatomate Video Generation (60-75s Vertical Short)
         # ---------------------------------------------------------------------
-        logger.info("[4/7] Rendering 9-scene institutional video via Creatomate...")
+        logger.info("[5/9] Rendering 8-scene high-retention vertical Short via Creatomate...")
         public_audio_url = voice_res.audio_url
         if not public_audio_url and voice_res.status == "SUCCESS" and voice_res.audio_path:
             logger.info("      Publishing narration audio to Netlify CDN for Creatomate audio mixing...")
@@ -204,20 +233,33 @@ class DailyTradeReportPipeline:
         video_res = self.video_service.create_daily_report_video(
             reconciliation=rec,
             ai_analysis=ai_res,
+            content_package=content_pkg,
             audio_url_or_path=public_audio_url or voice_res.audio_path,
         )
         stage_statuses["VIDEO"] = video_res.status
         logger.info("      Video Status: %s | URL: %s", video_res.status, video_res.video_url)
 
         # ---------------------------------------------------------------------
-        # Stage 5: YouTube Upload
+        # Stage 6: Clickable 16:9 YouTube Thumbnail Generation
         # ---------------------------------------------------------------------
-        logger.info("[5/7] Uploading video to YouTube (mode=%s)...", self.youtube_service.publish_mode)
+        logger.info("[6/9] Rendering 16:9 clickable thumbnail via Creatomate...")
+        thumbnail_res: ThumbnailRenderResult = self.video_service.create_daily_thumbnail(
+            content_package=content_pkg,
+        )
+        stage_statuses["THUMBNAIL"] = thumbnail_res.status
+        logger.info("      Thumbnail Status: %s | URL: %s | Template: %s | Headline: %s",
+                    thumbnail_res.status, thumbnail_res.image_url, thumbnail_res.template, content_pkg.thumbnail_headline)
+
+        # ---------------------------------------------------------------------
+        # Stage 7: YouTube Upload (Video + Custom Thumbnail)
+        # ---------------------------------------------------------------------
+        logger.info("[7/9] Uploading video and thumbnail to YouTube (mode=%s)...", self.youtube_service.publish_mode)
         youtube_res = None
         if video_res.status == "SUCCESS" and video_res.video_url:
             youtube_res = self.youtube_service.upload_daily_report_video(
                 video_url_or_path=video_res.video_url,
                 report_data=rec.to_dict(),
+                thumbnail_url_or_path=thumbnail_res.image_url if thumbnail_res.status == "SUCCESS" else None,
             )
             stage_statuses["YOUTUBE"] = youtube_res.status
         else:
@@ -228,14 +270,16 @@ class DailyTradeReportPipeline:
                 title=f"NEXUS Daily Trade Report — {target_date}",
                 privacy_status=self.youtube_service.publish_mode,
                 error_message="Video generation did not succeed; skipping YouTube upload.",
+                thumbnail_status="SKIPPED",
             )
             stage_statuses["YOUTUBE"] = "SKIPPED"
-        logger.info("      YouTube Status: %s | URL: %s", youtube_res.status, youtube_res.video_url)
+        logger.info("      YouTube Status: %s | URL: %s | Thumbnail Upload: %s",
+                    youtube_res.status, youtube_res.video_url, youtube_res.thumbnail_status)
 
         # ---------------------------------------------------------------------
-        # Stage 6: Email Report Dispatch
+        # Stage 8: Email Report Dispatch
         # ---------------------------------------------------------------------
-        logger.info("[6/7] Dispatching daily report email...")
+        logger.info("[8/9] Dispatching daily report email...")
         email_data = rec.to_dict()
         email_data.update({
             "ai_executive_summary": ai_res.executive_summary,
@@ -244,10 +288,12 @@ class DailyTradeReportPipeline:
         email_res = self.email_service.send_daily_report(
             report_data=email_data,
             youtube_url=youtube_res.video_url if youtube_res else None,
+            thumbnail_url=thumbnail_res.image_url if thumbnail_res.status == "SUCCESS" else None,
             system_status={
                 "Data": rec.trading_status,
                 "AI": ai_res.ai_status,
                 "Video": video_res.status,
+                "Thumbnail": thumbnail_res.status,
                 "YouTube": youtube_res.status if youtube_res else "SKIPPED",
                 "Email": "PENDING",
             },
@@ -256,9 +302,9 @@ class DailyTradeReportPipeline:
         logger.info("      Email Status: %s | Provider: %s | Recipient: %s", email_res.status, email_res.provider, email_res.recipient)
 
         # ---------------------------------------------------------------------
-        # Stage 7: Provenance & Final Ledger Persistence
+        # Stage 9: Provenance & Web App Cloud Synchronization
         # ---------------------------------------------------------------------
-        logger.info("[7/7] Computing deterministic provenance & persisting to ledger...")
+        logger.info("[9/9] Computing deterministic provenance & persisting to ledger...")
         prov = ReportProvenanceEngine.compute_provenance(
             report_date=target_date,
             reconciliation_data=rec.to_dict(),
@@ -266,6 +312,8 @@ class DailyTradeReportPipeline:
             voice_data=voice_res.to_dict(),
             video_data=video_res.to_dict(),
             youtube_data=youtube_res.to_dict() if youtube_res else None,
+            thumbnail_data=thumbnail_res.to_dict(),
+            content_data=content_pkg.to_dict(),
         )
 
         # Overall Status Resolution
@@ -277,6 +325,7 @@ class DailyTradeReportPipeline:
         all_success = (
             critical_success
             and stage_statuses["VOICE"] == "SUCCESS"
+            and stage_statuses["THUMBNAIL"] == "SUCCESS"
             and stage_statuses["YOUTUBE"] == "SUCCESS"
             and stage_statuses["EMAIL"] == "SUCCESS"
         )
@@ -293,6 +342,7 @@ class DailyTradeReportPipeline:
             "report_date": target_date,
             "job_run_id": parent_job.run_id,
             "status": overall_status,
+            "data_mode": data_mode,
             "total_trades": rec.total_trades,
             "winning_trades": rec.winning_trades,
             "losing_trades": rec.losing_trades,
@@ -322,19 +372,34 @@ class DailyTradeReportPipeline:
             "video_render_id": video_res.render_id,
             "video_status": video_res.status,
             "video_url": video_res.video_url,
+            "video_duration_seconds": 70.0,
+            "thumbnail_url": thumbnail_res.image_url,
+            "thumbnail_render_id": thumbnail_res.render_id,
+            "thumbnail_status": thumbnail_res.status,
+            "thumbnail_template": thumbnail_res.template_id,
+            "thumbnail_headline": content_pkg.thumbnail_headline,
+            "content_theme": content_pkg.content_theme,
+            "content_score": content_pkg.content_score,
+            "content_data_hash": content_pkg.data_hash,
+            "content_generated_at": content_pkg.generated_at,
             "youtube_video_id": youtube_res.video_id if youtube_res else None,
             "youtube_url": youtube_res.video_url if youtube_res else None,
             "youtube_status": youtube_res.status if youtube_res else "SKIPPED",
+            "youtube_upload_status": youtube_res.status if youtube_res else "SKIPPED",
+            "youtube_thumbnail_status": youtube_res.thumbnail_status if youtube_res else "SKIPPED",
             "email_status": email_res.status,
             "email_sent_at": email_res.sent_at,
             "provenance_hash": prov["provenance_hash"],
             "report_payload_json": {
+                "data_mode": data_mode,
                 "reconciliation": rec.to_dict(),
                 "stage_statuses": stage_statuses,
                 "ai_summary": ai_res.executive_summary,
-                "narration_script": ai_res.narration_script,
+                "narration_script": script_to_narrate,
                 "lessons_learned": ai_res.lessons_learned,
                 "tomorrow_watchlist": ai_res.tomorrow_watchlist,
+                "content_package": content_pkg.to_dict(),
+                "thumbnail": thumbnail_res.to_dict(),
             },
         }
 
@@ -357,9 +422,10 @@ class DailyTradeReportPipeline:
 
         # Sync to Web App data bundle (data.json and data.js)
         self._update_web_app_data(report_record)
+        stage_statuses["WEB_SYNC"] = "SUCCESS"
 
         duration_ms = int((time.perf_counter() - start_time) * 1000)
-        logger.info("Daily Trade Report finished: Status=%s in %dms", overall_status, duration_ms)
+        logger.info("Daily Trade Report finished: Status=%s, Mode=%s in %dms", overall_status, data_mode, duration_ms)
 
         return PipelineExecutionReport(
             report_date=target_date,
@@ -370,9 +436,12 @@ class DailyTradeReportPipeline:
             ai_analysis=ai_res.to_dict(),
             voice_result=voice_res.to_dict(),
             video_result=video_res.to_dict(),
+            thumbnail_result=thumbnail_res.to_dict(),
+            content_package=content_pkg.to_dict(),
             youtube_result=youtube_res.to_dict() if youtube_res else None,
             email_result=email_res.to_dict(),
             provenance=prov,
+            data_mode=data_mode,
             duration_ms=duration_ms,
         )
 
