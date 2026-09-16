@@ -408,8 +408,7 @@ function handleRoute() {
     primary = 'analysis';
     sub = 'pre';
   } else if (primary === 'news') {
-    primary = 'analysis';
-    sub = 'news';
+    primary = 'news';
   } else if (primary === 'risk') {
     primary = 'settings';
     sub = 'risk';
@@ -599,7 +598,7 @@ function renderSecondaryNav(primaryTab, activeSub) {
     html = `
       <button class="subnav-btn ${sub === 'pre' ? 'active' : ''}" onclick="switchAnalysisSubtab('pre')">08:30 Pre-Market Intelligence</button>
       <button class="subnav-btn ${sub === 'post' ? 'active' : ''}" onclick="switchAnalysisSubtab('post')">15:30 Post-Market &amp; Prediction Scorecard</button>
-      <button class="subnav-btn ${sub === 'news' ? 'active' : ''}" onclick="switchAnalysisSubtab('news')">News &amp; Macro Intelligence Feed</button>
+      <button class="subnav-btn ${sub === 'news' ? 'active' : ''}" onclick="navigate('news')">📰 Live News Wire (Dedicated) ➔</button>
     `;
   } else if (primaryTab === 'jobs') {
     html = `
@@ -3793,6 +3792,36 @@ function getFinancialImageryForArticle(cat, sym, title = '') {
   return 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&auto=format&fit=crop&q=80';
 }
 
+function categorizeNewsItem(n, defaultCat = 'CORPORATE') {
+  const sym = (n.symbol || (n.assets && n.assets[0]) || '').toUpperCase();
+  const title = (n.headline || n.title || '').toUpperCase();
+  const sectors = (n.affected_sectors || n.sectors || []).map(s => String(s).toUpperCase());
+  
+  if (sectors.some(s => s.includes('ENERGY') || s.includes('OIL') || s.includes('COMMODIT')) || 
+      title.includes('CRUDE') || title.includes('OIL') || title.includes('BRENT') || title.includes('PETROLEUM') ||
+      ['RELIANCE.NS', 'ONGC.NS', 'BPCL.NS', 'IOC.NS'].includes(sym)) {
+    return 'COMMODITIES';
+  }
+  if (sectors.some(s => s.includes('FINANC') || s.includes('BANK')) || 
+      title.includes('BANK') || title.includes('RBI') || title.includes('REPO') || title.includes('HDFC') || title.includes('ICICI') || title.includes('SBI') ||
+      ['HDFCBANK.NS', 'ICICIBANK.NS', 'SBIN.NS', 'KOTAKBANK.NS', 'AXISBANK.NS'].includes(sym)) {
+    return 'BANKING';
+  }
+  if (sectors.some(s => s.includes('TECH') || s.includes('IT')) || 
+      title.includes('TECH') || title.includes('INFOSYS') || title.includes('TCS') || title.includes('SOFTWARE') || 
+      ['TCS.NS', 'INFY.NS', 'WIPRO.NS', 'HCLTECH.NS', 'TECHM.NS'].includes(sym)) {
+    return 'TECH';
+  }
+  if (title.includes('PROFIT') || title.includes('EARN') || title.includes('REVENUE') || title.includes('ORDER') || title.includes('Q1') || title.includes('Q2') || title.includes('Q4') || title.includes('DIVIDEND') ||
+      ['LT.NS', 'ITC.NS', 'BHARTIARTL.NS'].includes(sym)) {
+    return 'CORPORATE';
+  }
+  if (title.includes('SENSEX') || title.includes('NIFTY') || title.includes('MACRO') || title.includes('INFLATION') || title.includes('GDP') || title.includes('RUPEE') || title.includes('DOLLAR') || title.includes('MARKET')) {
+    return 'MACRO';
+  }
+  return (n.category && n.category !== 'Markets' ? n.category : defaultCat).toUpperCase();
+}
+
 function renderNewsPage() {
   const streamEl = document.getElementById('news-channel-stream');
   if (!streamEl) return;
@@ -3802,7 +3831,7 @@ function renderNewsPage() {
     title: n.headline || n.title,
     summary: n.ai_summary || n.summary || '',
     source: n.source || 'Financial Wire',
-    category: (n.category || (n.affected_sectors && n.affected_sectors[0]) || 'MACRO').toUpperCase(),
+    category: categorizeNewsItem(n, 'MACRO'),
     sentiment: (n.sentiment || (n.polarity >= 0 ? 'BULLISH' : 'BEARISH')).toUpperCase(),
     impact: n.impact || 'HIGH',
     time: n.published_at ? new Date(n.published_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'Live',
@@ -3816,7 +3845,7 @@ function renderNewsPage() {
     title: n.title,
     summary: `Corporate regulatory disclosure and catalyst transmission monitoring for ${n.symbol || 'Nifty 50'}. Event class: ${n.event_type || 'MARKET_UPDATE'}.`,
     source: n.source || 'Exchange Filing',
-    category: (n.symbol && n.symbol.includes('SBIN') ? 'BANKING' : (n.symbol && n.symbol.includes('TCS') ? 'TECH' : 'CORPORATE')),
+    category: categorizeNewsItem(n, 'CORPORATE'),
     sentiment: n.polarity > 0.05 ? 'BULLISH' : (n.polarity < -0.05 ? 'BEARISH' : 'NEUTRAL'),
     impact: 'MEDIUM',
     time: n.pub_date ? new Date(n.pub_date).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : 'Today',
@@ -3851,11 +3880,14 @@ function renderNewsPage() {
     const summary = (a.summary || '').toUpperCase();
 
     // Category filter
-    if (currentNewsCategory === 'COMMODITIES' && !cat.includes('COMMODIT') && !cat.includes('ENERGY') && !title.includes('CRUDE') && !title.includes('OIL')) return false;
-    if (currentNewsCategory === 'BANKING' && !cat.includes('BANK') && !title.includes('BANK') && !title.includes('RBI')) return false;
-    if (currentNewsCategory === 'TECH' && !cat.includes('TECH') && !cat.includes('IT') && !title.includes('TECH') && !title.includes('IT')) return false;
-    if (currentNewsCategory === 'CORPORATE' && !cat.includes('CORP') && !cat.includes('EARN') && !title.includes('PROFIT') && !title.includes('Q1')) return false;
-    if (currentNewsCategory === 'MACRO' && !cat.includes('MACRO') && !cat.includes('MARKET') && !title.includes('SENSEX') && !title.includes('NIFTY') && !title.includes('CRUDE')) return false;
+    if (currentNewsCategory !== 'ALL' && cat !== currentNewsCategory) {
+      // Also match partials
+      if (currentNewsCategory === 'COMMODITIES' && !cat.includes('COMMODIT') && !cat.includes('ENERGY') && !title.includes('CRUDE') && !title.includes('OIL')) return false;
+      else if (currentNewsCategory === 'BANKING' && !cat.includes('BANK') && !title.includes('BANK') && !title.includes('RBI')) return false;
+      else if (currentNewsCategory === 'TECH' && !cat.includes('TECH') && !cat.includes('IT') && !title.includes('TECH') && !title.includes('IT')) return false;
+      else if (currentNewsCategory === 'CORPORATE' && !cat.includes('CORP') && !cat.includes('EARN') && !title.includes('PROFIT') && !title.includes('Q1')) return false;
+      else if (currentNewsCategory === 'MACRO' && !cat.includes('MACRO') && !cat.includes('MARKET') && !title.includes('SENSEX') && !title.includes('NIFTY') && !title.includes('CRUDE')) return false;
+    }
 
     // Sentiment filter
     if (currentNewsSentiment === 'BULLISH' && !sent.includes('BULL') && !sent.includes('POS')) return false;
@@ -4123,11 +4155,23 @@ window.closeProvenanceModalOnOverlay = closeProvenanceModalOnOverlay;
 // Retain legacy subtab helper for backwards compatibility
 function renderNewsAnalysis(sentimentFilter = 'ALL') {
   renderNewsPage();
+  const listEl = document.getElementById('analysis-news-list');
+  const streamEl = document.getElementById('news-channel-stream');
+  if (listEl && streamEl) {
+    listEl.innerHTML = `
+      <div style="margin-bottom: 16px; padding: 12px; background: var(--bg-surface-secondary); border-radius: var(--radius-sm); display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 13px; color: var(--text-secondary);">Institutional real-time visual wire is now active in its dedicated tab.</span>
+        <button class="subnav-btn" onclick="navigate('news')" style="font-weight: 700; color: var(--primary);">Open Dedicated News Tab ➔</button>
+      </div>
+      <div class="news-scroll-feed" style="max-height: 700px;">${streamEl.innerHTML}</div>
+    `;
+  }
 }
 window.renderNewsAnalysis = renderNewsAnalysis;
 
 function filterNewsSentiment(sent) {
   filterNewsSentimentTab(sent);
+  renderNewsAnalysis();
 }
 window.filterNewsSentiment = filterNewsSentiment;
 
