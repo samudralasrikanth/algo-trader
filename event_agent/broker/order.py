@@ -38,6 +38,7 @@ class OrderSide(str, Enum):
 class ExecutionMode(str, Enum):
     BACKTEST = "BACKTEST"
     PAPER_LIVE = "PAPER_LIVE"
+    PAPER = "PAPER_LIVE"
     BROKER_SANDBOX = "BROKER_SANDBOX"
 
 

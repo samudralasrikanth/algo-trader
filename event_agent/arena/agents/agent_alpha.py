@@ -7,6 +7,7 @@ Philosophy: "I trade what changed."
 Focus: Corporate earnings, news catalysts, regulatory filings, causal factors.
 """
 
+import os
 from typing import Any, Dict, List
 from ..models import (
     AgentProfile,
@@ -67,10 +68,11 @@ class AgentAlpha(BaseAgent):
             if base_price <= 0:
                 continue
 
-            # Alpha requires news/catalysts and conviction >= 60%
-            has_catalysts = len(catalysts) > 0 or abs(sentiment) >= 0.15
-            if has_catalysts and conviction >= 60.0 and abs(pred_pct) >= 0.4:
-                candidates.append((symbol, data, abs(sentiment) * conviction))
+            # Alpha requires news/catalysts and conviction >= min_conviction (default 48.0% for paper trading)
+            min_conviction = float(os.getenv("MIN_AGENT_CONVICTION", "48.0"))
+            has_catalysts = len(catalysts) > 0 or abs(sentiment) >= 0.10
+            if (has_catalysts or conviction >= min_conviction) and conviction >= min_conviction and abs(pred_pct) >= 0.35:
+                candidates.append((symbol, data, max(abs(sentiment), 0.15) * conviction))
 
         # Sort candidates by news impact score descending
         candidates.sort(key=lambda x: x[2], reverse=True)

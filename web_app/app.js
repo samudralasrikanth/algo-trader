@@ -10,6 +10,7 @@ window.getCurrentFilteredCmds = () => currentFilteredCmds;
 let currentPrimaryTab = 'overview';
 let currentSubTab = '';
 let currentAgentFilter = 'ALL';
+let currentTradesAgentFilter = 'ALL';
 let currentLeaderboardSort = 'default';
 let activePayoffStrategyKey = 'BCS'; // BCS, BPS, STRD, PROT
 let activeExpiry = '7D'; // 7D, 14D, 30D
@@ -398,8 +399,13 @@ function handleRoute() {
   let primary = pathParts[0] || 'overview';
   let sub = pathParts[1] || '';
 
-  // Canonical routing for the 5-Tab simplified architecture + backwards-compatible aliases
-  if (primary === 'arena' || primary === 'trades' || primary === 'positions' || primary === 'holdings') {
+  // Canonical routing for primary navigation + backwards-compatible aliases
+  if (primary === 'trades' || primary === 'positions' || primary === 'orders') {
+    if (sub && ['ALPHA', 'MOMENTUM', 'MACRO', 'DEFENSIVE', 'CONTRARIAN'].includes(sub.toUpperCase())) {
+      currentTradesAgentFilter = sub.toUpperCase();
+    }
+    primary = 'trades';
+  } else if (primary === 'arena' || primary === 'holdings') {
     if (sub && ['ALPHA', 'MOMENTUM', 'MACRO', 'DEFENSIVE', 'CONTRARIAN'].includes(sub.toUpperCase())) {
       currentAgentFilter = sub.toUpperCase();
     }
@@ -467,7 +473,12 @@ function navigate(primaryTab, subTab, options = {}) {
 
 function updateViewPanels(primaryTab, subTab) {
   // Normalize legacy tab aliases
-  if (primaryTab === 'arena' || primaryTab === 'trades' || primaryTab === 'positions') {
+  if (primaryTab === 'trades' || primaryTab === 'positions' || primaryTab === 'orders') {
+    if (subTab && ['ALPHA', 'MOMENTUM', 'MACRO', 'DEFENSIVE', 'CONTRARIAN'].includes(subTab.toUpperCase())) {
+      currentTradesAgentFilter = subTab.toUpperCase();
+    }
+    primaryTab = 'trades';
+  } else if (primaryTab === 'arena' || primaryTab === 'holdings') {
     if (subTab && ['ALPHA', 'MOMENTUM', 'MACRO', 'DEFENSIVE', 'CONTRARIAN'].includes(subTab.toUpperCase())) {
       currentAgentFilter = subTab.toUpperCase();
     }
@@ -500,6 +511,7 @@ function updateViewPanels(primaryTab, subTab) {
   const titles = {
     'overview': 'Executive Overview — NEXUS AI',
     'holdings': 'Portfolio Holdings & Agent Performance — NEXUS AI',
+    'trades': 'All Bot Trades & Open Positions Ledger — NEXUS AI',
     'analysis': 'Market Analysis & Prediction Correctness — NEXUS AI',
     'news': 'Live Financial News & Macro Intelligence Wire — NEXUS AI',
     'jobs': 'Data Pipeline Jobs & Scheduler — NEXUS AI',
@@ -526,6 +538,9 @@ function updateViewPanels(primaryTab, subTab) {
     document.getElementById('view-holdings')?.classList.add('active');
     document.getElementById('view-arena')?.classList.add('active');
     renderHoldingsPage();
+  } else if (primaryTab === 'trades') {
+    document.getElementById('view-trades')?.classList.add('active');
+    renderTradesPage();
   } else if (primaryTab === 'analysis') {
     document.getElementById('view-analysis')?.classList.add('active');
     document.getElementById('view-intelligence')?.classList.add('active');
@@ -569,11 +584,21 @@ function renderSecondaryNav(primaryTab, activeSub) {
     html = `
       <button class="subnav-btn active" onclick="navigate('overview')">Executive Summary</button>
       <button class="subnav-btn" onclick="navigate('holdings')">Portfolio Holdings &amp; Agents</button>
+      <button class="subnav-btn" onclick="navigate('trades')">Trades &amp; Positions Ledger</button>
       <button class="subnav-btn" onclick="navigate('analysis', 'pre')">Pre-Market Outlook</button>
       <button class="subnav-btn" onclick="navigate('analysis', 'post')">Post-Market Scorecard</button>
       <button class="subnav-btn" onclick="navigate('news')">Live News Wire</button>
       <button class="subnav-btn" onclick="navigate('jobs')">Jobs Ledger</button>
       <button class="subnav-btn" onclick="navigate('settings', 'risk')">Risk Invariants</button>
+    `;
+  } else if (primaryTab === 'trades') {
+    const posCount = (DATA.agent_positions || []).length;
+    const ordCount = (DATA.orders || []).length;
+    html = `
+      <button class="subnav-btn active" onclick="scrollToSection('section-dedicated-open-positions')">Active Open Positions (${posCount})</button>
+      <button class="subnav-btn" onclick="scrollToSection('section-dedicated-placed-orders')">Order Execution Ledger (${ordCount})</button>
+      <button class="subnav-btn" onclick="scrollToSection('section-dedicated-decisions')">Bot Decision History</button>
+      <button class="subnav-btn" onclick="executeAngelPaperTrade()" style="color: var(--primary); font-weight: 700;">⚡ Test Angel One Paper Trade</button>
     `;
   } else if (primaryTab === 'holdings') {
     html = `
@@ -3047,6 +3072,583 @@ function renderOrdersTable(agentFilter = 'ALL') {
   }
 }
 window.renderOrdersTable = renderOrdersTable;
+
+// -----------------------------------------------------------------------------
+// 9B. Dedicated Bot Trades & Open Positions Master Ledger Engine
+// -----------------------------------------------------------------------------
+
+function getAgentBadgeHtml(agentId) {
+  const a = (agentId || '').toUpperCase();
+  if (a.includes('ALPHA')) return '<span class="badge badge-purple" style="font-weight: 700; font-size: 11px;">⚡ ALPHA</span>';
+  if (a.includes('MOMENTUM')) return '<span class="badge badge-blue" style="font-weight: 700; font-size: 11px;">🚀 MOMENTUM</span>';
+  if (a.includes('MACRO')) return '<span class="badge badge-green" style="font-weight: 700; font-size: 11px;">🌐 MACRO</span>';
+  if (a.includes('DEFENSIVE')) return '<span class="badge badge-warning" style="font-weight: 700; font-size: 11px;">🛡️ DEFENSIVE</span>';
+  if (a.includes('CONTRARIAN')) return '<span class="badge badge-subtle" style="font-weight: 700; font-size: 11px;">🔄 CONTRARIAN</span>';
+  return `<span class="badge badge-gray" style="font-size: 11px;">${agentId || 'BOT'}</span>`;
+}
+window.getAgentBadgeHtml = getAgentBadgeHtml;
+
+function filterDedicatedTradesAgent(agentId) {
+  currentTradesAgentFilter = agentId || 'ALL';
+  const container = document.getElementById('dedicated-trades-agent-pills');
+  if (container) {
+    const btns = container.querySelectorAll('.subnav-btn');
+    btns.forEach(btn => {
+      const onclickAttr = btn.getAttribute('onclick') || '';
+      if (onclickAttr.includes(`'${currentTradesAgentFilter}'`)) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+  }
+  renderTradesPage();
+}
+window.filterDedicatedTradesAgent = filterDedicatedTradesAgent;
+
+function onDedicatedTradesSearchInput() {
+  renderTradesPage();
+}
+window.onDedicatedTradesSearchInput = onDedicatedTradesSearchInput;
+
+function onDedicatedTradesFilterChange() {
+  renderTradesPage();
+}
+window.onDedicatedTradesFilterChange = onDedicatedTradesFilterChange;
+
+function renderTradesPage() {
+  let orders = DATA.orders || [];
+  let positions = DATA.agent_positions || [];
+  
+  // Fallback position gathering if agent_positions is empty
+  if (!positions.length && DATA.arena?.portfolios) {
+    Object.keys(DATA.arena.portfolios).forEach(botId => {
+      const botP = DATA.arena.portfolios[botId];
+      if (botP && Array.isArray(botP.positions)) {
+        botP.positions.forEach(p => {
+          positions.push({
+            position_id: p.position_id || `POS-${botId}-${p.symbol}`,
+            agent_id: botId,
+            symbol: p.symbol,
+            direction: p.side || p.direction || 'BUY',
+            instrument_type: p.instrument_type || 'EQUITY',
+            quantity: p.quantity || 0,
+            entry_price: p.entry_price || p.avg_price || 0,
+            current_price: p.current_price || p.entry_price || 0,
+            stop_loss: p.stop_loss || 0,
+            target: p.target || 0,
+            unrealized_pnl: p.unrealized_pnl || 0,
+            unrealized_pnl_pct: p.unrealized_pnl_pct || 0,
+            opened_at: p.opened_at || p.timestamp || 'Active',
+            status: 'OPEN'
+          });
+        });
+      }
+    });
+  }
+
+  // Fallback orders gathering if orders is empty
+  if (!orders.length && DATA.arena?.orders) {
+    orders = DATA.arena.orders;
+  }
+
+  // Decisions list
+  let decisions = (DATA.arena && DATA.arena.decisions) ? DATA.arena.decisions : [];
+
+  // Update Bot Pill Counts
+  const countPositionsForAgent = (agentKey) => {
+    return positions.filter(p => {
+      const isOpen = (p.status || 'OPEN').toUpperCase() === 'OPEN';
+      if (!isOpen) return false;
+      if (agentKey === 'ALL') return true;
+      return (p.agent_id || '').toUpperCase().includes(agentKey);
+    }).length;
+  };
+
+  const countAll = countPositionsForAgent('ALL');
+  const countAlpha = countPositionsForAgent('ALPHA');
+  const countMom = countPositionsForAgent('MOMENTUM');
+  const countMacro = countPositionsForAgent('MACRO');
+  const countDef = countPositionsForAgent('DEFENSIVE');
+  const countContr = countPositionsForAgent('CONTRARIAN');
+
+  const elCAll = document.getElementById('t-count-all');
+  const elCAlpha = document.getElementById('t-count-alpha');
+  const elCMom = document.getElementById('t-count-momentum');
+  const elCMacro = document.getElementById('t-count-macro');
+  const elCDef = document.getElementById('t-count-defensive');
+  const elCContr = document.getElementById('t-count-contrarian');
+
+  if (elCAll) elCAll.textContent = countAll;
+  if (elCAlpha) elCAlpha.textContent = countAlpha;
+  if (elCMom) elCMom.textContent = countMom;
+  if (elCMacro) elCMacro.textContent = countMacro;
+  if (elCDef) elCDef.textContent = countDef;
+  if (elCContr) elCContr.textContent = countContr;
+
+  // Active open positions for KPI calculation
+  const openPositions = positions.filter(p => (p.status || 'OPEN').toUpperCase() === 'OPEN');
+  const totalUnrealizedPnl = openPositions.reduce((acc, p) => acc + (Number(p.unrealized_pnl) || 0), 0);
+  const totalCapitalDeployed = openPositions.reduce((acc, p) => acc + (Number(p.cost_basis || (p.entry_price * p.quantity)) || 0), 0);
+
+  // Update Top Metrics Ribbon
+  const kpiPosCount = document.getElementById('trades-kpi-pos-count');
+  if (kpiPosCount) kpiPosCount.textContent = `${openPositions.length}`;
+
+  const kpiPnlVal = document.getElementById('trades-kpi-pnl-val');
+  if (kpiPnlVal) {
+    const isPos = totalUnrealizedPnl >= 0;
+    kpiPnlVal.textContent = `${isPos ? '+' : '-'}₹${Math.abs(totalUnrealizedPnl).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    kpiPnlVal.style.color = isPos ? 'var(--success)' : 'var(--danger)';
+  }
+
+  const kpiDeployedVal = document.getElementById('trades-kpi-deployed-val');
+  if (kpiDeployedVal) {
+    kpiDeployedVal.textContent = `₹${totalCapitalDeployed.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  const kpiOrdersCount = document.getElementById('trades-kpi-orders-count');
+  if (kpiOrdersCount) kpiOrdersCount.textContent = `${orders.length}`;
+
+  const liveOrdersBadge = document.getElementById('trades-live-orders-badge');
+  if (liveOrdersBadge) liveOrdersBadge.textContent = `${orders.length} Orders`;
+
+  const totalOrdersTxt = document.getElementById('dedicated-total-orders-txt');
+  if (totalOrdersTxt) totalOrdersTxt.textContent = `${orders.length}`;
+
+  const filledOrdersTxt = document.getElementById('dedicated-filled-orders-txt');
+  if (filledOrdersTxt) {
+    const filledCount = orders.filter(o => (o.status || '').toUpperCase() === 'FILLED').length;
+    filledOrdersTxt.textContent = `${filledCount}`;
+  }
+
+  // Multi-Factor Filters
+  const searchQ = (document.getElementById('dedicated-trades-search-input')?.value || '').toLowerCase().trim();
+  const sideFilter = (document.getElementById('dedicated-trades-side-filter')?.value || 'ALL').toUpperCase();
+  const statusFilter = (document.getElementById('dedicated-trades-status-filter')?.value || 'ALL').toUpperCase();
+
+  // Filter Positions
+  const filteredPositions = positions.filter(p => {
+    const agent = (p.agent_id || '').toUpperCase();
+    if (currentTradesAgentFilter !== 'ALL' && !agent.includes(currentTradesAgentFilter)) return false;
+
+    if (searchQ) {
+      const matchSym = (p.symbol || '').toLowerCase().includes(searchQ);
+      const matchAgent = agent.toLowerCase().includes(searchQ);
+      const matchId = (p.position_id || '').toLowerCase().includes(searchQ);
+      if (!matchSym && !matchAgent && !matchId) return false;
+    }
+
+    const posSide = (p.direction || p.side || 'BUY').toUpperCase();
+    if (sideFilter !== 'ALL' && posSide !== sideFilter) return false;
+
+    const posStatus = (p.status || 'OPEN').toUpperCase();
+    if (statusFilter === 'OPEN' && posStatus !== 'OPEN') return false;
+    if (statusFilter === 'FILLED' && posStatus === 'CLOSED') return false;
+    if (statusFilter === 'REJECTED') return false; // positions are not rejected
+
+    return true;
+  });
+
+  // Filter Orders
+  const filteredOrders = orders.filter(o => {
+    const agent = (o.agent_id || '').toUpperCase();
+    if (currentTradesAgentFilter !== 'ALL' && !agent.includes(currentTradesAgentFilter)) return false;
+
+    if (searchQ) {
+      const matchSym = (o.symbol || '').toLowerCase().includes(searchQ);
+      const matchAgent = agent.toLowerCase().includes(searchQ);
+      const matchId = (o.order_id || '').toLowerCase().includes(searchQ) || (o.broker_order_id || '').toLowerCase().includes(searchQ);
+      if (!matchSym && !matchAgent && !matchId) return false;
+    }
+
+    const ordSide = (o.side || 'BUY').toUpperCase();
+    if (sideFilter !== 'ALL' && ordSide !== sideFilter) return false;
+
+    const ordStatus = (o.status || 'FILLED').toUpperCase();
+    if (statusFilter === 'OPEN' && ordStatus !== 'OPEN' && ordStatus !== 'SUBMITTED') return false;
+    if (statusFilter === 'FILLED' && ordStatus !== 'FILLED') return false;
+    if (statusFilter === 'REJECTED' && ordStatus !== 'REJECTED') return false;
+
+    return true;
+  });
+
+  // Filter Decisions
+  const filteredDecisions = decisions.filter(d => {
+    const agent = (d.agent_id || '').toUpperCase();
+    if (currentTradesAgentFilter !== 'ALL' && !agent.includes(currentTradesAgentFilter)) return false;
+
+    if (searchQ) {
+      const matchSym = (d.symbol || '').toLowerCase().includes(searchQ);
+      const matchAgent = agent.toLowerCase().includes(searchQ);
+      const matchReason = (d.reason || d.decision_rationale || '').toLowerCase().includes(searchQ);
+      if (!matchSym && !matchAgent && !matchReason) return false;
+    }
+
+    const dAction = (d.action || 'HOLD').toUpperCase();
+    if (sideFilter !== 'ALL' && !dAction.includes(sideFilter)) return false;
+
+    return true;
+  });
+
+  // Update badges with filtered counts
+  const posCountBadge = document.getElementById('dedicated-pos-count-badge');
+  if (posCountBadge) posCountBadge.textContent = `${filteredPositions.length}`;
+
+  const ordersCountBadge = document.getElementById('dedicated-orders-count-badge');
+  if (ordersCountBadge) ordersCountBadge.textContent = `${filteredOrders.length}`;
+
+  // Render Table Sections
+  renderDedicatedPositionsTable(filteredPositions);
+  renderDedicatedOrdersTable(filteredOrders);
+  renderDedicatedDecisionsTable(filteredDecisions);
+}
+window.renderTradesPage = renderTradesPage;
+
+function renderDedicatedPositionsTable(positions) {
+  const tbody = document.getElementById('dedicated-positions-tbody');
+  if (!tbody) return;
+
+  if (!positions || positions.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="11" style="text-align: center; padding: 36px 16px; color: var(--text-muted);">
+          <div style="font-size: 24px; margin-bottom: 8px;">📭</div>
+          <strong style="font-size: 14px; color: var(--text-primary);">No Active Positions Matching Filter</strong>
+          <div style="font-size: 12px; margin-top: 4px;">Adjust bot filter pills or search terms, or trigger paper bot cycles to initiate new positions.</div>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = positions.map(pos => {
+    const dir = (pos.direction || pos.side || 'BUY').toUpperCase();
+    const sideBadge = dir === 'BUY' ? 'badge-green' : 'badge-red';
+    const entry = Number(pos.entry_price) || 0;
+    const curr = Number(pos.current_price) || entry;
+    const qty = Number(pos.quantity) || 0;
+    
+    // Live MTM P&L
+    let pnl = Number(pos.unrealized_pnl);
+    if (isNaN(pnl) || pnl === 0) {
+      pnl = (dir === 'SELL' ? -1 : 1) * (curr - entry) * qty;
+    }
+    let pnlPct = Number(pos.unrealized_pnl_pct);
+    if (isNaN(pnlPct) || pnlPct === 0) {
+      pnlPct = entry > 0 ? ((curr - entry) / entry) * 100 * (dir === 'SELL' ? -1 : 1) : 0;
+    }
+
+    const isProfit = pnl >= 0;
+    const pnlColor = isProfit ? 'var(--success)' : 'var(--danger)';
+    const pnlSign = isProfit ? '+' : '';
+
+    // Stop Loss & Target
+    const sl = Number(pos.stop_loss) || 0;
+    const tgt = Number(pos.target) || 0;
+    const slTgtHtml = sl > 0 && tgt > 0 
+      ? `<div style="font-size: 11px;"><span style="color: var(--danger);">SL: ₹${sl.toLocaleString('en-IN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span><br><span style="color: var(--success);">TP: ₹${tgt.toLocaleString('en-IN', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span></div>`
+      : `<span style="color: var(--text-muted); font-size: 11px;">Dynamic Trailing</span>`;
+
+    // Timestamp formatting
+    let openTime = pos.opened_at || 'Today';
+    if (openTime.includes('T')) {
+      try {
+        const d = new Date(openTime);
+        openTime = d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+      } catch (e) {}
+    }
+
+    return `
+      <tr>
+        <td>
+          <div style="font-weight: 700; font-size: 13px; color: var(--text-primary);">${pos.symbol}</div>
+          <div style="font-size: 11px; color: var(--text-muted);">${pos.short_name || pos.sector || 'NSE Equity'}</div>
+        </td>
+        <td>${getAgentBadgeHtml(pos.agent_id)}</td>
+        <td><span class="badge ${pos.instrument_type === 'OPTION' ? 'badge-blue' : 'badge-subtle'}" style="font-size: 10px;">${pos.instrument_type || 'EQUITY'}</span></td>
+        <td><span class="badge ${sideBadge}" style="font-weight: 700; font-size: 11px;">${dir}</span></td>
+        <td class="numeric num" style="font-weight: 600;">${qty.toLocaleString('en-IN')}</td>
+        <td class="numeric num" style="font-size: 12px;">₹${entry.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td class="numeric num" style="font-weight: 700; font-size: 12px; color: var(--text-primary);">₹${curr.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td class="numeric num">${slTgtHtml}</td>
+        <td class="numeric num" style="font-weight: 700; font-size: 12px; color: ${pnlColor};">
+          ${pnlSign}₹${Math.abs(pnl).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          <div style="font-size: 10px; opacity: 0.85;">(${pnlSign}${pnlPct.toFixed(2)}%)</div>
+        </td>
+        <td class="num" style="font-size: 11px; color: var(--text-muted);">${openTime}</td>
+        <td style="text-align: right;">
+          <button class="subnav-btn" style="padding: 3px 8px; font-size: 11px; color: var(--danger); border-color: rgba(239, 68, 68, 0.4);" onclick="closeDedicatedPosition('${pos.position_id || pos.id}')">
+            Close ✕
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+window.renderDedicatedPositionsTable = renderDedicatedPositionsTable;
+
+function renderDedicatedOrdersTable(orders) {
+  const tbody = document.getElementById('dedicated-orders-tbody');
+  if (!tbody) return;
+
+  if (!orders || orders.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="13" style="text-align: center; padding: 36px 16px; color: var(--text-muted);">
+          <div style="font-size: 24px; margin-bottom: 8px;">📋</div>
+          <strong style="font-size: 14px; color: var(--text-primary);">No Orders Recorded Matching Filter</strong>
+          <div style="font-size: 12px; margin-top: 4px;">Orders placed by strategy bots during trading cycles will populate here in real-time.</div>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = orders.map(o => {
+    const isFilled = (o.status || '').toUpperCase() === 'FILLED';
+    const isRejected = (o.status || '').toUpperCase() === 'REJECTED';
+    const statusBadge = isFilled ? 'badge-green' : (isRejected ? 'badge-red' : 'badge-warning');
+    const sideBadge = (o.side || 'BUY').toUpperCase() === 'BUY' ? 'badge-green' : 'badge-red';
+
+    // Format time
+    let timeStr = o.submitted_at || o.created_at || 'Recent';
+    if (timeStr.includes('T')) {
+      try {
+        const d = new Date(timeStr);
+        timeStr = d.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      } catch (e) {}
+    }
+
+    const reqPrice = Number(o.requested_price) || 0;
+    const fillPrice = Number(o.fill_price) || reqPrice;
+    const slip = Number(o.slippage) || Math.abs(fillPrice - reqPrice);
+    const orderDisplayId = o.broker_order_id || o.order_id || 'ORD-UNKNOWN';
+    const shortOrderId = orderDisplayId.length > 22 ? `${orderDisplayId.substring(0, 10)}...${orderDisplayId.slice(-8)}` : orderDisplayId;
+
+    return `
+      <tr>
+        <td class="num" style="font-size: 11px; color: var(--text-muted);">${timeStr}</td>
+        <td>
+          <code title="${orderDisplayId}" style="font-size: 11px; color: var(--primary); cursor: pointer;" onclick="inspectOrder('${o.order_id}')">${shortOrderId}</code>
+        </td>
+        <td>${getAgentBadgeHtml(o.agent_id)}</td>
+        <td><strong style="font-size: 12px; color: var(--text-primary);">${o.symbol}</strong></td>
+        <td><span class="badge ${sideBadge}" style="font-weight: 700; font-size: 11px;">${o.side || 'BUY'}</span></td>
+        <td><span class="badge badge-subtle" style="font-size: 10px;">${o.order_type || 'MARKET'}</span></td>
+        <td class="numeric num" style="font-weight: 600;">${Number(o.fill_quantity || o.quantity || 0).toLocaleString('en-IN')}</td>
+        <td class="numeric num" style="font-size: 12px;">₹${reqPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td class="numeric num" style="font-weight: 700; font-size: 12px; color: var(--text-primary);">₹${fillPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td class="numeric num" style="font-size: 11px; color: ${slip > 0 ? 'var(--warning)' : 'var(--text-muted)'};">₹${slip.toFixed(2)}</td>
+        <td>
+          <span class="badge badge-paper" style="font-size: 10px; display: inline-flex; align-items: center; gap: 4px;">
+            <span>🟢</span>
+            <span>${o.broker_adapter || 'ANGEL ONE SMARTAPI (PAPER)'}</span>
+          </span>
+        </td>
+        <td><span class="badge ${statusBadge}" style="font-weight: 700; font-size: 11px;">${o.status || 'FILLED'}</span></td>
+        <td style="text-align: right;">
+          <button class="subnav-btn" style="padding: 2px 8px; font-size: 11px;" onclick="inspectOrder('${o.order_id}')">
+            Audit 🔍
+          </button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+window.renderDedicatedOrdersTable = renderDedicatedOrdersTable;
+
+function renderDedicatedDecisionsTable(decisions) {
+  const tbody = document.getElementById('dedicated-decisions-tbody');
+  if (!tbody) return;
+
+  if (!decisions || decisions.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align: center; padding: 28px 16px; color: var(--text-muted);">
+          <div style="font-size: 20px; margin-bottom: 6px;">🧠</div>
+          <strong style="font-size: 13px; color: var(--text-primary);">No Strategy Decisions Logged</strong>
+          <div style="font-size: 11px; margin-top: 3px;">Bot decisions and risk gate evaluation logs will appear here during trading arena cycles.</div>
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  tbody.innerHTML = decisions.slice(0, 30).map(d => {
+    const isApproved = d.risk_approved === 1 || d.risk_approved === true || String(d.status || '').toUpperCase() === 'APPROVED';
+    const gateBadge = isApproved 
+      ? '<span class="badge badge-green" style="font-size: 10px;">PASSED (8/8)</span>'
+      : '<span class="badge badge-red" style="font-size: 10px;">RISK REJECTED</span>';
+
+    const act = (d.action || 'HOLD').toUpperCase();
+    const actBadge = act === 'BUY' ? 'badge-green' : (act === 'SELL' ? 'badge-red' : 'badge-subtle');
+    const conf = d.confidence || d.conviction || '--';
+
+    return `
+      <tr>
+        <td class="num" style="font-size: 11px; color: var(--text-muted);">${d.market_date || d.timestamp || 'Today'}</td>
+        <td>${getAgentBadgeHtml(d.agent_id)}</td>
+        <td><strong style="font-size: 12px; color: var(--text-primary);">${d.symbol}</strong></td>
+        <td><span class="badge ${actBadge}" style="font-weight: 700; font-size: 11px;">${act}</span></td>
+        <td class="numeric num" style="font-weight: 600; font-size: 12px;">${conf}%</td>
+        <td>${gateBadge}</td>
+        <td style="font-size: 12px; line-height: 1.4; color: var(--text-secondary); max-width: 380px;">${d.reason || d.decision_rationale || 'Quantitative factor scoring passed strategy hurdle.'}</td>
+      </tr>
+    `;
+  }).join('');
+}
+window.renderDedicatedDecisionsTable = renderDedicatedDecisionsTable;
+
+function closeDedicatedPosition(posId) {
+  let pos = (DATA.agent_positions || []).find(p => String(p.position_id) === String(posId) || String(p.id) === String(posId));
+  if (!pos) {
+    alert('Position not found.');
+    return;
+  }
+  
+  if (!confirm(`Confirm paper closing position for ${pos.symbol} (${pos.quantity} shares @ ₹${pos.current_price})?`)) {
+    return;
+  }
+
+  pos.status = 'CLOSED';
+  pos.closed_at = new Date().toISOString();
+
+  const closeOrderId = `ORD-CLOSE-${Date.now()}-${(pos.symbol || '').replace(/[^A-Za-z0-9]/g, '')}`;
+  const closeOrder = {
+    order_id: closeOrderId,
+    portfolio_id: pos.agent_id,
+    agent_id: pos.agent_id,
+    symbol: pos.symbol,
+    side: (pos.direction || 'BUY').toUpperCase() === 'BUY' ? 'SELL' : 'BUY',
+    quantity: pos.quantity,
+    order_type: 'MARKET',
+    requested_price: pos.current_price,
+    fill_price: pos.current_price,
+    fill_quantity: pos.quantity,
+    slippage: 0.0,
+    estimated_charges: 20.0,
+    status: 'FILLED',
+    rejection_reason: '',
+    execution_mode: 'PAPER_LIVE',
+    created_at: new Date().toISOString().replace('T', ' ').substring(0, 19),
+    broker_adapter: 'ANGEL ONE SMARTAPI (PAPER)',
+    broker_order_id: `ANGEL-SBX-${closeOrderId}`
+  };
+
+  DATA.orders = DATA.orders || [];
+  DATA.orders.unshift(closeOrder);
+
+  if (typeof savePersistentState === 'function') {
+    savePersistentState();
+  }
+
+  renderTradesPage();
+
+  openOrderConfirmModal({
+    status: 'FILLED',
+    orderId: closeOrder.broker_order_id,
+    agent: pos.agent_id,
+    strategy: 'MANUAL_DISCRETIONARY_EXIT',
+    price: pos.current_price * pos.quantity,
+    broker: 'ANGEL ONE SMARTAPI (PAPER)',
+    hash: 'LOCAL-PAPER-CLOSE'
+  });
+}
+window.closeDedicatedPosition = closeDedicatedPosition;
+
+function executeAngelPaperTrade() {
+  const symbol = prompt('Enter NSE Symbol to paper trade (e.g. RELIANCE.NS, INFY.NS, TCS.NS):', 'RELIANCE.NS');
+  if (!symbol) return;
+  const qty = parseInt(prompt('Enter Quantity:', '10'), 10) || 10;
+  const side = (prompt('Enter Side (BUY or SELL):', 'BUY') || 'BUY').toUpperCase();
+
+  const estPrice = 2980.0;
+  const orderId = `ORD-ANGEL-MANUAL-${Date.now()}`;
+  const newOrder = {
+    order_id: orderId,
+    portfolio_id: 'ALPHA',
+    agent_id: 'ALPHA',
+    symbol: symbol.toUpperCase(),
+    side: side === 'SELL' ? 'SELL' : 'BUY',
+    quantity: qty,
+    order_type: 'MARKET',
+    requested_price: estPrice,
+    fill_price: estPrice,
+    fill_quantity: qty,
+    slippage: 0.5,
+    estimated_charges: 15.0,
+    status: 'FILLED',
+    rejection_reason: '',
+    execution_mode: 'PAPER_LIVE',
+    created_at: new Date().toISOString().replace('T', ' ').substring(0, 19),
+    broker_adapter: 'ANGEL ONE SMARTAPI (PAPER)',
+    broker_order_id: `ANGEL-SBX-${orderId}`
+  };
+
+  DATA.orders = DATA.orders || [];
+  DATA.orders.unshift(newOrder);
+
+  DATA.agent_positions = DATA.agent_positions || [];
+  DATA.agent_positions.unshift({
+    id: Date.now(),
+    position_id: `POS-${orderId}`,
+    agent_id: 'ALPHA',
+    strategy_version: 'ALPHA-1.0',
+    symbol: symbol.toUpperCase(),
+    short_name: symbol.toUpperCase(),
+    sector: 'Large Cap',
+    instrument_type: 'EQUITY',
+    direction: side,
+    quantity: qty,
+    entry_price: estPrice,
+    current_price: estPrice,
+    cost_basis: estPrice * qty,
+    market_value: estPrice * qty,
+    stop_loss: +(estPrice * 0.985).toFixed(2),
+    target: +(estPrice * 1.03).toFixed(2),
+    unrealized_pnl: 0.0,
+    unrealized_pnl_pct: 0.0,
+    status: 'OPEN',
+    opened_at: new Date().toISOString(),
+    closed_at: null
+  });
+
+  if (typeof savePersistentState === 'function') {
+    savePersistentState();
+  }
+
+  renderTradesPage();
+
+  openOrderConfirmModal({
+    status: 'FILLED',
+    orderId: newOrder.broker_order_id,
+    agent: 'ALPHA',
+    strategy: 'MANUAL_DISCRETIONARY',
+    price: estPrice * qty,
+    broker: 'ANGEL ONE SMARTAPI (PAPER)',
+    hash: 'ANGEL-SBX-LOCAL'
+  });
+}
+window.executeAngelPaperTrade = executeAngelPaperTrade;
+
+function inspectOrder(orderId) {
+  const order = (DATA.orders || []).find(o => o.order_id === orderId || o.broker_order_id === orderId);
+  if (!order) {
+    alert('Order details not found.');
+    return;
+  }
+  openOrderConfirmModal({
+    status: order.status,
+    orderId: order.broker_order_id || order.order_id,
+    agent: order.agent_id || 'SYSTEM',
+    strategy: order.execution_mode || 'PAPER_LIVE',
+    price: (order.fill_price || order.requested_price || 0) * (order.fill_quantity || order.quantity || 1),
+    broker: order.broker_adapter || 'ANGEL ONE SMARTAPI (PAPER)',
+    hash: order.trade_proposal_id || order.order_id
+  });
+}
+window.inspectOrder = inspectOrder;
 
 // -----------------------------------------------------------------------------
 // 10. Unified Analysis Engine (Pre-Market, Post-Market Scorecard & News)

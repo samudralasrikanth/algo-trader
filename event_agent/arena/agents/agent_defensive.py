@@ -7,6 +7,7 @@ Philosophy: "Survive first. Profit second."
 Focus: Low beta, FMCG/Pharma dividend stability, conservative sizing, Put hedging.
 """
 
+import os
 from typing import Any, Dict, List
 from ..models import (
     AgentProfile,
@@ -76,9 +77,10 @@ class AgentDefensive(BaseAgent):
             if base_price <= 0:
                 continue
 
-            # Defensive requires low beta (<0.90) or defensive sector, and conviction >= 62%
+            # Defensive requires low beta (<0.90) or defensive sector, and conviction >= min_conviction
+            min_conviction = float(os.getenv("MIN_AGENT_CONVICTION", "48.0"))
             is_low_beta = beta < 0.90 or any(ds.lower() in sector.lower() for ds in defensive_sectors)
-            if is_low_beta and conviction >= 62.0 and pred_pct > 0.2:
+            if is_low_beta and conviction >= min_conviction and pred_pct > 0.15:
                 # Defensive primarily trades long high-quality stocks
                 candidates.append((symbol, data, conviction / beta))
 

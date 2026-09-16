@@ -30,6 +30,8 @@ from ..storage.ledger import (
     get_performance_scorecard,
     get_job_execution_logs,
     get_arena_data,
+    get_all_orders,
+    get_agent_positions,
     init_db,
 )
 from ..arena.orchestrator import ArenaOrchestrator
@@ -359,10 +361,11 @@ def build_web_payload(
             "news_data_age": "3 min",
             "sources_count": 3,
             "conflicts_count": 0,
-            "mode": os.environ.get("PAPER_BROKER", "upstox_sandbox").upper(),
-            "broker_adapter": "UPSTOX SANDBOX",
+            "mode": os.environ.get("PAPER_BROKER", "angel").upper(),
+            "broker_adapter": "ANGEL ONE SMARTAPI (PAPER)" if "angel" in os.environ.get("PAPER_BROKER", os.environ.get("BROKER", "")).lower() else "UPSTOX SANDBOX",
         },
-        "orders": arena_cycle_result.get("orders", []),
+        "orders": get_all_orders(limit=200) or arena_cycle_result.get("orders", []),
+        "agent_positions": get_agent_positions(),
         "system_status": system_status,
         "portfolio": port,
         "vs_baselines": vs_baselines,

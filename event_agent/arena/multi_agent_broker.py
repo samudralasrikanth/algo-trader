@@ -419,9 +419,13 @@ class MultiAgentBroker:
         quantity = evaluation.adjusted_quantity
         requested_price = proposal.entry_price
 
-        # 1. Create Paper Broker V2 Order (Upstox Sandbox)
+        # 1. Create Paper Broker V2 Order
         order_side = OrderSide.BUY if proposal.direction == TradeDirection.BUY else OrderSide.SELL
         order_id = f"ORD-{trade_id}"
+        adapter_name = getattr(self.broker_adapter, "name", "ANGEL ONE SMARTAPI (PAPER)")
+        broker_prefix = "ANGEL-SBX" if "ANGEL" in adapter_name.upper() else "UPSTOX-SBX"
+        exec_mode = ExecutionMode.PAPER if "ANGEL" in adapter_name.upper() else ExecutionMode.BROKER_SANDBOX
+
         order = Order(
             order_id=order_id,
             portfolio_id=proposal.agent_id,
@@ -433,9 +437,9 @@ class MultiAgentBroker:
             requested_price=requested_price,
             trade_proposal_id=trade_id,
             status=OrderStatus.CREATED,
-            execution_mode=ExecutionMode.BROKER_SANDBOX,
-            broker_adapter="UPSTOX SANDBOX",
-            broker_order_id=f"UPSTOX-SBX-{order_id}",
+            execution_mode=exec_mode,
+            broker_adapter=adapter_name,
+            broker_order_id=f"{broker_prefix}-{order_id}",
         )
         self.broker_adapter.submit_order(order)
 
@@ -505,9 +509,9 @@ class MultiAgentBroker:
             sub_port.open_positions[proposal.symbol] = position
 
         order.status = OrderStatus.FILLED
-        order.execution_mode = ExecutionMode.BROKER_SANDBOX
-        order.broker_adapter = "UPSTOX SANDBOX"
-        order.broker_order_id = f"UPSTOX-SBX-{order_id}"
+        order.execution_mode = exec_mode
+        order.broker_adapter = adapter_name
+        order.broker_order_id = f"{broker_prefix}-{order_id}"
         self.orders[order_id] = order
         sub_port.orders[order_id] = order
         self.executed_trade_ids.add(trade_id)

@@ -7,6 +7,7 @@ Philosophy: "I trade the environment."
 Focus: RBI Repo, US Fed rates, CPI inflation, bond yields, USD/INR, Crude oil.
 """
 
+import os
 from typing import Any, Dict, List
 from ..models import (
     AgentProfile,
@@ -80,7 +81,8 @@ class AgentMacro(BaseAgent):
             if base_price <= 0:
                 continue
 
-            if is_macro_sensitive and conviction >= 60.0 and abs(pred_pct) >= 0.35:
+            min_conviction = float(os.getenv("MIN_AGENT_CONVICTION", "48.0"))
+            if is_macro_sensitive and conviction >= min_conviction and abs(pred_pct) >= 0.30:
                 candidates.append((symbol, data, conviction))
 
         candidates.sort(key=lambda x: x[2], reverse=True)

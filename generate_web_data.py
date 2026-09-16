@@ -22,7 +22,7 @@ from event_agent.storage.ledger import (
     init_db, get_latest_predictions, get_active_night_predictions,
     get_daily_audits, get_performance_scorecard, get_all_news,
     get_factor_attribution_summary, get_job_execution_logs, get_arena_data,
-    get_recent_daily_trade_reports
+    get_recent_daily_trade_reports, get_all_orders, get_agent_positions
 )
 from event_agent.reporting.web_export import build_web_payload
 from event_agent.arena.orchestrator import ArenaOrchestrator
@@ -119,6 +119,8 @@ def export_web_dataset():
         "attribution_summary": attribution_summary,
         "job_logs": job_logs,
         "all_news": all_news,
+        "orders": get_all_orders(limit=200),
+        "agent_positions": get_agent_positions(),
         "universe": NIFTY50_UNIVERSE,
         "stock_charts": stock_charts,
         "stock_events": stock_events_map,

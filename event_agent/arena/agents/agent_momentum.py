@@ -7,6 +7,7 @@ Philosophy: "I follow strength."
 Focus: 5D/20D trend persistence, volume expansion, breakout continuation.
 """
 
+import os
 from typing import Any, Dict, List
 from ..models import (
     AgentProfile,
@@ -60,8 +61,9 @@ class AgentMomentum(BaseAgent):
             if base_price <= 0:
                 continue
 
-            # Momentum threshold: Strong trend (>0.6% or <-0.6%) and conviction >= 60%
-            if abs(momentum_5d) >= 0.6 and conviction >= 60.0:
+            # Momentum threshold: Strong trend (>0.5% or <-0.5%) and conviction >= min_conviction (default 48.0% for paper trading)
+            min_conviction = float(os.getenv("MIN_AGENT_CONVICTION", "48.0"))
+            if abs(momentum_5d) >= 0.5 and conviction >= min_conviction:
                 candidates.append((symbol, data, abs(momentum_5d)))
 
         candidates.sort(key=lambda x: x[2], reverse=True)

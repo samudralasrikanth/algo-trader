@@ -2,6 +2,7 @@
 # event_agent/config.py — Nifty 50 Universe & V3.2 Arena Configuration
 # =============================================================================
 
+import os
 from pathlib import Path
 
 # Paths
@@ -21,7 +22,7 @@ MAX_RISK_PER_TRADE_PCT = 0.5            # 0.5% portfolio risk per trade
 MAX_SINGLE_POSITION_ALLOCATION_PCT = 20.0 # Max 20% capital in single stock
 MAX_PORTFOLIO_EXPOSURE_PCT = 50.0       # Max 50% capital deployed
 MAX_CORRELATED_EXPOSURE_PCT = 25.0      # Max 25% exposure per sector
-MIN_CONFIDENCE_PCT = 60.0               # Minimum calibrated conviction hurdle
+MIN_CONFIDENCE_PCT = float(os.getenv("MIN_AGENT_CONVICTION", "48.0")) # Minimum calibrated conviction hurdle
 DAILY_LOSS_LIMIT_PCT = 1.5              # 1.5% daily loss limit circuit breaker
 DRAWDOWN_WARNING_PCT = 20.0             # 20% drawdown alert
 DRAWDOWN_SUSPEND_PCT = 30.0             # 30% drawdown suspension

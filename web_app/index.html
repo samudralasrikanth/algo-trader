@@ -47,7 +47,7 @@
 
       <div class="sidebar-divider"></div>
 
-      <!-- Vertical Icon Navigation (5-Tab Core Layout) -->
+      <!-- Vertical Icon Navigation (7-Tab Layout) -->
       <nav class="sidebar-nav" aria-label="Command Terminal Navigation">
         <a class="sidebar-nav-btn active" data-tab="overview" onclick="navigate('overview')" href="#/overview" aria-label="Dashboard [01]">
           <span class="material-symbols-outlined">dashboard</span>
@@ -57,21 +57,25 @@
           <span class="material-symbols-outlined">account_balance_wallet</span>
           <span class="sidebar-tooltip">[02] Holdings & Agents</span>
         </a>
-        <a class="sidebar-nav-btn" data-tab="analysis" onclick="navigate('analysis', 'pre')" href="#/analysis/pre" aria-label="Pre/Post Market Analysis [03]">
+        <a class="sidebar-nav-btn" data-tab="trades" onclick="navigate('trades')" href="#/trades" aria-label="Trades & Open Positions [03]">
+          <span class="material-symbols-outlined">receipt_long</span>
+          <span class="sidebar-tooltip">[03] Trades &amp; Positions</span>
+        </a>
+        <a class="sidebar-nav-btn" data-tab="analysis" onclick="navigate('analysis', 'pre')" href="#/analysis/pre" aria-label="Pre/Post Market Analysis [04]">
           <span class="material-symbols-outlined">insights</span>
-          <span class="sidebar-tooltip">[03] Market Analysis</span>
+          <span class="sidebar-tooltip">[04] Market Analysis</span>
         </a>
-        <a class="sidebar-nav-btn" data-tab="news" onclick="navigate('news')" href="#/news" aria-label="Real-Time News Wire [04]">
+        <a class="sidebar-nav-btn" data-tab="news" onclick="navigate('news')" href="#/news" aria-label="Real-Time News Wire [05]">
           <span class="material-symbols-outlined">newspaper</span>
-          <span class="sidebar-tooltip">[04] Live News Feed</span>
+          <span class="sidebar-tooltip">[05] Live News Feed</span>
         </a>
-        <a class="sidebar-nav-btn" data-tab="jobs" onclick="navigate('jobs')" href="#/jobs" aria-label="Jobs & Scheduler [05]">
+        <a class="sidebar-nav-btn" data-tab="jobs" onclick="navigate('jobs')" href="#/jobs" aria-label="Jobs & Scheduler [06]">
           <span class="material-symbols-outlined">schedule</span>
-          <span class="sidebar-tooltip">[05] Jobs & Ledger</span>
+          <span class="sidebar-tooltip">[06] Jobs & Ledger</span>
         </a>
-        <a class="sidebar-nav-btn" data-tab="settings" onclick="navigate('settings', 'risk')" href="#/settings/risk" aria-label="Risk & Settings [06]">
+        <a class="sidebar-nav-btn" data-tab="settings" onclick="navigate('settings', 'risk')" href="#/settings/risk" aria-label="Risk & Settings [07]">
           <span class="material-symbols-outlined">shield</span>
-          <span class="sidebar-tooltip">[06] Risk & Settings</span>
+          <span class="sidebar-tooltip">[07] Risk & Settings</span>
         </a>
       </nav>
 
@@ -1003,6 +1007,211 @@
                 </tr>
               </thead>
               <tbody id="arena-decisions-tbody">
+                <!-- Injected via app.js -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- ================================================================= -->
+      <!-- VIEW: TRADES & OPEN POSITIONS (DEDICATED ALL-TRADES & POSITIONS)  -->
+      <!-- ================================================================= -->
+      <div id="view-trades" class="view-panel">
+
+        <!-- Hero Header -->
+        <section class="section-panel" style="margin-bottom: 20px;">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 4px;">
+                <span class="material-symbols-outlined" style="font-size: 26px; color: var(--primary);">receipt_long</span>
+                <h3 style="margin: 0; font-size: 18px;">All Bot Trades &amp; Open Positions Ledger</h3>
+              </div>
+              <p>Real-time institutional ledger of all active open positions placed by the 5 autonomous strategy bots, complete order execution fill history, and live Mark-to-Market P&amp;L attribution.</p>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <span class="badge badge-green" id="trades-broker-badge">🟢 Broker: Angel One SmartAPI (Paper Active)</span>
+              <span class="badge badge-blue">Client: S558238</span>
+              <span class="badge badge-subtle">Execution: Paper Trading</span>
+              <span class="badge badge-purple" id="trades-live-orders-badge">28 Orders</span>
+              <button class="subnav-btn" style="background: var(--primary); color: white; border: none; font-weight: 600; padding: 6px 14px; border-radius: 4px; display: flex; align-items: center; gap: 6px;" onclick="executeAngelPaperTrade()">
+                <span class="material-symbols-outlined" style="font-size: 16px;">add_shopping_cart</span>
+                <span>Place Test Paper Trade</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Top Metrics Ribbon (4 Cards) -->
+          <div class="portfolio-summary-bar" style="margin-top: 16px; margin-bottom: 0;">
+            <div class="portfolio-kpi-card accent-primary">
+              <span class="kpi-label">ACTIVE OPEN POSITIONS</span>
+              <div class="kpi-value" id="trades-kpi-pos-count">--</div>
+              <div class="kpi-sub">
+                <span id="trades-kpi-pos-sub">5 Bot Strategies Active</span>
+              </div>
+            </div>
+            <div class="portfolio-kpi-card accent-warning">
+              <span class="kpi-label">TOTAL UNREALIZED MTM P&amp;L</span>
+              <div class="kpi-value" id="trades-kpi-pnl-val">₹0.00</div>
+              <div class="kpi-sub">
+                <span id="trades-kpi-pnl-sub">Marked to Live Angel One Quotes</span>
+              </div>
+            </div>
+            <div class="portfolio-kpi-card accent-purple">
+              <span class="kpi-label">CAPITAL DEPLOYED IN TRADES</span>
+              <div class="kpi-value" id="trades-kpi-deployed-val">₹0.00</div>
+              <div class="kpi-sub">
+                <span id="trades-kpi-deployed-sub">Virtual Allocation</span>
+              </div>
+            </div>
+            <div class="portfolio-kpi-card accent-success">
+              <span class="kpi-label">TOTAL PLACED ORDERS</span>
+              <div class="kpi-value" id="trades-kpi-orders-count">--</div>
+              <div class="kpi-sub">
+                <span id="trades-kpi-orders-sub">All Bot Executions</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Sub-View Navigation & Multi-Factor Filters -->
+        <section class="section-panel" style="margin-bottom: 20px; padding: 14px 18px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+            <!-- Agent Filter Tabs -->
+            <div class="subnav-group" id="dedicated-trades-agent-pills" style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <button class="subnav-btn active" onclick="filterDedicatedTradesAgent('ALL')">All Bots (<span id="t-count-all">0</span>)</button>
+              <button class="subnav-btn" onclick="filterDedicatedTradesAgent('ALPHA')">⚡ Alpha (<span id="t-count-alpha">0</span>)</button>
+              <button class="subnav-btn" onclick="filterDedicatedTradesAgent('MOMENTUM')">🚀 Momentum (<span id="t-count-momentum">0</span>)</button>
+              <button class="subnav-btn" onclick="filterDedicatedTradesAgent('MACRO')">🌐 Macro (<span id="t-count-macro">0</span>)</button>
+              <button class="subnav-btn" onclick="filterDedicatedTradesAgent('DEFENSIVE')">🛡️ Defensive (<span id="t-count-defensive">0</span>)</button>
+              <button class="subnav-btn" onclick="filterDedicatedTradesAgent('CONTRARIAN')">🔄 Contrarian (<span id="t-count-contrarian">0</span>)</button>
+            </div>
+
+            <!-- Search and Side Dropdowns -->
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <input type="text" id="dedicated-trades-search-input" placeholder="Filter symbol, bot, or order ID..." oninput="onDedicatedTradesSearchInput()" style="padding: 6px 12px; font-size: 12px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-surface); color: var(--text-primary); width: 220px;">
+              <select id="dedicated-trades-side-filter" onchange="onDedicatedTradesFilterChange()" style="padding: 6px 10px; font-size: 12px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-surface); color: var(--text-primary);">
+                <option value="ALL">All Sides</option>
+                <option value="BUY">BUY Only</option>
+                <option value="SELL">SELL Only</option>
+              </select>
+              <select id="dedicated-trades-status-filter" onchange="onDedicatedTradesFilterChange()" style="padding: 6px 10px; font-size: 12px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-surface); color: var(--text-primary);">
+                <option value="ALL">All Statuses</option>
+                <option value="OPEN">Open Positions</option>
+                <option value="FILLED">Filled Orders</option>
+                <option value="REJECTED">Rejected Orders</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- SECTION A: ALL ACTIVE OPEN POSITIONS -->
+        <section class="section-panel" id="section-dedicated-open-positions">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="material-symbols-outlined" style="color: var(--primary);">trending_up</span>
+                <h3 style="margin: 0; font-size: 15px;">Active Open Positions Across All Bots (<span id="dedicated-pos-count-badge">0</span>)</h3>
+              </div>
+              <p>Current positions held by each trading bot strategy with live price marks, unrealized P&amp;L, stop loss, and target levels.</p>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span class="badge badge-paper">PAPER TRADING (ANGEL ONE)</span>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table" id="dedicated-positions-table">
+              <thead>
+                <tr>
+                  <th>SYMBOL &amp; ASSET</th>
+                  <th>BOT AGENT</th>
+                  <th>TYPE</th>
+                  <th>SIDE</th>
+                  <th class="numeric">QTY</th>
+                  <th class="numeric">AVG ENTRY</th>
+                  <th class="numeric">CURRENT PRICE</th>
+                  <th class="numeric">STOP / TARGET</th>
+                  <th class="numeric">UNREALIZED P&amp;L</th>
+                  <th>OPENED AT</th>
+                  <th style="text-align: right;">ACTION</th>
+                </tr>
+              </thead>
+              <tbody id="dedicated-positions-tbody">
+                <!-- Injected via app.js -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- SECTION B: ALL TRADES PLACED BY BOT (EXECUTION ORDER LEDGER) -->
+        <section class="section-panel" id="section-dedicated-placed-orders" style="margin-top: 24px;">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="material-symbols-outlined" style="color: var(--primary);">history</span>
+                <h3 style="margin: 0; font-size: 15px;">All Trades Placed by Bot — Execution Ledger (<span id="dedicated-orders-count-badge">0</span>)</h3>
+              </div>
+              <p>Audit trail of all orders submitted by the bot agents to the broker adapter, execution prices, slippage, and fill statuses.</p>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span style="font-size: 11px; color: var(--text-muted);" id="dedicated-orders-summary-text">Orders: <strong id="dedicated-total-orders-txt">0</strong> | Filled: <strong id="dedicated-filled-orders-txt" style="color: var(--success);">0</strong></span>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table" id="dedicated-orders-table">
+              <thead>
+                <tr>
+                  <th>TIME / DATE</th>
+                  <th>ORDER ID</th>
+                  <th>BOT AGENT</th>
+                  <th>SYMBOL</th>
+                  <th>SIDE</th>
+                  <th>TYPE</th>
+                  <th class="numeric">QTY</th>
+                  <th class="numeric">REQ PRICE</th>
+                  <th class="numeric">FILL PRICE</th>
+                  <th class="numeric">SLIPPAGE</th>
+                  <th>BROKER ADAPTER</th>
+                  <th>STATUS</th>
+                  <th style="text-align: right;">AUDIT</th>
+                </tr>
+              </thead>
+              <tbody id="dedicated-orders-tbody">
+                <!-- Injected via app.js -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- SECTION C: BOT STRATEGY DECISION AUDIT -->
+        <section class="section-panel" id="section-dedicated-decisions" style="margin-top: 24px;">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="material-symbols-outlined" style="color: var(--primary);">psychology</span>
+                <h3 style="margin: 0; font-size: 15px;">Bot Decision Rationale &amp; Risk Gate History</h3>
+              </div>
+              <p>Explains why the bot decided to trade or not trade for each symbol, conviction score, and risk gate evaluation.</p>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table" id="dedicated-decisions-table">
+              <thead>
+                <tr>
+                  <th>DATE</th>
+                  <th>BOT AGENT</th>
+                  <th>SYMBOL</th>
+                  <th>ACTION</th>
+                  <th>CONVICTION</th>
+                  <th>RISK GATE</th>
+                  <th>DECISION RATIONALE</th>
+                </tr>
+              </thead>
+              <tbody id="dedicated-decisions-tbody">
                 <!-- Injected via app.js -->
               </tbody>
             </table>
@@ -2558,6 +2767,10 @@
       <a class="mobile-nav-btn" data-tab="holdings" onclick="navigate('holdings')" href="#/holdings">
         <span class="material-symbols-outlined">account_balance_wallet</span>
         <span>Holdings</span>
+      </a>
+      <a class="mobile-nav-btn" data-tab="trades" onclick="navigate('trades')" href="#/trades">
+        <span class="material-symbols-outlined">receipt_long</span>
+        <span>Trades</span>
       </a>
       <a class="mobile-nav-btn" data-tab="analysis" onclick="navigate('analysis', 'pre')" href="#/analysis/pre">
         <span class="material-symbols-outlined">insights</span>

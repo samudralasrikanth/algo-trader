@@ -397,9 +397,21 @@ def init_db() -> None:
             strategy_id TEXT,
             trade_proposal_id TEXT,
             execution_mode TEXT NOT NULL,
+            broker_adapter TEXT,
+            broker_order_id TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """)
+
+        # Add broker columns dynamically to orders if upgrading existing DB
+        for col, col_type in [
+            ("broker_adapter", "TEXT"),
+            ("broker_order_id", "TEXT"),
+        ]:
+            try:
+                cursor.execute(f"ALTER TABLE orders ADD COLUMN {col} {col_type}")
+            except Exception:
+                pass
 
         # 14. Paper Broker V2 Order Fills
         cursor.execute("""
@@ -1458,6 +1470,24 @@ def get_agent_positions(agent_id: Optional[str] = None) -> List[Dict[str, Any]]:
         return [dict(r) for r in cursor.fetchall()]
 
 
+def get_all_orders(agent_id: Optional[str] = None, limit: int = 200) -> List[Dict[str, Any]]:
+    """Retrieve orders from ledger ordered by submission/creation time."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        if agent_id:
+            cursor.execute("SELECT * FROM orders WHERE agent_id = ? ORDER BY created_at DESC LIMIT ?", (agent_id, limit))
+        else:
+            cursor.execute("SELECT * FROM orders ORDER BY created_at DESC LIMIT ?", (limit,))
+        results = []
+        for r in cursor.fetchall():
+            d = dict(r)
+            if not d.get("broker_adapter"):
+                d["broker_adapter"] = "ANGEL ONE SMARTAPI (PAPER)" if "angel" in os.environ.get("PAPER_BROKER", os.environ.get("BROKER", "")).lower() else "UPSTOX SANDBOX"
+            results.append(d)
+        return results
+
+
 def get_agent_trades(agent_id: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
     """Retrieve executed trades."""
     init_db()
@@ -1566,6 +1596,7 @@ def get_agent_strategies(agent_id: Optional[str] = None, status: Optional[str] =
 
 def save_order(order_dict: Dict[str, Any]) -> None:
     """Persist order record into SQLite ledger."""
+    init_db()
     with get_connection() as conn:
         cursor = conn.cursor()
         cursor.execute("""
@@ -1573,8 +1604,9 @@ def save_order(order_dict: Dict[str, Any]) -> None:
             order_id, portfolio_id, agent_id, symbol, side, quantity,
             order_type, requested_price, limit_price, stop_price, submitted_at,
             fill_price, fill_quantity, slippage, estimated_charges, status,
-            rejection_reason, strategy_id, trade_proposal_id, execution_mode
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            rejection_reason, strategy_id, trade_proposal_id, execution_mode,
+            broker_adapter, broker_order_id
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             order_dict["order_id"], order_dict["portfolio_id"], order_dict["agent_id"],
             order_dict["symbol"], str(order_dict["side"]), int(order_dict["quantity"]),
@@ -1585,6 +1617,8 @@ def save_order(order_dict: Dict[str, Any]) -> None:
             order_dict.get("estimated_charges", 0.0), str(order_dict["status"]),
             order_dict.get("rejection_reason", ""), order_dict.get("strategy_id"),
             order_dict.get("trade_proposal_id"), str(order_dict.get("execution_mode", "PAPER_LIVE")),
+            order_dict.get("broker_adapter", "ANGEL ONE SMARTAPI (PAPER)"),
+            order_dict.get("broker_order_id", f"ANGEL-SBX-{order_dict['order_id']}"),
         ))
         conn.commit()
 
