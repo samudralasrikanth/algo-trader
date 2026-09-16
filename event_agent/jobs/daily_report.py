@@ -59,7 +59,7 @@ def validate_required_secrets() -> Dict[str, str]:
     audit = {}
     for s in secrets:
         val = os.environ.get(s, "").strip()
-        is_placeholder = "placeholder" in val.lower() or "htcgeupzkxxxplqtvxue" in val
+        is_placeholder = "placeholder" in val.lower() or "your-project-ref" in val.lower()
         audit[s] = "PRESENT" if (bool(val) and not is_placeholder) else "MISSING"
 
     logger.info("=== NEXUS SECRETS DIAGNOSTIC AUDIT ===")

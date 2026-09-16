@@ -1799,10 +1799,10 @@ def save_daily_trade_report(report: Dict[str, Any]) -> bool:
 
     # Attempt Supabase cloud mirror
     supabase_url = os.environ.get("SUPABASE_URL", "").strip()
-    if "htcgeupzkxxxplqtvxue" in supabase_url:
+    if "your-project-ref" in supabase_url or "placeholder" in supabase_url.lower():
         supabase_url = ""
     supabase_key = (os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY") or "").strip()
-    if supabase_key.startswith("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0Y2dl"):
+    if "your-service-role-key" in supabase_key:
         supabase_key = ""
     if supabase_url and supabase_key:
         try:

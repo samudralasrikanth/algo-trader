@@ -49,9 +49,9 @@ if ENV_PATH.exists():
         logger.debug("Failed reading .env for Supabase config: %s", e)
 
 # Reject dummy placeholders
-if "htcgeupzkxxxplqtvxue" in SUPABASE_URL:
+if "your-project-ref" in SUPABASE_URL or "placeholder" in SUPABASE_URL.lower():
     SUPABASE_URL = ""
-if SUPABASE_SERVICE_KEY.startswith("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0Y2dl"):
+if "your-service-role-key" in SUPABASE_SERVICE_KEY:
     SUPABASE_SERVICE_KEY = ""
 
 

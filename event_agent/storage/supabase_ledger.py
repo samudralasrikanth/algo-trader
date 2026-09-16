@@ -27,10 +27,10 @@ if ENV_PATH.exists():
             elif line.startswith("SUPABASE_ANON_KEY=") and not SUPABASE_ANON_KEY:
                 SUPABASE_ANON_KEY = line.split("=", 1)[1].strip()
 
-# Reject known dummy / placeholder URLs
-if "htcgeupzkxxxplqtvxue" in SUPABASE_URL:
+# Reject unconfigured generic placeholders
+if "your-project-ref" in SUPABASE_URL or "placeholder" in SUPABASE_URL.lower():
     SUPABASE_URL = ""
-if SUPABASE_SERVICE_KEY.startswith("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0Y2dl"):
+if "your-service-role-key" in SUPABASE_SERVICE_KEY:
     SUPABASE_SERVICE_KEY = ""
 
 

@@ -130,15 +130,15 @@ class SchedulerHeartbeatManager:
     @property
     def supabase_url(self) -> Optional[str]:
         val = os.environ.get("SUPABASE_URL", "").strip()
-        # Reject default dummy URL
-        if not val or "htcgeupzkxxxplqtvxue" in val:
+        # Reject unconfigured generic placeholder
+        if not val or "your-project-ref" in val or "placeholder" in val.lower():
             return None
         return val.rstrip("/")
 
     @property
     def supabase_service_key(self) -> Optional[str]:
         val = (os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY") or "").strip()
-        if not val or val.startswith("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imh0Y2dl"):
+        if not val or "your-service-role-key" in val:
             return None
         return val
 
