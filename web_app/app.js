@@ -3906,7 +3906,8 @@ function renderNewsPage() {
   if (!filtered.length) {
     streamEl.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 50px; background: var(--bg-surface); border-radius: var(--radius-md);">No news articles found matching the current channel or search query.</div>`;
   } else {
-    streamEl.innerHTML = filtered.map(a => {
+    let cardsHtml = '';
+    filtered.forEach((a, idx) => {
       const imgUrl = getFinancialImageryForArticle(a.category, a.assets[0], a.title);
       const isBull = a.sentiment.includes('BULL') || a.sentiment.includes('POS');
       const isBear = a.sentiment.includes('BEAR') || a.sentiment.includes('NEG');
@@ -3915,40 +3916,60 @@ function renderNewsPage() {
       const tagsHtml = a.assets.map(ast => `<span class="news-card-tag">$${ast}</span>`).join('');
       const causalHtml = a.causalChain ? `
         <div class="news-causal-impact-box">
-          <span class="material-symbols-outlined" style="font-size: 14px; color: var(--primary);">account_tree</span>
+          <span class="material-symbols-outlined" style="font-size: 13px; color: var(--primary);">account_tree</span>
           <span><strong>Why It Matters:</strong> ${a.causalChain}</span>
         </div>
       ` : '';
 
-      return `
+      cardsHtml += `
         <article class="news-channel-card">
           <div class="news-card-thumb-wrap">
             <img src="${imgUrl}" alt="${a.title}" class="news-card-img" loading="lazy" onerror="this.src='https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=600&auto=format&fit=crop&q=80'">
             <span class="news-card-category-overlay">${a.category}</span>
+            <span class="badge ${sentBadge} news-card-sent-badge">${a.sentiment}</span>
           </div>
           <div class="news-card-content">
             <div>
-              <div class="news-card-header">
-                <a href="${a.url}" target="_blank" rel="noopener noreferrer" class="news-card-title">${a.title}</a>
-                <span class="badge ${sentBadge}" style="flex-shrink: 0; font-size: 10px;">${a.sentiment}</span>
+              <div class="news-card-meta-row">
+                <span>${a.source}</span>
+                <span>${a.time}</span>
               </div>
+              <a href="${a.url}" target="_blank" rel="noopener noreferrer" class="news-card-title">${a.title}</a>
               <div class="news-card-summary">${a.summary}</div>
               ${causalHtml}
             </div>
             <div class="news-card-footer">
               <div class="news-card-tags">
-                <span style="font-weight: 600; color: var(--text-muted);">${a.source} • ${a.time}</span>
                 ${tagsHtml}
               </div>
-              <a href="${a.url}" target="_blank" rel="noopener noreferrer" class="subnav-btn" style="padding: 3px 8px; font-size: 10px; display: inline-flex; align-items: center; gap: 4px; text-decoration: none;">
-                <span>Read Full</span>
-                <span class="material-symbols-outlined" style="font-size: 12px;">open_in_new</span>
+              <a href="${a.url}" target="_blank" rel="noopener noreferrer" class="news-card-read-btn">
+                <span>Read</span>
+                <span class="material-symbols-outlined" style="font-size: 11px;">open_in_new</span>
               </a>
             </div>
           </div>
         </article>
       `;
-    }).join('');
+
+      // Inject square in-feed ad placeholder after card 3 and card 11
+      if (idx === 3 || idx === 11) {
+        cardsHtml += `
+          <article class="news-channel-card news-ad-card-placeholder">
+            <div class="ad-slot-header" style="padding: 12px 14px 0 14px;">
+              <span class="ad-slot-tag">SPONSORED AD SPOT</span>
+              <span class="material-symbols-outlined" style="font-size: 14px; color: var(--text-muted);">campaign</span>
+            </div>
+            <div class="ad-card-body">
+              <span class="material-symbols-outlined" style="font-size: 34px; color: var(--primary); opacity: 0.8; margin-bottom: 8px;">monetization_on</span>
+              <div class="ad-slot-title">Future In-Feed Native Ad</div>
+              <div class="ad-slot-desc">Reserved 1:1 square native sponsored card for brokerage tools, trading platforms &amp; institutional sponsors.</div>
+            </div>
+            <div class="ad-slot-footer" style="padding: 10px 14px; text-align: center;">Ready for Ad Network / Direct Sponsor</div>
+          </article>
+        `;
+      }
+    });
+    streamEl.innerHTML = cardsHtml;
   }
 
   // Update Right Column: Sentiment distribution
