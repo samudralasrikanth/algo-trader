@@ -22,7 +22,7 @@ jobs:
       - name: Install Dependencies
         run: |
           pip install --upgrade pip
-          pip install yfinance pandas requests beautifulsoup4 lxml
+          pip install yfinance pandas requests beautifulsoup4 lxml python-dotenv
 
       - name: Run Post-Market Audit Cycle (Syncs to Supabase)
         env:

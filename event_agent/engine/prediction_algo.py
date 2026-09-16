@@ -65,26 +65,37 @@ def fetch_stock_market_context(
     try:
         ticker = yf.Ticker(symbol)
         hist = ticker.history(period="3mo")
+        if not hist.empty:
+            hist = hist.dropna(subset=["Close", "High", "Low"])
         if not hist.empty and len(hist) >= 5:
             # Filter by point-in-time cutoff if specified
             if cutoff_dt:
                 cutoff_date = cutoff_dt.date() if isinstance(cutoff_dt, datetime) else cutoff_dt
                 hist = hist[hist.index.date <= cutoff_date]
+                hist = hist.dropna(subset=["Close", "High", "Low"])
 
             if not hist.empty and len(hist) >= 5:
                 last_close = float(hist["Close"].iloc[-1])
                 prev_close = float(hist["Close"].iloc[-2]) if len(hist) >= 2 else last_close
+                if math.isnan(last_close) or last_close <= 0:
+                    last_close = default_price
+                if math.isnan(prev_close) or prev_close <= 0:
+                    prev_close = last_close
+
                 daily_returns = hist["Close"].pct_change().dropna()
                 daily_volatility = float(daily_returns.std()) if len(daily_returns) > 1 else 0.015
                 if math.isnan(daily_volatility) or daily_volatility <= 0:
                     daily_volatility = 0.015
 
                 high_low = (hist["High"] - hist["Low"]) / hist["Close"]
+                high_low = high_low.dropna()
                 atr_pct = float(high_low.tail(14).mean()) if len(high_low) >= 5 else 0.018
                 if math.isnan(atr_pct) or atr_pct <= 0:
                     atr_pct = 0.018
 
-                close_history = [float(x) for x in hist["Close"].tail(20).tolist()]
+                close_history = [float(x) for x in hist["Close"].tail(20).tolist() if not math.isnan(x)]
+                if not close_history:
+                    close_history = [default_price] * 20
 
                 return {
                     "current_price": round(last_close, 2),
@@ -202,8 +213,12 @@ def generate_stock_prediction(
 
     # 3. Market Context (Prices, Volatility, History)
     mkt = fetch_stock_market_context(symbol, cutoff_dt=data_cutoff_dt)
-    base_price = mkt["current_price"]
-    daily_vol = mkt["daily_volatility"]
+    base_price = mkt.get("current_price")
+    if base_price is None or math.isnan(base_price) or base_price <= 0:
+        base_price = DEFAULT_PRICES.get(symbol, 1000.0)
+    daily_vol = mkt.get("daily_volatility", 0.015)
+    if daily_vol is None or math.isnan(daily_vol) or daily_vol <= 0:
+        daily_vol = 0.015
     price_history = mkt.get("price_history_20d", [base_price] * 20)
 
     # 4. Multi-Factor Algorithm Formulation (Deterministic Math)

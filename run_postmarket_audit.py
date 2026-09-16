@@ -27,6 +27,8 @@ def fetch_today_actual_ohlc(symbol: str, target_date_str: str) -> Optional[Dict[
         ticker = yf.Ticker(symbol)
         hist = ticker.history(start=start_str, end=end_str)
         if not hist.empty:
+            hist = hist.dropna(subset=["Open", "High", "Low", "Close"])
+        if not hist.empty:
             for idx, row in hist.iterrows():
                 row_date = idx.strftime("%Y-%m-%d")
                 if row_date >= target_date_str:

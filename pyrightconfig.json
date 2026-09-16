@@ -1,0 +1,10 @@
+{
+  "include": [
+    "."
+  ],
+  "extraPaths": [
+    ".",
+    "event_agent",
+    "data"
+  ]
+}

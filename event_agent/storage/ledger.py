@@ -10,8 +10,20 @@ import urllib.request
 from datetime import datetime, date, timedelta
 from typing import List, Dict, Any, Optional
 import yfinance as yf
+import math
 
 logger = logging.getLogger(__name__)
+
+
+def _clean_float(val: Any, default: float = 0.0) -> float:
+    """Ensure a float value is valid and not None/NaN/Inf for SQLite insertion."""
+    if val is None:
+        return default
+    try:
+        f = float(val)
+        return default if (math.isnan(f) or math.isinf(f)) else f
+    except (ValueError, TypeError):
+        return default
 
 from ..config import DB_PATH, ALLOCATION_PER_STOCK, HORIZONS
 
@@ -717,15 +729,20 @@ def fetch_historical_actual_price(symbol: str, target_date_str: str) -> Optional
     """Fetch closing price on or immediately after target_date_str from cache."""
     hist = get_symbol_price_df(symbol)
     if hist is not None and not hist.empty:
+        hist = hist.dropna(subset=["Close"])
+    if hist is not None and not hist.empty:
         # Check direct match
         if target_date_str in hist.index:
-            return round(float(hist.loc[target_date_str]["Close"]), 2)
+            val = float(hist.loc[target_date_str]["Close"])
+            return round(val, 2) if not math.isnan(val) else None
         # Otherwise find next available trading day
         future_dates = [d for d in hist.index if d >= target_date_str]
         if future_dates:
             closest_date = min(future_dates)
-            return round(float(hist.loc[closest_date]["Close"]), 2)
-        return round(float(hist["Close"].iloc[-1]), 2)
+            val = float(hist.loc[closest_date]["Close"])
+            return round(val, 2) if not math.isnan(val) else None
+        last_val = float(hist["Close"].iloc[-1])
+        return round(last_val, 2) if not math.isnan(last_val) else None
     return None
 
 
@@ -968,6 +985,15 @@ def save_night_prediction(pred: Dict[str, Any], target_trade_date: str) -> int:
         provenance = pred.get("provenance", {})
         provenance_json = json.dumps(provenance)
         
+        base_price = _clean_float(pred.get("base_price"), 1000.0)
+        target_1d = _clean_float(pred.get("target_1d", pred.get("predicted_1d_target")), round(base_price * 1.01, 2))
+        expected_1d_pct = _clean_float(pred.get("expected_1d_pct", pred.get("predicted_1d_pct")), 1.0)
+        pred_low = _clean_float(range_1d.get("low"), round(base_price * 0.98, 2))
+        pred_high = _clean_float(range_1d.get("high"), round(base_price * 1.02, 2))
+        conviction = _clean_float(pred.get("conviction"), 50.0)
+        stock_sentiment_score = _clean_float(pred.get("stock_sentiment_score"), 0.0)
+        macro_sentiment_score = _clean_float(pred.get("macro_sentiment_score"), 0.0)
+
         cursor.execute("""
         INSERT INTO night_predictions (
             created_at, forecast_date, target_trade_date, symbol, short_name, sector,
@@ -984,16 +1010,16 @@ def save_night_prediction(pred: Dict[str, Any], target_trade_date: str) -> int:
             pred.get("symbol"),
             pred.get("short_name"),
             pred.get("sector"),
-            pred.get("base_price"),
-            pred.get("target_1d", pred.get("predicted_1d_target")),
-            pred.get("expected_1d_pct", pred.get("predicted_1d_pct")),
-            range_1d.get("low", 0),
-            range_1d.get("high", 0),
-            pred.get("direction"),
-            pred.get("action"),
-            pred.get("conviction"),
-            pred.get("stock_sentiment_score"),
-            pred.get("macro_sentiment_score"),
+            base_price,
+            target_1d,
+            expected_1d_pct,
+            pred_low,
+            pred_high,
+            pred.get("direction") or "NEUTRAL",
+            pred.get("action") or "HOLD",
+            conviction,
+            stock_sentiment_score,
+            macro_sentiment_score,
             catalysts_json,
             risks_json,
             reasoning_json,
@@ -1074,6 +1100,17 @@ def save_daily_audit(audit: Dict[str, Any]) -> int:
         cursor = conn.cursor()
         factors_json = json.dumps(audit.get("factors_active", []))
         
+        base_price = _clean_float(audit.get("base_price"), 1000.0)
+        predicted_target = _clean_float(audit.get("predicted_target"), base_price)
+        predicted_change_pct = _clean_float(audit.get("predicted_change_pct"), 0.0)
+        actual_open = _clean_float(audit.get("actual_open"), base_price) if audit.get("actual_open") is not None else None
+        actual_high = _clean_float(audit.get("actual_high"), base_price) if audit.get("actual_high") is not None else None
+        actual_low = _clean_float(audit.get("actual_low"), base_price) if audit.get("actual_low") is not None else None
+        actual_close = _clean_float(audit.get("actual_close"), base_price) if audit.get("actual_close") is not None else None
+        actual_change_pct = _clean_float(audit.get("actual_change_pct"), 0.0) if audit.get("actual_change_pct") is not None else None
+        abs_error_pct = _clean_float(audit.get("abs_error_pct"), 0.0)
+        simulated_pnl = _clean_float(audit.get("simulated_pnl"), 0.0)
+
         cursor.execute("""
         INSERT INTO daily_audits (
             night_pred_id, trade_date, symbol, short_name, sector, base_price,
@@ -1089,20 +1126,20 @@ def save_daily_audit(audit: Dict[str, Any]) -> int:
             audit.get("symbol"),
             audit.get("short_name"),
             audit.get("sector"),
-            audit.get("base_price"),
-            audit.get("predicted_target", 0.0),
-            audit.get("predicted_change_pct", 0.0),
+            base_price,
+            predicted_target,
+            predicted_change_pct,
             audit.get("predicted_direction", "NEUTRAL"),
-            audit.get("actual_open"),
-            audit.get("actual_high"),
-            audit.get("actual_low"),
-            audit.get("actual_close"),
-            audit.get("actual_change_pct"),
+            actual_open,
+            actual_high,
+            actual_low,
+            actual_close,
+            actual_change_pct,
             audit.get("actual_direction"),
             audit.get("direction_correct", 0),
             audit.get("hit_target_range", 0),
-            audit.get("abs_error_pct", 0.0),
-            audit.get("simulated_pnl", 0.0),
+            abs_error_pct,
+            simulated_pnl,
             audit.get("attribution_category", "MARKET_NOISE_DRIFT"),
             audit.get("diagnostic_explanation", ""),
             audit.get("refactoring_suggestion", ""),

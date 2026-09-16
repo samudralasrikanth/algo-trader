@@ -15,10 +15,18 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..broker.cost_model import CostModel
-from ..broker.order import Order, OrderFill, OrderSide, OrderStatus, OrderType, ExecutionMode
-from ..broker.execution_simulator import Candle5M, ExecutionSimulator, Fill
-from ..broker.broker_adapter import BrokerAdapter, UpstoxSandboxAdapter, get_paper_broker_adapter
+try:
+    from event_agent.broker.cost_model import CostModel
+    from event_agent.broker.order import Order, OrderFill, OrderSide, OrderStatus, OrderType, ExecutionMode
+    from event_agent.broker.execution_simulator import Candle5M, ExecutionSimulator, Fill
+    from event_agent.broker.broker_adapter import BrokerAdapter, UpstoxSandboxAdapter, get_paper_broker_adapter
+    from event_agent.config import AGENT_STARTING_CAPITAL, TOTAL_VIRTUAL_CAPITAL
+except (ImportError, ValueError):
+    from ..broker.cost_model import CostModel
+    from ..broker.order import Order, OrderFill, OrderSide, OrderStatus, OrderType, ExecutionMode
+    from ..broker.execution_simulator import Candle5M, ExecutionSimulator, Fill
+    from ..broker.broker_adapter import BrokerAdapter, UpstoxSandboxAdapter, get_paper_broker_adapter
+    from ..config import AGENT_STARTING_CAPITAL, TOTAL_VIRTUAL_CAPITAL
 from .asset_models import (
     AssetClass,
     LegSide,
@@ -30,7 +38,6 @@ from .asset_models import (
     StrategyType,
 )
 from .options_engine import OptionsPricingEngine
-from ..config import AGENT_STARTING_CAPITAL, TOTAL_VIRTUAL_CAPITAL
 from .models import (
     HedgeDecision,
     Instrument,
