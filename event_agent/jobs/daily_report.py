@@ -18,11 +18,17 @@ from datetime import datetime, timezone
 import json
 import logging
 import os
+from pathlib import Path
 import sys
 from typing import Any, Dict, List, Optional
 
-from ..reporting.daily_trade_pipeline import DailyTradeReportPipeline, PipelineExecutionReport
-from ..storage.scheduler_heartbeat import (
+# Ensure workspace root is in sys.path
+_WORKSPACE_ROOT = str(Path(__file__).resolve().parent.parent.parent)
+if _WORKSPACE_ROOT not in sys.path:
+    sys.path.insert(0, _WORKSPACE_ROOT)
+
+from event_agent.reporting.daily_trade_pipeline import DailyTradeReportPipeline, PipelineExecutionReport
+from event_agent.storage.scheduler_heartbeat import (
     SchedulerHeartbeatManager,
     SchedulerInvocation,
     SchedulerState,

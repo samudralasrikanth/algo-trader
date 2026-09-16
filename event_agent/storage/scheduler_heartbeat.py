@@ -22,10 +22,14 @@ import urllib.request
 import urllib.error
 from typing import Any, Dict, List, Optional, Tuple
 
+import sys
+
 logger = logging.getLogger(__name__)
 
 IST_TZ = timezone(timedelta(hours=5, minutes=30))
 BASE_DIR = Path(__file__).resolve().parents[2]
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
 LOCAL_DB_PATH = BASE_DIR / "data" / "job_runs.db"
 
 
@@ -337,7 +341,7 @@ class SchedulerHeartbeatManager:
         and the NSE trading calendar.
         Returns: (next_run_datetime_utc, next_run_ist_string)
         """
-        from ..arena.market_clock import MarketClock
+        from event_agent.arena.market_clock import MarketClock
 
         now_utc = current_dt or datetime.now(timezone.utc)
         now_ist = now_utc.astimezone(IST_TZ)
@@ -373,7 +377,7 @@ class SchedulerHeartbeatManager:
         - If after 18:45 IST on a trading day without a valid execution, latches status to MISSED.
         - Computes next expected run dynamically.
         """
-        from ..arena.market_clock import MarketClock
+        from event_agent.arena.market_clock import MarketClock
 
         now_utc = current_dt or datetime.now(timezone.utc)
         now_ist = now_utc.astimezone(IST_TZ)
