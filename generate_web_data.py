@@ -81,6 +81,67 @@ def export_web_dataset():
         arena_result["summary"]["total_active_positions"] = live_reval["active_positions_count"]
         arena_result["summary"]["total_arena_return_pct"] = round((arena_result["summary"]["total_arena_value"] - 10000000.0) / 10000000.0 * 100, 2)
 
+        # Synchronize each agent's portfolio & leaderboard with live MTM rates
+        from event_agent.storage.ledger import get_agent_positions
+        import collections
+        open_db_pos = [p for p in get_agent_positions() if p.get("status") == "OPEN"]
+        agent_pos_map = collections.defaultdict(list)
+        for p in open_db_pos:
+            agent_pos_map[p["agent_id"]].append(p)
+
+        for aid in ["ALPHA", "MOMENTUM", "MACRO", "DEFENSIVE", "CONTRARIAN"]:
+            pos_list = agent_pos_map.get(aid, [])
+            a_inv = round(sum(float(p.get("cost_basis") or 0.0) for p in pos_list), 2)
+            a_pnl = round(sum(float(p.get("unrealized_pnl") or 0.0) for p in pos_list), 2)
+            a_cash = round(max(0.0, 2000000.0 - a_inv), 2)
+            a_nav = round(a_cash + a_inv + a_pnl, 2)
+            a_ret = round(((a_nav - 2000000.0) / 2000000.0) * 100.0, 2)
+
+            if "portfolios" in arena_result and aid in arena_result["portfolios"]:
+                port = arena_result["portfolios"][aid]
+                port["invested_capital"] = a_inv
+                port["unrealized_pnl"] = a_pnl
+                port["total_pnl"] = a_pnl
+                port["current_cash"] = a_cash
+                port["portfolio_value"] = a_nav
+                port["return_pct"] = a_ret
+                port["open_positions_count"] = len(pos_list)
+
+                # Update live prices and PnL on holdings list
+                if "holdings_by_instrument" in port and "all" in port["holdings_by_instrument"]:
+                    for h in port["holdings_by_instrument"]["all"]:
+                        match = next((p for p in pos_list if p.get("symbol") == h.get("symbol")), None)
+                        if match:
+                            h["current_price"] = match.get("current_price")
+                            h["unrealized_pnl"] = match.get("unrealized_pnl")
+                            h["pnl_pct"] = match.get("unrealized_pnl_pct")
+
+            if "leaderboard" in arena_result:
+                for lb_row in arena_result["leaderboard"]:
+                    if lb_row.get("agent_id") == aid:
+                        lb_row["portfolio_value"] = a_nav
+                        lb_row["cash"] = a_cash
+                        lb_row["invested"] = a_inv
+                        lb_row["unrealized_pnl"] = a_pnl
+                        lb_row["total_return_pct"] = a_ret
+                        lb_row["day_return_pct"] = a_ret
+                        lb_row["positions_count"] = len(pos_list)
+
+        # Re-sort leaderboard by total_return_pct descending and update ranks & trophies
+        if "leaderboard" in arena_result:
+            arena_result["leaderboard"].sort(key=lambda x: x.get("total_return_pct", 0.0), reverse=True)
+            for rank, r in enumerate(arena_result["leaderboard"], 1):
+                r["rank"] = rank
+                r["trophies"] = []
+            if arena_result["leaderboard"]:
+                arena_result["leaderboard"][0]["trophies"].append({
+                    "code": "BEST_RETURN",
+                    "icon": "🥇",
+                    "title": "Best Return",
+                    "desc": "Highest overall portfolio NAV return",
+                })
+                arena_result["summary"]["top_agent"] = arena_result["leaderboard"][0].get("name", "Agent Alpha")
+
     print(f"      Arena Value: ₹{arena_result['summary']['total_arena_value']:,.2f} | Capital Deployed: ₹{arena_result['summary']['total_arena_invested']:,.2f} | Live P&L: ₹{arena_result['summary']['total_arena_pnl']:+,.2f}")
 
     print("[2/4] Building full V3.2 Web Payload (Leaderboard, Consensus, Forensic Audits)...")

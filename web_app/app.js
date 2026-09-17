@@ -2516,10 +2516,31 @@ function closeOrderConfirmModal() {
 // -----------------------------------------------------------------------------
 function renderHoldingsPage() {
   const summary = DATA.arena?.summary || {};
-  const totalNav = summary.total_arena_value || 9998924.28;
-  const totalCash = summary.total_arena_cash || 9205464.28;
-  const totalPnl = summary.total_arena_pnl || -1075.72;
-  const totalInvested = summary.total_arena_invested || 793590.0;
+  const openPosList = (DATA.agent_positions || []).filter(p => (p.status || 'OPEN').toUpperCase() === 'OPEN');
+  const agentLiveMetrics = {};
+  ['ALPHA', 'MOMENTUM', 'DEFENSIVE', 'MACRO', 'CONTRARIAN'].forEach(aid => {
+    const list = openPosList.filter(p => (p.agent_id || '').toUpperCase() === aid);
+    const invested = list.reduce((sum, p) => sum + (Number(p.cost_basis) || (Number(p.entry_price) * Number(p.quantity))), 0);
+    const pnl = list.reduce((sum, p) => sum + (Number(p.unrealized_pnl) || 0), 0);
+    const cash = Math.max(0, 2000000 - invested);
+    const nav = cash + invested + pnl;
+    const ret = ((nav - 2000000) / 2000000) * 100;
+    agentLiveMetrics[aid] = { invested, pnl, cash, nav, ret, count: list.length };
+  });
+
+  const hasLivePos = openPosList.length > 0;
+  const totalNav = hasLivePos
+    ? Object.values(agentLiveMetrics).reduce((sum, m) => sum + m.nav, 0)
+    : (summary.total_arena_value || 10000000.0);
+  const totalCash = hasLivePos
+    ? Object.values(agentLiveMetrics).reduce((sum, m) => sum + m.cash, 0)
+    : (summary.total_arena_cash || 10000000.0);
+  const totalPnl = hasLivePos
+    ? Object.values(agentLiveMetrics).reduce((sum, m) => sum + m.pnl, 0)
+    : (summary.total_arena_pnl || 0.0);
+  const totalInvested = hasLivePos
+    ? Object.values(agentLiveMetrics).reduce((sum, m) => sum + m.invested, 0)
+    : (summary.total_arena_invested || 0.0);
 
   // 1. Update Portfolio Summary KPIs
   const navEl = document.getElementById('holdings-nav-val');
@@ -2561,17 +2582,18 @@ function renderHoldingsPage() {
     agents.forEach(a => {
       const aid = a.agent_id;
       const port = portfolios[aid] || {};
-      const cash = port.current_cash ?? a.cash ?? 2000000;
-      const nav = port.portfolio_value ?? a.portfolio_value ?? 2000000;
-      const pnl = port.total_pnl ?? a.unrealized_pnl ?? 0.0;
-      const ret = Number(port.return_pct ?? a.total_return_pct ?? 0.0);
-      const openPos = port.open_positions_count ?? a.positions_count ?? 0;
+      const liveM = agentLiveMetrics[aid];
+      const cash = liveM ? liveM.cash : (port.current_cash ?? a.cash ?? 2000000);
+      const nav = liveM ? liveM.nav : (port.portfolio_value ?? a.portfolio_value ?? 2000000);
+      const pnl = liveM ? liveM.pnl : (port.total_pnl ?? a.unrealized_pnl ?? 0.0);
+      const ret = liveM ? liveM.ret : Number(port.return_pct ?? a.total_return_pct ?? 0.0);
+      const openPos = liveM ? liveM.count : (port.open_positions_count ?? a.positions_count ?? 0);
       const winRate = Number(port.win_rate_pct ?? a.win_rate ?? 0.0);
       const isSelected = currentAgentFilter === aid;
       const meta = agentIcons[aid] || { emoji: '🤖', color: '#3B82F6' };
 
       cardsHtml += `
-        <div class="agent-perf-card ${isSelected ? 'selected' : ''}" onclick="selectArenaAgent('${aid}')" role="button" tabindex="0" title="Click to view Agent ${aid}'s holdings & orders">
+        <div class="agent-perf-card ${isSelected ? 'selected' : ''}" data-agent-id="${aid}" onclick="selectArenaAgent('${aid}')" role="button" tabindex="0" title="Click to view Agent ${aid}'s holdings & orders">
           <div class="agent-card-header">
             <div class="agent-identity">
               <div class="agent-avatar-circle" style="background: ${meta.color}15; color: ${meta.color};">
@@ -2582,7 +2604,7 @@ function renderHoldingsPage() {
                 <div class="agent-role">${a.title || 'Autonomous Strategy Agent'}</div>
               </div>
             </div>
-            <span class="badge ${ret >= 0 ? 'badge-green' : 'badge-red'}" style="font-size: 11px;">
+            <span class="badge agent-ret-badge ${ret >= 0 ? 'badge-green' : 'badge-red'}" style="font-size: 11px;">
               ${ret >= 0 ? '+' : ''}${ret.toFixed(2)}%
             </span>
           </div>
@@ -2590,11 +2612,11 @@ function renderHoldingsPage() {
           <div class="agent-pnl-banner">
             <div class="pnl-col">
               <span class="pnl-label">Agent NAV</span>
-              <span class="num" style="font-size: 15px; font-weight: 800; color: var(--text-primary);">₹${Number(nav).toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
+              <span class="num agent-nav-val" style="font-size: 15px; font-weight: 800; color: var(--text-primary);">₹${Number(nav).toLocaleString('en-IN', { maximumFractionDigits: 0 })}</span>
             </div>
             <div class="pnl-col" style="text-align: right;">
               <span class="pnl-label">Net P&amp;L</span>
-              <span class="num" style="font-size: 15px; font-weight: 800; color: ${pnl >= 0 ? 'var(--success)' : 'var(--danger)'};">
+              <span class="num agent-pnl-val" style="font-size: 15px; font-weight: 800; color: ${pnl >= 0 ? 'var(--success)' : 'var(--danger)'};">
                 ${pnl >= 0 ? '+' : ''}₹${Number(pnl).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
               </span>
             </div>
@@ -2603,11 +2625,11 @@ function renderHoldingsPage() {
           <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 11px; margin-bottom: 12px;">
             <div>
               <span style="color: var(--text-muted); display: block;">Cash Avail</span>
-              <span class="num" style="font-weight: 600;">₹${(cash / 100000).toFixed(2)}L</span>
+              <span class="num agent-cash-val" style="font-weight: 600;">₹${(cash / 100000).toFixed(2)}L</span>
             </div>
             <div>
               <span style="color: var(--text-muted); display: block;">Positions</span>
-              <span class="num" style="font-weight: 600;">${openPos} active</span>
+              <span class="num agent-pos-val" style="font-weight: 600;">${openPos} active</span>
             </div>
             <div>
               <span style="color: var(--text-muted); display: block;">Win Rate</span>
@@ -2751,7 +2773,7 @@ function renderHoldingsTable(filterType = 'all', agentFilter = 'ALL') {
     const pnlPct = pos.pnl_pct || 0.0;
 
     html += `
-      <tr onclick="openPositionDetailModalByIndex(${idx})" role="button" tabindex="0" title="Inspect position details">
+      <tr data-symbol="${pos.symbol}" onclick="openPositionDetailModalByIndex(${idx})" role="button" tabindex="0" title="Inspect position details">
         <td>
           <div style="font-weight: 700; color: var(--text-primary);">${pos.symbol || 'Position'}</div>
           <div style="font-size: 11px; color: var(--text-muted);">${pos.instrument?.contract_name || 'Standard Contract'}</div>
@@ -2764,12 +2786,12 @@ function renderHoldingsTable(filterType = 'all', agentFilter = 'ALL') {
         <td><span class="badge ${pos.direction === 'BUY' ? 'badge-green' : 'badge-red'}">${pos.direction || 'BUY'}</span></td>
         <td class="numeric num">${pos.quantity || 50}</td>
         <td class="numeric num">₹${Number(pos.entry_price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
-        <td class="numeric num">₹${Number(pos.current_price || pos.entry_price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
+        <td class="numeric num pos-cur-price" style="font-weight: 700;">₹${Number(pos.current_price || pos.entry_price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</td>
         <td class="numeric num" style="font-size: 11px;">
           <span style="color: var(--danger);">S: ₹${Number(pos.stop_loss || 0).toFixed(1)}</span> / 
           <span style="color: var(--success);">T: ₹${Number(pos.target || 0).toFixed(1)}</span>
         </td>
-        <td class="numeric num" style="font-weight: 700; color: ${pnl >= 0 ? 'var(--success)' : 'var(--danger)'};">
+        <td class="numeric num pos-pnl-cell" style="font-weight: 700; color: ${pnl >= 0 ? 'var(--success)' : 'var(--danger)'};">
           ${pnl >= 0 ? '+' : ''}₹${Number(pnl).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
           <div style="font-size: 10px;">(${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(1)}%)</div>
         </td>
@@ -7302,7 +7324,10 @@ function updateLivePositionRates(quotes) {
     // Recalculate KPIs
     const totalUnrealizedPnl = openPositions.reduce((acc, p) => acc + (Number(p.unrealized_pnl) || 0), 0);
     const totalCapitalDeployed = openPositions.reduce((acc, p) => acc + (Number(p.cost_basis || (p.entry_price * p.quantity)) || 0), 0);
+    const totalArenaCash = Math.max(0, 10000000 - totalCapitalDeployed);
+    const totalArenaValue = totalArenaCash + totalCapitalDeployed + totalUnrealizedPnl;
 
+    // 1. Update Trades Page KPIs
     const kpiPnlVal = document.getElementById('trades-kpi-pnl-val');
     if (kpiPnlVal) {
       const isPos = totalUnrealizedPnl >= 0;
@@ -7315,12 +7340,127 @@ function updateLivePositionRates(quotes) {
       kpiDeployedVal.textContent = `₹${totalCapitalDeployed.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     }
 
-    // Update Header/Sidebar Total P&L if present
+    // 2. Update Header/Sidebar Total P&L if present
     const navPnl = document.getElementById('nav-pnl-val');
     if (navPnl) {
       const isPos = totalUnrealizedPnl >= 0;
       navPnl.textContent = `${isPos ? '+' : '-'}₹${Math.abs(totalUnrealizedPnl).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
       navPnl.style.color = isPos ? 'var(--success)' : 'var(--danger)';
+    }
+
+    // 3. Update Holdings Summary Ribbon
+    const hNav = document.getElementById('holdings-nav-val');
+    if (hNav) hNav.textContent = `₹${Number(totalArenaValue).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    const hCash = document.getElementById('holdings-cash-val');
+    if (hCash) hCash.textContent = `Cash: ₹${(totalArenaCash / 100000).toFixed(2)}L`;
+
+    const hPnl = document.getElementById('holdings-pnl-val');
+    if (hPnl) {
+      const isPos = totalUnrealizedPnl >= 0;
+      hPnl.textContent = `${isPos ? '+' : ''}₹${Number(totalUnrealizedPnl).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      hPnl.style.color = isPos ? 'var(--success)' : 'var(--danger)';
+    }
+
+    const hUtil = document.getElementById('holdings-util-val');
+    if (hUtil) {
+      const utilPct = ((totalCapitalDeployed / 10000000) * 100).toFixed(2);
+      hUtil.textContent = `${utilPct}%`;
+    }
+
+    const hDep = document.getElementById('holdings-deployed-sub');
+    if (hDep) hDep.textContent = `₹${(totalCapitalDeployed / 100000).toFixed(2)}L Deployed`;
+
+    // 4. Update Agent-Level Performance & Capital Efficiency Cards
+    const agentIds = ['ALPHA', 'MOMENTUM', 'MACRO', 'DEFENSIVE', 'CONTRARIAN'];
+    agentIds.forEach(aid => {
+      const agentPos = openPositions.filter(p => (p.agent_id || '').toUpperCase() === aid);
+      const aInvested = agentPos.reduce((sum, p) => sum + (Number(p.cost_basis) || (Number(p.entry_price) * Number(p.quantity))), 0);
+      const aPnl = agentPos.reduce((sum, p) => sum + (Number(p.unrealized_pnl) || 0), 0);
+      const aCash = Math.max(0, 2000000 - aInvested);
+      const aNav = aCash + aInvested + aPnl;
+      const aRet = ((aNav - 2000000) / 2000000) * 100;
+      const aCount = agentPos.length;
+
+      // Update in DATA.arena data structures
+      if (DATA.arena) {
+        if (DATA.arena.portfolios && DATA.arena.portfolios[aid]) {
+          const p = DATA.arena.portfolios[aid];
+          p.portfolio_value = aNav;
+          p.current_cash = aCash;
+          p.invested_capital = aInvested;
+          p.unrealized_pnl = aPnl;
+          p.total_pnl = aPnl;
+          p.return_pct = aRet;
+          p.open_positions_count = aCount;
+        }
+        if (Array.isArray(DATA.arena.leaderboard)) {
+          const lb = DATA.arena.leaderboard.find(x => x.agent_id === aid);
+          if (lb) {
+            lb.portfolio_value = aNav;
+            lb.cash = aCash;
+            lb.invested = aInvested;
+            lb.unrealized_pnl = aPnl;
+            lb.total_return_pct = aRet;
+            lb.day_return_pct = aRet;
+            lb.positions_count = aCount;
+          }
+        }
+      }
+
+      // Update DOM Agent Card in #agent-cards-container
+      const card = document.querySelector(`.agent-perf-card[data-agent-id="${aid}"]`);
+      if (card) {
+        const retBadge = card.querySelector('.agent-ret-badge');
+        if (retBadge) {
+          retBadge.className = `badge agent-ret-badge ${aRet >= 0 ? 'badge-green' : 'badge-red'}`;
+          retBadge.textContent = `${aRet >= 0 ? '+' : ''}${aRet.toFixed(2)}%`;
+        }
+
+        const navEl = card.querySelector('.agent-nav-val');
+        if (navEl) {
+          const formattedNav = `₹${Number(aNav).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+          if (navEl.textContent !== formattedNav) {
+            navEl.classList.remove('flash-positive', 'flash-negative');
+            void navEl.offsetWidth;
+            navEl.classList.add(aRet >= 0 ? 'flash-positive' : 'flash-negative');
+            navEl.textContent = formattedNav;
+          }
+        }
+
+        const pnlEl = card.querySelector('.agent-pnl-val');
+        if (pnlEl) {
+          const isPos = aPnl >= 0;
+          pnlEl.style.color = isPos ? 'var(--success)' : 'var(--danger)';
+          pnlEl.textContent = `${isPos ? '+' : ''}₹${Number(aPnl).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+        }
+
+        const cashEl = card.querySelector('.agent-cash-val');
+        if (cashEl) {
+          cashEl.textContent = `₹${(aCash / 100000).toFixed(2)}L`;
+        }
+
+        const posEl = card.querySelector('.agent-pos-val');
+        if (posEl) {
+          posEl.textContent = `${aCount} active`;
+        }
+      }
+    });
+
+    // 5. Update Overview Page Stats & 5-Agent Arena list
+    const ovTodayPnl = document.getElementById('ov-today-pnl');
+    if (ovTodayPnl) {
+      ovTodayPnl.textContent = `${totalUnrealizedPnl >= 0 ? '+' : ''}₹${Math.abs(totalUnrealizedPnl).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+      ovTodayPnl.style.color = totalUnrealizedPnl >= 0 ? 'var(--success)' : 'var(--danger)';
+    }
+    const ovTotalPnl = document.getElementById('ov-total-pnl');
+    if (ovTotalPnl) {
+      ovTotalPnl.textContent = `${totalUnrealizedPnl >= 0 ? '+' : ''}₹${Math.abs(totalUnrealizedPnl).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+      ovTotalPnl.style.color = totalUnrealizedPnl >= 0 ? 'var(--success)' : 'var(--danger)';
+    }
+
+    if (typeof renderFiveAgentArena === 'function') {
+      renderFiveAgentArena();
     }
   }
 }
