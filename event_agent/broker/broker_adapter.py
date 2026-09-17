@@ -291,11 +291,13 @@ class AngelOnePaperAdapter(BrokerAdapter):
         if all([self.api_key, self.client_code, self.pin, self.totp_secret]):
             try:
                 import sys
+                import importlib
                 from pathlib import Path
                 root_dir = Path(__file__).resolve().parent.parent.parent
                 if str(root_dir) not in sys.path:
                     sys.path.insert(0, str(root_dir))
-                from data.adapters.angel_adapter import AngelAdapter
+                angel_module = importlib.import_module("data.adapters.angel_adapter")
+                AngelAdapter = getattr(angel_module, "AngelAdapter")
                 self._angel_client = AngelAdapter(
                     api_key=self.api_key,
                     client_code=self.client_code,

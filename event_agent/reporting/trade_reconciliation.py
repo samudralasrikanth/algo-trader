@@ -18,7 +18,7 @@ import json
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..storage.ledger import get_connection
+from event_agent.storage.ledger import get_connection
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +116,7 @@ class TradeReconciliationEngine:
 
         # Refresh open positions with live market rates for accurate P&L streaming
         try:
-            from ..engine.live_market_feed import revalue_all_positions_live
+            from event_agent.engine.live_market_feed import revalue_all_positions_live
             revalue_all_positions_live()
         except Exception as e:
             logger.debug(f"Live revaluation in trade reconciliation: {e}")

@@ -7,7 +7,7 @@ import os
 import sqlite3
 import json
 import urllib.request
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 from typing import List, Dict, Any, Optional
 import yfinance as yf
 import math
@@ -25,7 +25,7 @@ def _clean_float(val: Any, default: float = 0.0) -> float:
     except (ValueError, TypeError):
         return default
 
-from ..config import DB_PATH, ALLOCATION_PER_STOCK, HORIZONS
+from event_agent.config import DB_PATH, ALLOCATION_PER_STOCK, HORIZONS
 
 
 def get_connection() -> sqlite3.Connection:
