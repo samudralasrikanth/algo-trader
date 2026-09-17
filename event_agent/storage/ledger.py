@@ -1643,8 +1643,12 @@ def get_all_orders(agent_id: Optional[str] = None, limit: int = 200) -> List[Dic
         results = []
         for r in cursor.fetchall():
             d = dict(r)
-            if not d.get("broker_adapter"):
-                d["broker_adapter"] = "ANGEL ONE SMARTAPI (PAPER)" if "angel" in os.environ.get("PAPER_BROKER", os.environ.get("BROKER", "")).lower() else "UPSTOX SANDBOX"
+            if not d.get("broker_adapter") or "angel" in str(d.get("broker_adapter", "")).lower():
+                d["broker_adapter"] = "UPSTOX SANDBOX"
+            if not d.get("execution_mode") or d.get("execution_mode") == "PAPER_LIVE":
+                d["execution_mode"] = "BROKER_SANDBOX"
+            if not d.get("broker_order_id") or "ANGEL-SBX" in str(d.get("broker_order_id", "")):
+                d["broker_order_id"] = f"UPSTOX-SBX-{d['order_id']}"
             results.append(d)
         return results
 

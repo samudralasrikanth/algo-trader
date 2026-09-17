@@ -399,7 +399,7 @@ def get_paper_broker_adapter() -> BrokerAdapter:
     Factory function returning the active paper broker adapter.
     Supports Angel One, Upstox Sandbox, and Internal Paper Broker.
     """
-    broker_type = os.getenv("PAPER_BROKER", os.getenv("BROKER", "angel")).lower()
+    broker_type = os.getenv("PAPER_BROKER", os.getenv("BROKER", "upstox")).lower()
     if "angel" in broker_type:
         return AngelOnePaperAdapter()
     elif "internal" in broker_type or "inbuilt" in broker_type:

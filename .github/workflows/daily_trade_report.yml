@@ -16,9 +16,9 @@ name: 🎬 NEXUS Daily Trade Report & Video Pipeline (18:30 IST)
 # =============================================================================
 
 on:
-  schedule:
-    # 13:00 UTC = 18:30 IST (Monday through Friday)
-    - cron: '0 13 * * 1-5'
+  # Netlify Scheduled Function (0 13 * * 1-5 / 18:30 IST) is canonical trigger.
+  # schedule:
+  #   - cron: '0 13 * * 1-5'
   workflow_dispatch:
     inputs:
       scheduled_date:

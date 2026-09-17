@@ -11,6 +11,7 @@ Multi-Agent Paper Broker managing 5 isolated sub-portfolios:
 """
 
 import logging
+import os
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
@@ -351,6 +352,7 @@ class MultiAgentBroker:
         cost_model: Optional[CostModel] = None,
         simulator: Optional[ExecutionSimulator] = None,
         broker_adapter: Optional[BrokerAdapter] = None,
+        auto_hydrate: bool = True,
     ):
         self.cost_model = cost_model or CostModel(default_schedule="equity_delivery")
         self.simulator = simulator or ExecutionSimulator(conservative_ambiguity=True)
@@ -364,7 +366,8 @@ class MultiAgentBroker:
         }
         self.executed_trade_ids: set = set()
         self.orders: Dict[str, Any] = {}
-        self.hydrate_from_db()
+        if auto_hydrate and os.getenv("TESTING", "").lower() not in ("1", "true", "yes"):
+            self.hydrate_from_db()
 
     def hydrate_from_db(self) -> None:
         """

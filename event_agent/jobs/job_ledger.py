@@ -106,7 +106,8 @@ class JobLedger:
     def __init__(self, db_path: Optional[Path] = None, enable_supabase: bool = True):
         self.db_path = db_path or DB_PATH
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        self.enable_supabase = enable_supabase and bool(SUPABASE_URL and SUPABASE_SERVICE_KEY)
+        is_testing = os.environ.get("TESTING") == "1" or bool(os.environ.get("PYTEST_CURRENT_TEST"))
+        self.enable_supabase = enable_supabase and not is_testing and bool(SUPABASE_URL and SUPABASE_SERVICE_KEY)
         self._init_db()
 
     def _init_db(self) -> None:

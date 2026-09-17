@@ -127,15 +127,17 @@ class SchedulerHeartbeatManager:
     Manages durable persistence and health evaluation of scheduler invocations.
     """
 
-    def __init__(self, db_path: Optional[Path] = None):
+    def __init__(self, db_path: Optional[Path] = None, enable_supabase: bool = True):
         self.db_path = db_path or LOCAL_DB_PATH
+        is_testing = os.environ.get("TESTING") == "1" or bool(os.environ.get("PYTEST_CURRENT_TEST"))
+        self.enable_supabase = enable_supabase and not is_testing
         init_local_heartbeat_db(self.db_path)
 
     @property
     def supabase_url(self) -> Optional[str]:
         val = os.environ.get("SUPABASE_URL", "").strip()
-        # Reject unconfigured generic placeholder
-        if not val or "your-project-ref" in val or "placeholder" in val.lower():
+        # Reject unconfigured generic placeholder or dummy test domains
+        if not val or "your-project-ref" in val or "placeholder" in val.lower() or "xxx" in val.lower():
             return None
         return val.rstrip("/")
 
@@ -201,6 +203,9 @@ class SchedulerHeartbeatManager:
             conn.commit()
 
         # 2. Cloud Supabase write
+        if not self.enable_supabase and not require_cloud:
+            return True, "LOCAL_ONLY_WARNING"
+
         is_valid, msg = self.validate_configuration()
         if not is_valid:
             if require_cloud:
@@ -268,61 +273,63 @@ class SchedulerHeartbeatManager:
             """, (status, comp_iso, workflow_run_id, job_run_id, error_code, error_message, invocation_id))
             conn.commit()
 
-        is_valid, _ = self.validate_configuration()
-        if is_valid:
-            try:
-                url = f"{self.supabase_url}/rest/v1/scheduler_invocations?invocation_id=eq.{invocation_id}"
-                headers = {
-                    "apikey": self.supabase_service_key,
-                    "Authorization": f"Bearer {self.supabase_service_key}",
-                    "Content-Type": "application/json",
-                    "Prefer": "return=representation",
-                }
-                patch_payload = {
-                    "status": status,
-                    "completed_at": comp_iso,
-                }
-                if workflow_run_id:
-                    patch_payload["workflow_run_id"] = workflow_run_id
-                if job_run_id:
-                    patch_payload["job_run_id"] = job_run_id
-                if error_code:
-                    patch_payload["error_code"] = error_code
-                if error_message:
-                    patch_payload["error_message"] = error_message
+        if self.enable_supabase:
+            is_valid, _ = self.validate_configuration()
+            if is_valid:
+                try:
+                    url = f"{self.supabase_url}/rest/v1/scheduler_invocations?invocation_id=eq.{invocation_id}"
+                    headers = {
+                        "apikey": self.supabase_service_key,
+                        "Authorization": f"Bearer {self.supabase_service_key}",
+                        "Content-Type": "application/json",
+                        "Prefer": "return=representation",
+                    }
+                    patch_payload = {
+                        "status": status,
+                        "completed_at": comp_iso,
+                    }
+                    if workflow_run_id:
+                        patch_payload["workflow_run_id"] = workflow_run_id
+                    if job_run_id:
+                        patch_payload["job_run_id"] = job_run_id
+                    if error_code:
+                        patch_payload["error_code"] = error_code
+                    if error_message:
+                        patch_payload["error_message"] = error_message
 
-                req = urllib.request.Request(
-                    url,
-                    data=json.dumps(patch_payload).encode("utf-8"),
-                    headers=headers,
-                    method="PATCH",
-                )
-                with urllib.request.urlopen(req, timeout=10) as resp:
-                    return resp.status in (200, 204)
-            except Exception as e:
-                logger.warning("Failed updating heartbeat in Supabase: %s", e)
+                    req = urllib.request.Request(
+                        url,
+                        data=json.dumps(patch_payload).encode("utf-8"),
+                        headers=headers,
+                        method="PATCH",
+                    )
+                    with urllib.request.urlopen(req, timeout=10) as resp:
+                        return resp.status in (200, 204)
+                except Exception as e:
+                    logger.warning("Failed updating heartbeat in Supabase: %s", e)
 
         return True
 
     def get_latest_heartbeat(self) -> Optional[Dict[str, Any]]:
         """Retrieves the most recent scheduler invocation."""
-        is_valid, _ = self.validate_configuration()
-        if is_valid:
-            try:
-                url = f"{self.supabase_url}/rest/v1/scheduler_invocations?select=*&order=started_at.desc&limit=1"
-                headers = {
-                    "apikey": self.supabase_service_key,
-                    "Authorization": f"Bearer {self.supabase_service_key}",
-                    "Content-Type": "application/json",
-                }
-                req = urllib.request.Request(url, headers=headers, method="GET")
-                with urllib.request.urlopen(req, timeout=10) as resp:
-                    if resp.status == 200:
-                        rows = json.loads(resp.read().decode("utf-8"))
-                        if rows:
-                            return rows[0]
-            except Exception as e:
-                logger.debug("Failed fetching latest heartbeat from Supabase: %s", e)
+        if self.enable_supabase:
+            is_valid, _ = self.validate_configuration()
+            if is_valid:
+                try:
+                    url = f"{self.supabase_url}/rest/v1/scheduler_invocations?select=*&order=started_at.desc&limit=1"
+                    headers = {
+                        "apikey": self.supabase_service_key,
+                        "Authorization": f"Bearer {self.supabase_service_key}",
+                        "Content-Type": "application/json",
+                    }
+                    req = urllib.request.Request(url, headers=headers, method="GET")
+                    with urllib.request.urlopen(req, timeout=10) as resp:
+                        if resp.status == 200:
+                            rows = json.loads(resp.read().decode("utf-8"))
+                            if rows:
+                                return rows[0]
+                except Exception as e:
+                    logger.debug("Failed fetching latest heartbeat from Supabase: %s", e)
 
         # Fallback to local SQLite
         with sqlite3.connect(str(self.db_path)) as conn:

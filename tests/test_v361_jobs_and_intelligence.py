@@ -372,8 +372,8 @@ class TestV361SpecificRequirements:
         """Ensures parent scheduler run tracks children and bitwise replay reconstructs state."""
         from event_agent.jobs.job_ledger import JobLedger
 
-        ledger = JobLedger()
-        runs = ledger.get_recent_runs(limit=20)
+        ledger = JobLedger(enable_supabase=False)
+        runs = ledger.get_recent_runs(limit=100)
         parent_sched = next((r for r in runs if "SCHED-" in r.run_id), None)
         assert parent_sched is not None, "A SCHEDULER parent run must exist in ledger"
 

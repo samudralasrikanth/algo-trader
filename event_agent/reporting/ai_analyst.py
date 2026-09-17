@@ -236,8 +236,8 @@ Produce a JSON object with these exact keys:
             )
         except Exception as e:
             latency_ms = int((time.perf_counter() - start_time) * 1000)
-            logger.error("OpenRouter exception: %s. Using fallback engine...", e)
-            return self._build_fallback_result(reconciliation, latency_ms=latency_ms, error_msg=str(e))
+            logger.error("OpenRouter exception: %s. Returning failed result...", e)
+            return self._build_failed_result(error_msg=f"OpenRouter exception: {e}", latency_ms=latency_ms)
 
     def _build_fallback_result(
         self,
