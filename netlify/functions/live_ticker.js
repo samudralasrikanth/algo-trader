@@ -15,9 +15,9 @@
 
 let cachedData = null;
 let lastCacheTime = 0;
-const CACHE_TTL_MS = 10000; // 10 seconds
+const CACHE_TTL_MS = 5000; // 5 seconds
 
-const SYMBOLS = {
+const MACRO_SYMBOLS = {
   'NIFTY 50': '^NSEI',
   'BANK NIFTY': '^NSEBANK',
   'INDIA VIX': '^INDIAVIX',
@@ -25,6 +25,10 @@ const SYMBOLS = {
   'BRENT': 'BZ=F',
   'GOLD': 'GC=F'
 };
+
+const DEFAULT_ACTIVE_STOCKS = [
+  'LT.NS', 'APOLLOHOSP.NS', 'M&M.NS', 'BAJAJ-AUTO.NS', 'NESTLEIND.NS', 'TITAN.NS', 'TRENT.NS'
+];
 
 async function fetchQuote(sym) {
   try {
@@ -43,10 +47,10 @@ async function fetchQuote(sym) {
     const chg_pct = prev ? (chg / prev) * 100 : 0;
     return {
       symbol: sym,
-      price,
-      previous_close: prev,
-      change: chg,
-      change_pct: chg_pct,
+      price: Math.round(price * 100) / 100,
+      previous_close: Math.round(prev * 100) / 100,
+      change: Math.round(chg * 100) / 100,
+      change_pct: Math.round(chg_pct * 100) / 100,
       isPositive: chg >= 0,
       timestamp: new Date().toISOString()
     };
@@ -62,15 +66,22 @@ exports.handler = async function(event, context) {
     "Access-Control-Allow-Origin": origin,
     "Access-Control-Allow-Methods": "GET, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
-    "Cache-Control": "public, max-age=10, stale-while-revalidate=30",
+    "Cache-Control": "public, max-age=5, stale-while-revalidate=15",
   };
 
   if (event.httpMethod === "OPTIONS") {
     return { statusCode: 204, headers, body: "" };
   }
 
+  // Parse any requested symbols from query params: ?symbols=LT.NS,APOLLOHOSP.NS
+  const requestedSymbols = event.queryStringParameters?.symbols
+    ? event.queryStringParameters.symbols.split(',').map(s => s.trim()).filter(Boolean)
+    : [];
+
+  const targetStocks = Array.from(new Set([...DEFAULT_ACTIVE_STOCKS, ...requestedSymbols]));
+
   const now = Date.now();
-  if (cachedData && (now - lastCacheTime < CACHE_TTL_MS)) {
+  if (cachedData && (now - lastCacheTime < CACHE_TTL_MS) && requestedSymbols.length === 0) {
     return {
       statusCode: 200,
       headers,
@@ -79,17 +90,30 @@ exports.handler = async function(event, context) {
   }
 
   try {
-    const entries = Object.entries(SYMBOLS);
-    const results = await Promise.all(
-      entries.map(async ([name, sym]) => {
-        const q = await fetchQuote(sym);
-        return [name, q];
-      })
-    );
+    // 1. Fetch Macro Indices
+    const macroEntries = Object.entries(MACRO_SYMBOLS);
+    const macroFetches = macroEntries.map(async ([name, sym]) => {
+      const q = await fetchQuote(sym);
+      return [name, q];
+    });
+
+    // 2. Fetch Active Stock Symbols
+    const stockFetches = targetStocks.map(async (sym) => {
+      const q = await fetchQuote(sym);
+      return [sym, q];
+    });
+
+    const [macroResults, stockResults] = await Promise.all([
+      Promise.all(macroFetches),
+      Promise.all(stockFetches)
+    ]);
 
     const quotes = {};
-    for (const [name, q] of results) {
+    for (const [name, q] of macroResults) {
       if (q) quotes[name] = q;
+    }
+    for (const [sym, q] of stockResults) {
+      if (q) quotes[sym] = q;
     }
 
     // Add Domestic INR Gold Calculation
@@ -100,18 +124,22 @@ exports.handler = async function(event, context) {
       quotes['GOLD'].price_inr_10g = inrPer10g;
     }
 
-    cachedData = {
+    const payload = {
       status: "LIVE",
       source: "Yahoo Finance Live Feed",
       timestamp: new Date().toISOString(),
       quotes
     };
-    lastCacheTime = now;
+
+    if (requestedSymbols.length === 0) {
+      cachedData = payload;
+      lastCacheTime = now;
+    }
 
     return {
       statusCode: 200,
       headers,
-      body: JSON.stringify(cachedData)
+      body: JSON.stringify(payload)
     };
   } catch (e) {
     return {

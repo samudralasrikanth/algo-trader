@@ -1399,6 +1399,130 @@ def save_agent_position(pos: Dict[str, Any]) -> None:
         conn.commit()
 
 
+def close_agent_position(position_id: str, exit_price: Optional[float] = None, exit_reason: str = "MANUAL_CLOSE") -> bool:
+    """Close an open position in agent_positions, marking status = CLOSED and recording exit details."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM agent_positions WHERE position_id = ? AND status = 'OPEN'", (position_id,))
+        row = cursor.fetchone()
+        if not row:
+            return False
+        
+        pos = dict(row)
+        ep = float(pos.get("entry_price", 0.0))
+        xp = float(exit_price) if exit_price is not None else ep
+        qty = int(pos.get("quantity", 0))
+        direction = str(pos.get("direction", "BUY")).upper()
+        
+        if direction == "BUY":
+            gross_pnl = (xp - ep) * qty
+        else:
+            gross_pnl = (ep - xp) * qty
+            
+        cost_basis = float(pos.get("cost_basis", ep * qty))
+        pnl_pct = (gross_pnl / cost_basis * 100.0) if cost_basis > 0 else 0.0
+        now_iso = datetime.now().isoformat()
+        
+        cursor.execute("""
+            UPDATE agent_positions
+            SET status = 'CLOSED',
+                current_price = ?,
+                market_value = ?,
+                unrealized_pnl = 0.0,
+                unrealized_pnl_pct = 0.0,
+                closed_at = ?
+            WHERE position_id = ?
+        """, (xp, xp * qty, now_iso, position_id))
+        conn.commit()
+        return True
+
+
+def clean_stale_test_positions() -> Dict[str, int]:
+    """
+    Cleans up old test positions prior to active trading session and resolves duplicates.
+    Ensures portfolio capital invariant <= 1 Crore is strictly maintained.
+    """
+    init_db()
+    closed_count = 0
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        
+        # 1. Close historical test positions created before 2026-09-16
+        cursor.execute("SELECT position_id, entry_price FROM agent_positions WHERE status = 'OPEN' AND opened_at < '2026-09-16'")
+        stale = cursor.fetchall()
+        for r in stale:
+            pid, ep = r[0], r[1]
+            cursor.execute("""
+                UPDATE agent_positions
+                SET status = 'CLOSED',
+                    closed_at = datetime('now')
+                WHERE position_id = ?
+            """, (pid,))
+            closed_count += 1
+            
+        # 2. Deduplicate: For each (agent_id, symbol), keep only the newest OPEN position
+        cursor.execute("""
+            SELECT agent_id, symbol, count(*) as c
+            FROM agent_positions
+            WHERE status = 'OPEN'
+            GROUP BY agent_id, symbol
+            HAVING c > 1
+        """)
+        dupes = cursor.fetchall()
+        for agent_id, symbol, _ in dupes:
+            cursor.execute("""
+                SELECT id FROM agent_positions
+                WHERE agent_id = ? AND symbol = ? AND status = 'OPEN'
+                ORDER BY id DESC
+            """, (agent_id, symbol))
+            rows = cursor.fetchall()
+            # Keep rows[0], close all others
+            for r in rows[1:]:
+                cursor.execute("UPDATE agent_positions SET status = 'CLOSED', closed_at = datetime('now') WHERE id = ?", (r[0],))
+                closed_count += 1
+                
+        conn.commit()
+    return {"closed_stale_count": closed_count}
+
+
+def update_agent_position_prices(price_map: Dict[str, float]) -> int:
+    """
+    Updates current_price, market_value, unrealized_pnl, and unrealized_pnl_pct
+    for all OPEN positions in agent_positions table using live market quotes.
+    """
+    init_db()
+    updated_count = 0
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, symbol, direction, quantity, entry_price, cost_basis FROM agent_positions WHERE status = 'OPEN'")
+        open_pos = cursor.fetchall()
+        
+        for r in open_pos:
+            pos_id, sym, direction, qty, ep, cb = r[0], r[1], str(r[2]).upper(), int(r[3]), float(r[4]), float(r[5])
+            if sym in price_map and price_map[sym] > 0:
+                cur_p = round(float(price_map[sym]), 2)
+                mkt_val = round(cur_p * qty, 2)
+                if direction == "BUY":
+                    u_pnl = round((cur_p - ep) * qty, 2)
+                else:
+                    u_pnl = round((ep - cur_p) * qty, 2)
+                cost_base = cb if cb > 0 else (ep * qty)
+                pnl_pct = round((u_pnl / cost_base * 100.0), 2) if cost_base > 0 else 0.0
+                
+                cursor.execute("""
+                    UPDATE agent_positions
+                    SET current_price = ?,
+                        market_value = ?,
+                        unrealized_pnl = ?,
+                        unrealized_pnl_pct = ?
+                    WHERE id = ?
+                """, (cur_p, mkt_val, u_pnl, pnl_pct, pos_id))
+                updated_count += 1
+        conn.commit()
+    return updated_count
+
+
 def save_agent_trade(trade: Dict[str, Any]) -> bool:
     """Record an executed trade idempotently. Returns True if inserted, False if already existed."""
     init_db()

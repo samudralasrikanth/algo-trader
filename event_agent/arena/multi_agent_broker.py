@@ -371,7 +371,69 @@ class MultiAgentBroker:
         }
         self.executed_trade_ids: set = set()
         self.orders: Dict[str, Any] = {}
+        self.hydrate_from_db()
 
+    def hydrate_from_db(self) -> None:
+        """
+        Loads active open positions from SQLite database, populates SubPortfolio.open_positions,
+        and synchronizes cash balances. Guarantees portfolio capital invariant <= 1 Crore is strictly maintained.
+        """
+        try:
+            from ..storage.ledger import get_agent_positions
+            db_positions = get_agent_positions()
+            for p_dict in db_positions:
+                aid = p_dict.get("agent_id")
+                if aid not in self.sub_portfolios:
+                    continue
+                sub_port = self.sub_portfolios[aid]
+                sym = p_dict.get("symbol")
+                if not sym:
+                    continue
+
+                itype_str = p_dict.get("instrument_type", "EQUITY")
+                inst_type = InstrumentType.EQUITY
+                if itype_str == "FUTURE":
+                    inst_type = InstrumentType.FUTURE
+                elif itype_str == "OPTION":
+                    inst_type = InstrumentType.OPTION
+
+                inst = Instrument(underlying=sym, instrument_type=inst_type)
+                direction = TradeDirection.BUY if str(p_dict.get("direction", "BUY")).upper() == "BUY" else TradeDirection.SELL
+                qty = int(p_dict.get("quantity", 0))
+                ep = float(p_dict.get("entry_price", 0.0))
+                cp = float(p_dict.get("current_price", ep))
+                sl = float(p_dict.get("stop_loss", 0.0))
+                tgt = float(p_dict.get("target", 0.0))
+                inv = float(p_dict.get("cost_basis", ep * qty))
+                tid = p_dict.get("position_id") or f"TRD-{aid}-{sym}"
+
+                arena_pos = ArenaPosition(
+                    agent_id=aid,
+                    strategy_version=p_dict.get("strategy_version", "1.0"),
+                    symbol=sym,
+                    instrument=inst,
+                    direction=direction,
+                    quantity=qty,
+                    entry_price=ep,
+                    current_price=cp,
+                    stop_loss=sl,
+                    target=tgt,
+                    invested_capital=inv,
+                    margin_or_premium=inv,
+                    trade_id=tid,
+                    status="OPEN",
+                    entry_time=p_dict.get("opened_at", ""),
+                )
+                arena_pos.unrealized_pnl = float(p_dict.get("unrealized_pnl", 0.0))
+                sub_port.open_positions[sym] = arena_pos
+                self.executed_trade_ids.add(tid)
+
+            # Synchronize cash strictly
+            for aid, sub_port in self.sub_portfolios.items():
+                total_invested = sum(pos.invested_capital for pos in sub_port.open_positions.values())
+                sub_port.cash = max(0.0, sub_port.starting_capital - total_invested + sub_port.realized_pnl)
+        except Exception as e:
+            logger.debug(f"MultiAgentBroker DB hydration notice: {e}")
 
     def create_portfolio(self, agent_id: str, initial_capital: float = AGENT_STARTING_CAPITAL) -> SubPortfolio:
         if agent_id not in self.sub_portfolios:

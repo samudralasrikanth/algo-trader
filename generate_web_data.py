@@ -22,8 +22,10 @@ from event_agent.storage.ledger import (
     init_db, get_latest_predictions, get_active_night_predictions,
     get_daily_audits, get_performance_scorecard, get_all_news,
     get_factor_attribution_summary, get_job_execution_logs, get_arena_data,
-    get_recent_daily_trade_reports, get_all_orders, get_agent_positions
+    get_recent_daily_trade_reports, get_all_orders, get_agent_positions,
+    clean_stale_test_positions
 )
+from event_agent.engine.live_market_feed import revalue_all_positions_live
 from event_agent.reporting.web_export import build_web_payload
 from event_agent.arena.orchestrator import ArenaOrchestrator
 from run_night_forecast import get_next_trading_day
@@ -44,6 +46,10 @@ DATA_JS_PATH = WEB_DIR / "data.js"
 
 def export_web_dataset():
     init_db()
+    clean_stale_test_positions()
+    live_reval = revalue_all_positions_live()
+    print(f"[*] Live Position Revaluation: {live_reval.get('status')} | Updated {live_reval.get('updated_positions_count', 0)} positions | Unrealized P&L: ₹{live_reval.get('total_unrealized_pnl', 0.0):+,.2f}")
+
     next_day_str = get_next_trading_day()
     scorecard = get_performance_scorecard()
     latest_preds = get_latest_predictions(limit=15)
@@ -59,7 +65,23 @@ def export_web_dataset():
         predictions=night_preds,
         force_execute=True,
     )
-    print(f"      Arena Value: ₹{arena_result['summary']['total_arena_value']:,.2f} | Executed Trades: {arena_result['executed_trades_count']}")
+
+    # Revalue all positions with live market rates immediately after cycle
+    live_reval = revalue_all_positions_live()
+    print(f"[*] Live Market Revaluation: {live_reval.get('status')} | Updated {live_reval.get('updated_positions_count', 0)} positions | Live P&L: ₹{live_reval.get('total_unrealized_pnl', 0.0):+,.2f}")
+
+    if live_reval.get("status") == "SUCCESS":
+        inv = live_reval["total_cost_basis"]
+        mkt_val = live_reval["total_market_value"]
+        pnl = live_reval["total_unrealized_pnl"]
+        cash = arena_result["summary"]["total_arena_cash"]
+        arena_result["summary"]["total_arena_invested"] = inv
+        arena_result["summary"]["total_arena_pnl"] = pnl
+        arena_result["summary"]["total_arena_value"] = round(cash + mkt_val, 2)
+        arena_result["summary"]["total_active_positions"] = live_reval["active_positions_count"]
+        arena_result["summary"]["total_arena_return_pct"] = round((arena_result["summary"]["total_arena_value"] - 10000000.0) / 10000000.0 * 100, 2)
+
+    print(f"      Arena Value: ₹{arena_result['summary']['total_arena_value']:,.2f} | Capital Deployed: ₹{arena_result['summary']['total_arena_invested']:,.2f} | Live P&L: ₹{arena_result['summary']['total_arena_pnl']:+,.2f}")
 
     print("[2/4] Building full V3.2 Web Payload (Leaderboard, Consensus, Forensic Audits)...")
     v3_payload = build_web_payload(

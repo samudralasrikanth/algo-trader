@@ -114,6 +114,13 @@ class TradeReconciliationEngine:
                 decisions=[],
             )
 
+        # Refresh open positions with live market rates for accurate P&L streaming
+        try:
+            from ..engine.live_market_feed import revalue_all_positions_live
+            revalue_all_positions_live()
+        except Exception as e:
+            logger.debug(f"Live revaluation in trade reconciliation: {e}")
+
         orders_raw = cls._fetch_orders_from_db(target_date)
         trades_raw = cls._fetch_trades_from_db(target_date)
         positions_raw = cls._fetch_open_positions_from_db()

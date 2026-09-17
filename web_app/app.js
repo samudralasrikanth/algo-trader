@@ -3360,7 +3360,7 @@ function renderDedicatedPositionsTable(positions) {
     }
 
     return `
-      <tr>
+      <tr data-symbol="${pos.symbol}" data-pos-id="${pos.position_id || pos.id || ''}">
         <td>
           <div style="font-weight: 700; font-size: 13px; color: var(--text-primary);">${pos.symbol}</div>
           <div style="font-size: 11px; color: var(--text-muted);">${pos.short_name || pos.sector || 'NSE Equity'}</div>
@@ -3370,9 +3370,9 @@ function renderDedicatedPositionsTable(positions) {
         <td><span class="badge ${sideBadge}" style="font-weight: 700; font-size: 11px;">${dir}</span></td>
         <td class="numeric num" style="font-weight: 600;">${qty.toLocaleString('en-IN')}</td>
         <td class="numeric num" style="font-size: 12px;">₹${entry.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-        <td class="numeric num" style="font-weight: 700; font-size: 12px; color: var(--text-primary);">₹${curr.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+        <td class="numeric num pos-cur-price" style="font-weight: 700; font-size: 12px; color: var(--text-primary);">₹${curr.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
         <td class="numeric num">${slTgtHtml}</td>
-        <td class="numeric num" style="font-weight: 700; font-size: 12px; color: ${pnlColor};">
+        <td class="numeric num pos-pnl-cell" style="font-weight: 700; font-size: 12px; color: ${pnlColor};">
           ${pnlSign}₹${Math.abs(pnl).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           <div style="font-size: 10px; opacity: 0.85;">(${pnlSign}${pnlPct.toFixed(2)}%)</div>
         </td>
@@ -7097,9 +7097,13 @@ let liveTickerTimer = null;
 let lastTickerQuotes = {};
 
 async function fetchLiveTickerData() {
+  // Extract symbols from open positions
+  const posSymbols = Array.from(new Set((DATA.agent_positions || []).map(p => p.symbol).filter(Boolean)));
+  const queryStr = posSymbols.length > 0 ? `?symbols=${encodeURIComponent(posSymbols.join(','))}` : '';
+
   // 1. First try serverless function /api/live_ticker
   try {
-    const res = await fetch('/api/live_ticker', {
+    const res = await fetch(`/api/live_ticker${queryStr}`, {
       headers: { 'Accept': 'application/json' },
       cache: 'no-cache'
     });
@@ -7107,6 +7111,7 @@ async function fetchLiveTickerData() {
       const data = await res.json();
       if (data && data.quotes && Object.keys(data.quotes).length > 0) {
         updateTopBarWithLiveQuotes(data.quotes);
+        updateLivePositionRates(data.quotes);
         return;
       }
     }
@@ -7124,6 +7129,10 @@ async function fetchLiveTickerData() {
       'BRENT': 'BZ=F',
       'GOLD': 'GC=F'
     };
+    posSymbols.forEach(s => {
+      symMap[s] = s;
+    });
+
     const fallbackQuotes = {};
     const fetches = Object.entries(symMap).map(async ([name, sym]) => {
       try {
@@ -7138,10 +7147,11 @@ async function fetchLiveTickerData() {
             const chg = p - prev;
             const chg_pct = prev ? (chg / prev) * 100 : 0;
             fallbackQuotes[name] = {
-              price: p,
-              previous_close: prev,
-              change: chg,
-              change_pct: chg_pct,
+              symbol: sym,
+              price: Math.round(p * 100) / 100,
+              previous_close: Math.round(prev * 100) / 100,
+              change: Math.round(chg * 100) / 100,
+              change_pct: Math.round(chg_pct * 100) / 100,
               isPositive: chg >= 0
             };
           }
@@ -7151,6 +7161,7 @@ async function fetchLiveTickerData() {
     await Promise.all(fetches);
     if (Object.keys(fallbackQuotes).length > 0) {
       updateTopBarWithLiveQuotes(fallbackQuotes);
+      updateLivePositionRates(fallbackQuotes);
     }
   } catch (err) {
     console.debug('Live ticker direct poll fallback notice:', err);
@@ -7234,6 +7245,87 @@ function updateTopBarWithLiveQuotes(quotes) {
   }
 }
 
+function updateLivePositionRates(quotes) {
+  if (!quotes || typeof quotes !== 'object') return;
+
+  let anyUpdated = false;
+  const openPositions = (DATA.agent_positions || []).filter(p => (p.status || 'OPEN').toUpperCase() === 'OPEN');
+
+  openPositions.forEach(pos => {
+    const q = quotes[pos.symbol];
+    if (q && q.price && q.price > 0) {
+      const oldPrice = Number(pos.current_price) || Number(pos.entry_price);
+      const newPrice = Number(q.price);
+      pos.current_price = newPrice;
+      pos.market_value = newPrice * (Number(pos.quantity) || 0);
+
+      const isBuy = (pos.direction || pos.side || 'BUY').toUpperCase() === 'BUY';
+      const dirMult = isBuy ? 1 : -1;
+      const entry = Number(pos.entry_price) || newPrice;
+      const qty = Number(pos.quantity) || 0;
+      pos.unrealized_pnl = dirMult * (newPrice - entry) * qty;
+      const costBase = Number(pos.cost_basis) || (entry * qty);
+      pos.unrealized_pnl_pct = costBase > 0 ? (pos.unrealized_pnl / costBase * 100) : 0;
+      anyUpdated = true;
+
+      // Update DOM row in dedicated positions table if present
+      const rows = document.querySelectorAll(`tr[data-symbol="${pos.symbol}"]`);
+      rows.forEach(tr => {
+        const curPriceEl = tr.querySelector('.pos-cur-price');
+        const pnlEl = tr.querySelector('.pos-pnl-cell');
+
+        if (curPriceEl) {
+          const formattedNewPrice = `₹${newPrice.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          if (curPriceEl.textContent !== formattedNewPrice) {
+            curPriceEl.classList.remove('flash-positive', 'flash-negative');
+            void curPriceEl.offsetWidth; // trigger reflow
+            curPriceEl.classList.add(newPrice >= oldPrice ? 'flash-positive' : 'flash-negative');
+            curPriceEl.textContent = formattedNewPrice;
+          }
+        }
+
+        if (pnlEl) {
+          const isPos = pos.unrealized_pnl >= 0;
+          const pnlColor = isPos ? 'var(--success)' : 'var(--danger)';
+          const pnlSign = isPos ? '+' : '';
+          pnlEl.style.color = pnlColor;
+          pnlEl.innerHTML = `
+            ${pnlSign}₹${Math.abs(pos.unrealized_pnl).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <div style="font-size: 10px; opacity: 0.85;">(${pnlSign}${pos.unrealized_pnl_pct.toFixed(2)}%)</div>
+          `;
+        }
+      });
+    }
+  });
+
+  if (anyUpdated) {
+    // Recalculate KPIs
+    const totalUnrealizedPnl = openPositions.reduce((acc, p) => acc + (Number(p.unrealized_pnl) || 0), 0);
+    const totalCapitalDeployed = openPositions.reduce((acc, p) => acc + (Number(p.cost_basis || (p.entry_price * p.quantity)) || 0), 0);
+
+    const kpiPnlVal = document.getElementById('trades-kpi-pnl-val');
+    if (kpiPnlVal) {
+      const isPos = totalUnrealizedPnl >= 0;
+      kpiPnlVal.textContent = `${isPos ? '+' : '-'}₹${Math.abs(totalUnrealizedPnl).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      kpiPnlVal.style.color = isPos ? 'var(--success)' : 'var(--danger)';
+    }
+
+    const kpiDeployedVal = document.getElementById('trades-kpi-deployed-val');
+    if (kpiDeployedVal) {
+      kpiDeployedVal.textContent = `₹${totalCapitalDeployed.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
+    // Update Header/Sidebar Total P&L if present
+    const navPnl = document.getElementById('nav-pnl-val');
+    if (navPnl) {
+      const isPos = totalUnrealizedPnl >= 0;
+      navPnl.textContent = `${isPos ? '+' : '-'}₹${Math.abs(totalUnrealizedPnl).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      navPnl.style.color = isPos ? 'var(--success)' : 'var(--danger)';
+    }
+  }
+}
+window.updateLivePositionRates = updateLivePositionRates;
+
 function startLiveTickerPolling() {
   fetchLiveTickerData();
 
@@ -7242,7 +7334,7 @@ function startLiveTickerPolling() {
     if (!document.hidden) {
       fetchLiveTickerData();
     }
-  }, 15000);
+  }, 5000); // 5-second interval for real-time live video streaming and trade monitoring
 
   setInterval(renderHeaderClock, 1000);
 }

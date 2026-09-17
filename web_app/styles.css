@@ -237,6 +237,16 @@ body {
   100% { background-color: transparent; }
 }
 
+.pos-cur-price.flash-positive {
+  animation: ticker-flash-green 1.2s ease-out;
+  color: var(--success) !important;
+}
+
+.pos-cur-price.flash-negative {
+  animation: ticker-flash-red 1.2s ease-out;
+  color: var(--danger) !important;
+}
+
 .terminal-header-status-group {
   display: flex;
   align-items: center;
