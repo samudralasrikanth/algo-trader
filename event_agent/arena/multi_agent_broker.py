@@ -376,7 +376,7 @@ class MultiAgentBroker:
         """
         try:
             from event_agent.storage.ledger import get_agent_positions
-            db_positions = get_agent_positions()
+            db_positions = get_agent_positions(status="OPEN")
             for p_dict in db_positions:
                 aid = p_dict.get("agent_id")
                 if aid not in self.sub_portfolios:

@@ -82,47 +82,32 @@ class AgentContrarian(BaseAgent):
             ]
 
         available_slots = max(0, 10 - len(existing_symbols))
-        selected = candidates[:min(available_slots, 4)]
+        selected = candidates[:min(available_slots, 3)]
 
         proposals = []
         for seq, (symbol, data, direction, _, rationale) in enumerate(selected, 1):
-            base_price = float(data.get("base_price", 0.0))
-            action = TradeAction.BUY if direction == TradeDirection.BUY else TradeAction.SELL
-            conviction = float(data.get("conviction", 64.0))
-
-            # Mean-reversion target
-            if direction == TradeDirection.BUY:
-                target = base_price * 1.018
-                stop = base_price * 0.988
-                exp_pct = 1.8
-            else:
-                target = base_price * 0.982
-                stop = base_price * 1.012
-                exp_pct = -1.8
-
-            inst = Instrument(underlying=symbol, instrument_type=InstrumentType.EQUITY)
-            reason = f"{rationale}. Fading consensus expecting swift reversion toward 20-day mean."
-
-            proposals.append(
-                ProposedTrade(
-                    agent_id=self.agent_id,
-                    strategy_version=self.strategy_version,
-                    symbol=symbol,
-                    action=action,
-                    instrument=inst,
-                    direction=direction,
-                    entry_price=base_price,
-                    stop_loss=stop,
-                    target=target,
-                    confidence=conviction,
-                    expected_move_pct=exp_pct,
-                    planned_risk_amount=current_equity * 0.005,
-                    hedge_decision=HedgeDecision.NO,
-                    hedge_instrument=None,
-                    decision_reason=reason,
-                    snapshot_id=snapshot_id,
-                    sequence=seq,
-                )
+            # 1. Real Decision-Time AI inference & deterministic thesis validation
+            thesis = self.generate_and_validate_thesis(
+                symbol=symbol,
+                stock_data=data,
+                market_snapshot=market_snapshot,
             )
 
-        return proposals
+            # 2. Route thesis through Central Deterministic Instrument Selector
+            proposal = self.instrument_selector.select_instrument(
+                thesis=thesis,
+                stock_data=data,
+                portfolio_equity=current_equity,
+                current_open_positions=current_open_positions,
+                snapshot_id=snapshot_id,
+                sequence=seq,
+            )
+            proposals.append(proposal)
+
+        return proposals if proposals else [
+            self.create_no_trade_proposal(
+                reason="All contrarian mean-reversion setups failed quality, risk hurdle, or portfolio exposure checks.",
+                snapshot_id=snapshot_id,
+                confidence=58.0,
+            )
+        ]

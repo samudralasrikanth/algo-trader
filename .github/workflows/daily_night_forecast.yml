@@ -37,4 +37,6 @@ jobs:
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
         run: |
-          npx -y netlify-cli deploy --dir=web_app --site-name nifty50-event-agent --prod --no-build || true
+          if [ -n "$NETLIFY_AUTH_TOKEN" ]; then
+            npx -y netlify-cli deploy --dir=web_app --site f5474525-5305-4487-b0d8-e5b66d0566cb --prod --no-build || true
+          fi

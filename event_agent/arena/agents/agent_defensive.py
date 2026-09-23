@@ -110,41 +110,28 @@ class AgentDefensive(BaseAgent):
 
         proposals = []
         for seq, (symbol, data, _) in enumerate(selected, 1):
-            base_price = float(data.get("base_price", 0.0))
-            pred_pct = float(data.get("predicted_1d_pct", 0.0))
-            conviction = float(data.get("conviction", 68.0))
-
-            # Tight risk stop, conservative target
-            target = base_price * (1.0 + (abs(pred_pct) * 0.9) / 100.0)
-            stop = base_price * (1.0 - (abs(pred_pct) * 0.5) / 100.0)
-
-            # Defensive systematically adds Put Option hedge
-            hedge_dec = HedgeDecision.YES
-            hedge_inst = "NIFTY-PE-PROTECTION"
-
-            reason = f"Low-beta capital preservation setup in {data.get('short_name')} (Beta: {data.get('beta')}). Systematic NIFTY PUT downside hedge active."
-            inst = Instrument(underlying=symbol, instrument_type=InstrumentType.EQUITY)
-
-            proposals.append(
-                ProposedTrade(
-                    agent_id=self.agent_id,
-                    strategy_version=self.strategy_version,
-                    symbol=symbol,
-                    action=TradeAction.BUY,
-                    instrument=inst,
-                    direction=TradeDirection.BUY,
-                    entry_price=base_price,
-                    stop_loss=stop,
-                    target=target,
-                    confidence=conviction,
-                    expected_move_pct=pred_pct,
-                    planned_risk_amount=current_equity * 0.0035,  # Conservative 0.35% risk
-                    hedge_decision=hedge_dec,
-                    hedge_instrument=hedge_inst,
-                    decision_reason=reason,
-                    snapshot_id=snapshot_id,
-                    sequence=seq,
-                )
+            # 1. Real Decision-Time AI inference & deterministic thesis validation
+            thesis = self.generate_and_validate_thesis(
+                symbol=symbol,
+                stock_data=data,
+                market_snapshot=market_snapshot,
             )
 
-        return proposals
+            # 2. Route thesis through Central Deterministic Instrument Selector
+            proposal = self.instrument_selector.select_instrument(
+                thesis=thesis,
+                stock_data=data,
+                portfolio_equity=current_equity,
+                current_open_positions=current_open_positions,
+                snapshot_id=snapshot_id,
+                sequence=seq,
+            )
+            proposals.append(proposal)
+
+        return proposals if proposals else [
+            self.create_no_trade_proposal(
+                reason="All defensive setups failed quality, risk hurdle, or portfolio exposure checks.",
+                snapshot_id=snapshot_id,
+                confidence=60.0,
+            )
+        ]

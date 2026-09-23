@@ -78,53 +78,32 @@ class AgentMomentum(BaseAgent):
             ]
 
         available_slots = max(0, 10 - len(existing_symbols))
-        selected = candidates[:min(available_slots, 5)]
+        selected = candidates[:min(available_slots, 3)]
 
         proposals = []
         for seq, (symbol, data, mom_val) in enumerate(selected, 1):
-            base_price = float(data.get("base_price", 0.0))
-            pred_pct = float(data.get("predicted_1d_pct", 0.0))
-            conviction = float(data.get("conviction", 65.0))
-            direction = TradeDirection.BUY if pred_pct >= 0 else TradeDirection.SELL
-            action = TradeAction.BUY if pred_pct >= 0 else TradeAction.SELL
-
-            # Stop and target for momentum (wider target, tight trailing stop)
-            if direction == TradeDirection.BUY:
-                target = base_price * (1.0 + (abs(pred_pct) * 1.3) / 100.0)
-                stop = base_price * (1.0 - (abs(pred_pct) * 0.5) / 100.0)
-            else:
-                target = base_price * (1.0 - (abs(pred_pct) * 1.3) / 100.0)
-                stop = base_price * (1.0 + (abs(pred_pct) * 0.5) / 100.0)
-
-            # High momentum uses simulated futures contracts for capital efficiency
-            use_futures = abs(pred_pct) >= 1.2
-            inst_type = InstrumentType.FUTURE if use_futures else InstrumentType.EQUITY
-            inst = Instrument(underlying=symbol, instrument_type=inst_type, expiry="NEAR")
-
-            reason = f"5-day momentum breakout of {mom_val:+.2f}% with strong trend continuation score."
-            if use_futures:
-                reason += " Simulated Futures contract selected for trend gearing."
-
-            proposals.append(
-                ProposedTrade(
-                    agent_id=self.agent_id,
-                    strategy_version=self.strategy_version,
-                    symbol=symbol,
-                    action=action,
-                    instrument=inst,
-                    direction=direction,
-                    entry_price=base_price,
-                    stop_loss=stop,
-                    target=target,
-                    confidence=conviction,
-                    expected_move_pct=pred_pct,
-                    planned_risk_amount=current_equity * 0.005,
-                    hedge_decision=HedgeDecision.NO,
-                    hedge_instrument=None,
-                    decision_reason=reason,
-                    snapshot_id=snapshot_id,
-                    sequence=seq,
-                )
+            # 1. Real Decision-Time AI inference & deterministic thesis validation
+            thesis = self.generate_and_validate_thesis(
+                symbol=symbol,
+                stock_data=data,
+                market_snapshot=market_snapshot,
             )
 
-        return proposals
+            # 2. Route thesis through Central Deterministic Instrument Selector
+            proposal = self.instrument_selector.select_instrument(
+                thesis=thesis,
+                stock_data=data,
+                portfolio_equity=current_equity,
+                current_open_positions=current_open_positions,
+                snapshot_id=snapshot_id,
+                sequence=seq,
+            )
+            proposals.append(proposal)
+
+        return proposals if proposals else [
+            self.create_no_trade_proposal(
+                reason="All momentum breakout setups failed net edge hurdle, risk/reward, or portfolio risk limits.",
+                snapshot_id=snapshot_id,
+                confidence=58.0,
+            )
+        ]

@@ -12,6 +12,11 @@
  * 4. Strictly protects all secrets and API keys server-side.
  */
 
+// Node.js 20 compatibility shim for Supabase Realtime WebSocket check
+if (typeof WebSocket === "undefined") {
+  global.WebSocket = class DummyWebSocket {};
+}
+
 const { createClient } = require("@supabase/supabase-js");
 
 function getSupabaseClient() {

@@ -57,6 +57,16 @@ class TradeAction(str, Enum):
     NO_TRADE = "NO_TRADE"
 
 
+class PositionSide(str, Enum):
+    LONG = "LONG"
+    SHORT = "SHORT"
+
+
+class OrderIntent(str, Enum):
+    OPEN = "OPEN"
+    CLOSE = "CLOSE"
+
+
 class HedgeDecision(str, Enum):
     YES = "YES"
     NO = "NO"
@@ -177,13 +187,24 @@ class ProposedTrade:
     evidence: List[str] = field(default_factory=list)
     horizon: str = "1D"
     expected_return: float = 0.0
+    position_side: PositionSide = PositionSide.LONG
+    order_action: TradeAction = TradeAction.BUY
+    order_intent: OrderIntent = OrderIntent.OPEN
     timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+    def __post_init__(self):
+        if self.order_action == TradeAction.BUY and self.action != TradeAction.BUY:
+            self.order_action = self.action
+        if self.action == TradeAction.SELL and self.direction == TradeDirection.SELL:
+            self.position_side = PositionSide.SHORT
+            self.order_action = TradeAction.SELL
+            self.order_intent = OrderIntent.OPEN
 
     def generate_trade_id(self, market_date: str) -> str:
         """
         Collision-proof deterministic Trade ID incorporating snapshot, sequence and hash.
         """
-        payload = f"{self.snapshot_id}:{self.action.value}:{self.sequence}:{self.symbol}:{self.instrument.instrument_type.value}".encode()
+        payload = f"{self.snapshot_id}:{self.action.value}:{self.position_side.value}:{self.order_intent.value}:{self.sequence}:{self.symbol}:{self.instrument.instrument_type.value}".encode()
         h = hashlib.sha256(payload).hexdigest()[:8]
         sym_clean = self.symbol.replace(".NS", "").replace("^", "")
         return f"TRD-{market_date}-{self.agent_id}-{sym_clean}-{self.instrument.instrument_type.value}-{self.sequence}-{h}"
@@ -194,6 +215,9 @@ class ProposedTrade:
             "strategy_version": self.strategy_version,
             "symbol": self.symbol,
             "action": self.action.value,
+            "position_side": self.position_side.value,
+            "order_action": self.order_action.value,
+            "order_intent": self.order_intent.value,
             "instrument": self.instrument.to_dict(),
             "direction": self.direction.value,
             "entry_price": round(self.entry_price, 2),

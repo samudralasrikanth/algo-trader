@@ -43,7 +43,7 @@ def sync_to_netlify():
     
     print("[*] Deploying updated data to Netlify...")
     try:
-        cmd = ["npx", "-y", "netlify-cli", "deploy", "--dir=web_app", "--site-name", "nifty50-event-agent", "--prod", "--no-build"]
+        cmd = ["npx", "-y", "netlify-cli", "deploy", "--dir=web_app", "--site", "f5474525-5305-4487-b0d8-e5b66d0566cb", "--prod", "--no-build"]
         res = subprocess.run(cmd, cwd=str(BASE_DIR), capture_output=True, text=True, timeout=60)
         if res.returncode == 0:
             print("[✓] Netlify deployment live! URL: https://nifty50-event-agent.netlify.app")

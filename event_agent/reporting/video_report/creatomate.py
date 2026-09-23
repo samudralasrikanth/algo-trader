@@ -100,9 +100,20 @@ class CreatomateVideoService:
         self,
         api_key: Optional[str] = None,
         template_id: Optional[str] = None,
+        engine_mode: Optional[str] = None,
     ):
         self.api_key = api_key or os.environ.get("CREATOMATE_API_KEY")
         self.template_id = template_id or os.environ.get("CREATOMATE_TEMPLATE_ID")
+        env_mode = os.environ.get("VIDEO_ENGINE")
+        if engine_mode:
+            self.engine_mode = engine_mode.strip().lower()
+        elif api_key:
+            # Explicit API key provided in code constructor takes precedence
+            self.engine_mode = "creatomate"
+        elif env_mode:
+            self.engine_mode = env_mode.strip().lower()
+        else:
+            self.engine_mode = "local"
 
     # -------------------------------------------------------------------------
     # A. Video Generation (60–75s YouTube Short)
@@ -117,19 +128,17 @@ class CreatomateVideoService:
     ) -> VideoRenderResult:
         """
         Builds the 8-scene YouTube Short storyboard (1080x1920) and submits for rendering.
+        If engine_mode is 'local' or CREATOMATE_API_KEY is missing/empty, uses the free local engine.
         Polls until completion or timeout.
         """
-        if not self.api_key:
-            return VideoRenderResult(
-                status="VIDEO_RENDER_FAILED",
-                render_id=None,
-                video_url=None,
-                duration_seconds=0.0,
-                error_message="CREATOMATE_API_KEY is not configured",
-            )
+        pkg = content_package or ContentIntelligenceEngine.build_content_package(reconciliation, ai_analysis)
+
+        if self.engine_mode == "local" or not self.api_key:
+            logger.info("Using Free Built-In Local Video Engine (engine_mode=%s, has_api_key=%s)...",
+                        self.engine_mode, bool(self.api_key))
+            return self._render_local_video(reconciliation, ai_analysis, audio_url_or_path, pkg)
 
         start_time = time.perf_counter()
-        pkg = content_package or ContentIntelligenceEngine.build_content_package(reconciliation, ai_analysis)
         source_spec = self._build_storyboard_source(reconciliation, ai_analysis, audio_url_or_path, pkg)
 
         headers = {
@@ -238,18 +247,14 @@ class CreatomateVideoService:
         timeout_seconds: int = 90,
     ) -> ThumbnailRenderResult:
         """
-        Builds the 1280x720 16:9 thumbnail storyboard and renders as an image via Creatomate.
+        Builds the 1280x720 16:9 thumbnail storyboard and renders as an image.
+        If engine_mode is 'local' or CREATOMATE_API_KEY is missing/empty, uses the free local engine.
         Polls until completion or timeout.
         """
-        if not self.api_key:
-            return ThumbnailRenderResult(
-                status="THUMBNAIL_RENDER_FAILED",
-                render_id=None,
-                image_url=None,
-                template=content_package.thumbnail_template,
-                headline=content_package.thumbnail_headline,
-                error_message="CREATOMATE_API_KEY is not configured",
-            )
+        if self.engine_mode == "local" or not self.api_key:
+            logger.info("Using Free Built-In Local Thumbnail Engine (engine_mode=%s, has_api_key=%s)...",
+                        self.engine_mode, bool(self.api_key))
+            return self._render_local_thumbnail(content_package)
 
         start_time = time.perf_counter()
         source_spec = self._build_thumbnail_source(content_package)
@@ -1160,6 +1165,29 @@ class CreatomateVideoService:
     # -------------------------------------------------------------------------
     # E. Local High-Fidelity Video & Thumbnail Fallback Engines
     # -------------------------------------------------------------------------
+    @staticmethod
+    def _resolve_font(size: int, bold: bool = False):
+        """Cross-platform font loader compatible with macOS and Linux GitHub runners."""
+        from PIL import ImageFont
+        candidates = [
+            "/System/Library/Fonts/Supplemental/Arial Bold.ttf" if bold else "/System/Library/Fonts/Supplemental/Arial.ttf",
+            "/System/Library/Fonts/Supplemental/Arial.ttf",
+            "/System/Library/Fonts/Helvetica.ttc",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+            "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf" if bold else "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
+        ]
+        for p in candidates:
+            if os.path.exists(p):
+                try:
+                    return ImageFont.truetype(p, size)
+                except Exception:
+                    continue
+        try:
+            return ImageFont.load_default()
+        except Exception:
+            return None
+
     def _render_local_video(
         self,
         reconciliation: DailyReconciliationReport,
@@ -1216,17 +1244,12 @@ print(asset.duration.seconds)
         width, height = 1080, 1920
 
         # Fonts
-        font_bold_path = "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
-        font_reg_path = "/System/Library/Fonts/Helvetica.ttc"
-        try:
-            font_h1 = ImageFont.truetype(font_bold_path, 60)
-            font_h2 = ImageFont.truetype(font_bold_path, 44)
-            font_body = ImageFont.truetype(font_reg_path, 36)
-            font_metric = ImageFont.truetype(font_bold_path, 80)
-            font_sub = ImageFont.truetype(font_reg_path, 28)
-            font_badge = ImageFont.truetype(font_bold_path, 30)
-        except Exception:
-            font_h1 = font_h2 = font_body = font_metric = font_sub = font_badge = ImageFont.load_default()
+        font_h1 = self._resolve_font(60, bold=True)
+        font_h2 = self._resolve_font(44, bold=True)
+        font_body = self._resolve_font(36, bold=False)
+        font_metric = self._resolve_font(80, bold=True)
+        font_sub = self._resolve_font(28, bold=False)
+        font_badge = self._resolve_font(30, bold=True)
 
         # Story Acts
         scenes = [
@@ -1431,12 +1454,30 @@ print(asset.duration.seconds)
         fourcc = cv2.VideoWriter_fourcc(*"avc1")
         writer = cv2.VideoWriter(temp_raw_video, fourcc, fps, (width, height))
 
+        # Check for custom presenter/avatar image
+        avatar_paths = [
+            os.path.abspath("web_app/assets/avatars/presenter.png"),
+            os.path.abspath("web_app/assets/avatars/presenter.jpg"),
+            os.path.abspath("data/avatars/presenter.png"),
+        ]
+        custom_avatar_img = None
+        for ap in avatar_paths:
+            if os.path.exists(ap):
+                loaded = cv2.imread(ap)
+                if loaded is not None:
+                    custom_avatar_img = loaded
+                    logger.info("Loaded custom replica avatar from: %s", ap)
+                    break
+
+        avatar_w, avatar_h = 240, 240
+        avatar_x, avatar_y = width - avatar_w - 70, height - avatar_h - 220
+
         for frame_idx in range(total_frames):
             current_time = frame_idx / fps
             scene_idx = min(int(current_time / scene_dur), len(scenes) - 1)
             frame = scene_images[scene_idx].copy()
 
-            # Scanline animation
+            # Dynamic scanline animation across charts
             scan_y = int((frame_idx * 16) % height)
             cv2.line(frame, (30, scan_y), (width - 30, scan_y), (0, 180, 100), 2)
 
@@ -1451,6 +1492,68 @@ print(asset.duration.seconds)
                 dot_x = 80 + int(s_i * ((width - 160) / (len(scenes) - 1)))
                 dot_color = (0, 230, 118) if s_i <= scene_idx else (71, 85, 105)
                 cv2.circle(frame, (dot_x, 1840), 6, dot_color, -1)
+
+            # -------------------------------------------------------------
+            # AI Presenter / Talking Cartoon Replica Overlay (Lower Right)
+            # -------------------------------------------------------------
+            center_x = avatar_x + avatar_w // 2
+            center_y = avatar_y + avatar_h // 2
+            radius = avatar_w // 2
+
+            # Speaking audio pulse effect (synchronized to frame rhythm)
+            is_speaking = bool(resolved_audio and current_time < (duration_sec - 1.0))
+            mouth_open = int(abs(np.sin(frame_idx * 0.7)) * 14) if is_speaking else 0
+            glow_thickness = int(2 + abs(np.sin(frame_idx * 0.5)) * 3) if is_speaking else 2
+            glow_color = (0, 230, 118) if is_speaking else (148, 163, 184)
+
+            # Outer glowing avatar ring
+            cv2.circle(frame, (center_x, center_y), radius + 8, glow_color, glow_thickness)
+            cv2.circle(frame, (center_x, center_y), radius + 4, (15, 23, 42), -1)
+
+            if custom_avatar_img is not None:
+                # Resize and blend user's replica photo/cartoon
+                resized_av = cv2.resize(custom_avatar_img, (avatar_w, avatar_h))
+                mask = np.zeros((avatar_h, avatar_w), dtype=np.uint8)
+                cv2.circle(mask, (radius, radius), radius - 2, 255, -1)
+                roi = frame[avatar_y:avatar_y+avatar_h, avatar_x:avatar_x+avatar_w]
+                mask_inv = cv2.bitwise_not(mask)
+                bg = cv2.bitwise_and(roi, roi, mask=mask_inv)
+                fg = cv2.bitwise_and(resized_av, resized_av, mask=mask)
+                frame[avatar_y:avatar_y+avatar_h, avatar_x:avatar_x+avatar_w] = cv2.add(bg, fg)
+            else:
+                # High-tech animated cartoon avatar
+                # Head
+                cv2.circle(frame, (center_x, center_y), radius, (30, 41, 59), -1)
+                cv2.circle(frame, (center_x, center_y - 15), 45, (235, 195, 165), -1) # Face
+                # Hair
+                cv2.ellipse(frame, (center_x, center_y - 45), (45, 28), 0, 180, 360, (25, 25, 35), -1)
+                # Eyes with blinking
+                blink = (frame_idx % 45) < 3
+                if blink:
+                    cv2.line(frame, (center_x - 18, center_y - 20), (center_x - 6, center_y - 20), (30, 30, 30), 2)
+                    cv2.line(frame, (center_x + 6, center_y - 20), (center_x + 18, center_y - 20), (30, 30, 30), 2)
+                else:
+                    cv2.circle(frame, (center_x - 12, center_y - 20), 5, (255, 255, 255), -1)
+                    cv2.circle(frame, (center_x - 12, center_y - 20), 2, (30, 30, 30), -1)
+                    cv2.circle(frame, (center_x + 12, center_y - 20), 5, (255, 255, 255), -1)
+                    cv2.circle(frame, (center_x + 12, center_y - 20), 2, (30, 30, 30), -1)
+                # Mouth (animated lip-sync)
+                if mouth_open > 3:
+                    cv2.ellipse(frame, (center_x, center_y + 8), (10, mouth_open), 0, 0, 360, (140, 40, 40), -1)
+                else:
+                    cv2.line(frame, (center_x - 8, center_y + 8), (center_x + 8, center_y + 8), (140, 40, 40), 2)
+                # Cyber suit
+                cv2.ellipse(frame, (center_x, center_y + 95), (65, 45), 0, 180, 360, (15, 23, 42), -1)
+                cv2.line(frame, (center_x, center_y + 55), (center_x, center_y + 100), (0, 230, 118), 2)
+
+            # Presenter Badge / Tag
+            tag_w, tag_h = 170, 32
+            tag_x, tag_y = center_x - tag_w // 2, avatar_y + avatar_h + 12
+            cv2.rectangle(frame, (tag_x, tag_y), (tag_x + tag_w, tag_y + tag_h), (15, 23, 42), -1)
+            cv2.rectangle(frame, (tag_x, tag_y), (tag_x + tag_w, tag_y + tag_h), glow_color, 1)
+            speaker_label = "SRIKANTH // AI" if is_speaking else "PRESENTER"
+            cv2.putText(frame, speaker_label, (tag_x + 16, tag_y + 21),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.45, glow_color, 1, cv2.LINE_AA)
 
             writer.write(frame)
 
@@ -1571,15 +1674,11 @@ if let export = AVAssetExportSession(asset: composition, presetName: AVAssetExpo
         draw.rectangle([(20, 20), (w - 20, h - 20)], outline=(0, 230, 118), width=4)
         draw.rectangle([(30, 30), (w - 30, h - 30)], outline=(30, 41, 59), width=1)
 
-        font_bold = "/System/Library/Fonts/Supplemental/Arial Bold.ttf"
-        font_reg = "/System/Library/Fonts/Helvetica.ttc"
-        try:
-            f_head = ImageFont.truetype(font_bold, 52)
-            f_sub = ImageFont.truetype(font_reg, 28)
-            f_badge = ImageFont.truetype(font_bold, 32)
-            f_metric = ImageFont.truetype(font_bold, 68)
-        except Exception:
-            f_head = f_sub = f_badge = f_metric = ImageFont.load_default()
+        # Fonts
+        f_head = self._resolve_font(52, bold=True)
+        f_sub = self._resolve_font(28, bold=False)
+        f_badge = self._resolve_font(32, bold=True)
+        f_metric = self._resolve_font(68, bold=True)
 
         # Top Bar
         draw.text((60, 60), "NEXUS FINANCIAL LABS // NIFTY 50 FORENSIC AUDIT", fill=(148, 163, 184), font=f_sub)

@@ -22,6 +22,11 @@
  * Uses server-side service role credentials. No secrets returned or logged.
  */
 
+// Node.js 20 compatibility shim for Supabase Realtime WebSocket check
+if (typeof WebSocket === "undefined") {
+  global.WebSocket = class DummyWebSocket {};
+}
+
 const { schedule } = require("@netlify/functions");
 const { createClient } = require("@supabase/supabase-js");
 const crypto = require("crypto");

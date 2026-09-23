@@ -89,7 +89,7 @@ def revalue_all_positions_live() -> Dict[str, Any]:
 
     Returns a summary dictionary suitable for video streaming scripts, web exports, and reporting.
     """
-    positions = get_agent_positions()
+    positions = get_agent_positions(status="OPEN")
     if not positions:
         return {
             "status": "NO_OPEN_POSITIONS",
@@ -107,7 +107,32 @@ def revalue_all_positions_live() -> Dict[str, Any]:
     updated_count = update_agent_position_prices(price_map)
 
     # Re-fetch updated positions to aggregate metrics
-    refreshed_positions = get_agent_positions()
+    refreshed_positions = get_agent_positions(status="OPEN")
+
+    # Dedicated Dual Exit Engine evaluation with 9-level priority hierarchy
+    exits_triggered = 0
+    try:
+        from event_agent.arena.exit_engine import ExitEngine
+        from event_agent.storage.ledger import close_agent_position
+        exit_signals = ExitEngine.evaluate_all(refreshed_positions, quotes)
+        for sig in exit_signals:
+            if sig.should_exit:
+                pos_target = next((p for p in refreshed_positions if p.get("position_id") == sig.position_id), None)
+                brokerage = 40.0 if pos_target and "OPTION" in str(pos_target.get("instrument_type", "")) else 20.0
+                close_agent_position(
+                    position_id=sig.position_id,
+                    exit_price=sig.suggested_exit_price,
+                    exit_reason=sig.exit_reason,
+                    brokerage_costs=brokerage,
+                )
+                exits_triggered += 1
+                logger.info(f"ExitEngine closed {sig.symbol} ({sig.position_id}): {sig.exit_reason} at ₹{sig.suggested_exit_price:.2f} (Priority {sig.priority_name})")
+
+        if exits_triggered > 0:
+            refreshed_positions = get_agent_positions(status="OPEN")
+    except Exception as exit_err:
+        logger.warning(f"Exit evaluation warning: {exit_err}")
+
     total_unrealized_pnl = sum(float(p.get("unrealized_pnl", 0.0)) for p in refreshed_positions)
     total_market_value = sum(float(p.get("market_value", 0.0)) for p in refreshed_positions)
     total_cost_basis = sum(float(p.get("cost_basis", 0.0)) for p in refreshed_positions)
@@ -117,6 +142,7 @@ def revalue_all_positions_live() -> Dict[str, Any]:
         "status": "SUCCESS",
         "updated_positions_count": updated_count,
         "active_positions_count": len(refreshed_positions),
+        "exits_triggered": exits_triggered,
         "total_cost_basis": round(total_cost_basis, 2),
         "total_market_value": round(total_market_value, 2),
         "total_unrealized_pnl": round(total_unrealized_pnl, 2),

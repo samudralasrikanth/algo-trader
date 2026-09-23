@@ -20,6 +20,11 @@
  * No secrets are exposed or returned.
  */
 
+// Node.js 20 compatibility shim for Supabase Realtime WebSocket check
+if (typeof WebSocket === "undefined") {
+  global.WebSocket = class DummyWebSocket {};
+}
+
 const { createClient } = require("@supabase/supabase-js");
 
 // NSE 2026 Official Holidays (YYYY-MM-DD)

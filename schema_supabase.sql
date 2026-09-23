@@ -249,4 +249,137 @@ ALTER TABLE public.scheduler_invocations ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public Read Scheduler Invocations" ON public.scheduler_invocations;
 CREATE POLICY "Service Role All Scheduler Invocations" ON public.scheduler_invocations FOR ALL USING (true);
 
+-- =============================================================================
+-- V4.2.1 CONTINUOUS EVENT SENTINEL TABLES
+-- =============================================================================
+
+-- 9. Dedicated Sentinel Invocations Table
+CREATE TABLE IF NOT EXISTS public.sentinel_invocations (
+    id BIGSERIAL PRIMARY KEY,
+    scheduled_invocation_id TEXT NOT NULL,
+    sentinel_invocation_id TEXT UNIQUE NOT NULL,
+    started_at TIMESTAMPTZ NOT NULL,
+    completed_at TIMESTAMPTZ NOT NULL,
+    sources_checked INTEGER NOT NULL DEFAULT 8,
+    events_seen INTEGER NOT NULL DEFAULT 0,
+    events_new INTEGER NOT NULL DEFAULT 0,
+    events_duplicate INTEGER NOT NULL DEFAULT 0,
+    events_material INTEGER NOT NULL DEFAULT 0,
+    events_triggered INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'SUCCESS',
+    error TEXT NULL,
+    lineage_json JSONB NULL,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE public.sentinel_invocations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Service Role All Sentinel Invocations" ON public.sentinel_invocations FOR ALL USING (true);
+CREATE POLICY "Public Read Sentinel Invocations" ON public.sentinel_invocations FOR SELECT USING (true);
+
+-- 10. Continuous Event Ledger
+CREATE TABLE IF NOT EXISTS public.event_ledger (
+    id BIGSERIAL PRIMARY KEY,
+    event_id TEXT UNIQUE NOT NULL,
+    category TEXT NOT NULL,
+    source TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    raw_payload_hash TEXT NOT NULL,
+    timestamp TIMESTAMPTZ NOT NULL,
+    importance_score NUMERIC DEFAULT 0,
+    india_relevance TEXT DEFAULT 'LOW',
+    novelty TEXT DEFAULT 'HIGH',
+    market_reaction_score NUMERIC DEFAULT 0,
+    thesis_relation TEXT DEFAULT 'NEUTRAL',
+    verdict TEXT NOT NULL DEFAULT 'STORE_ONLY',
+    associated_thesis_id TEXT,
+    event_data_json JSONB,
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE public.event_ledger ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Service Role All Event Ledger" ON public.event_ledger FOR ALL USING (true);
+CREATE POLICY "Public Read Event Ledger" ON public.event_ledger FOR SELECT USING (true);
+
+-- 11. Active NIFTY Market Thesis
+CREATE TABLE IF NOT EXISTS public.active_theses (
+    id BIGSERIAL PRIMARY KEY,
+    thesis_id TEXT UNIQUE NOT NULL,
+    revision INTEGER NOT NULL DEFAULT 1,
+    created_at TIMESTAMPTZ NOT NULL,
+    bias TEXT NOT NULL,
+    confidence NUMERIC NOT NULL,
+    expected_move NUMERIC NOT NULL,
+    valid_until TIMESTAMPTZ NOT NULL,
+    invalidation_conditions_json JSONB,
+    last_material_event_id TEXT,
+    status TEXT NOT NULL DEFAULT 'ACTIVE',
+    volatility_regime TEXT DEFAULT 'NORMAL',
+    risk_multiplier NUMERIC DEFAULT 1.0,
+    stop_multiplier NUMERIC DEFAULT 1.0,
+    updated_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE public.active_theses ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Service Role All Active Theses" ON public.active_theses FOR ALL USING (true);
+CREATE POLICY "Public Read Active Theses" ON public.active_theses FOR SELECT USING (true);
+
+-- 12. Deterministic Thesis Revisions
+CREATE TABLE IF NOT EXISTS public.thesis_revisions (
+    id BIGSERIAL PRIMARY KEY,
+    thesis_id TEXT NOT NULL,
+    revision INTEGER NOT NULL,
+    parent_thesis_id TEXT,
+    trigger_event_id TEXT NOT NULL,
+    adjustment_reason TEXT NOT NULL,
+    confidence_delta NUMERIC NOT NULL,
+    expected_move_delta NUMERIC NOT NULL,
+    volatility_regime TEXT NOT NULL,
+    risk_multiplier NUMERIC NOT NULL,
+    stop_multiplier NUMERIC NOT NULL,
+    before_state_json JSONB NOT NULL,
+    after_state_json JSONB NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT now(),
+    UNIQUE(thesis_id, revision)
+);
+ALTER TABLE public.thesis_revisions ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Service Role All Thesis Revisions" ON public.thesis_revisions FOR ALL USING (true);
+CREATE POLICY "Public Read Thesis Revisions" ON public.thesis_revisions FOR SELECT USING (true);
+
+-- 13. Economic Calendar Events
+CREATE TABLE IF NOT EXISTS public.economic_calendar_events (
+    id BIGSERIAL PRIMARY KEY,
+    event_code TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    category TEXT NOT NULL,
+    scheduled_time TIMESTAMPTZ NOT NULL,
+    consensus_expectation TEXT,
+    prior_value TEXT,
+    actual_value TEXT,
+    surprise_delta TEXT,
+    current_stage TEXT NOT NULL,
+    stage_updated_at TIMESTAMPTZ DEFAULT now(),
+    created_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE public.economic_calendar_events ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Service Role All Calendar Events" ON public.economic_calendar_events FOR ALL USING (true);
+CREATE POLICY "Public Read Calendar Events" ON public.economic_calendar_events FOR SELECT USING (true);
+
+-- 14. Event Coverage Metrics (Decoupled Denominators)
+CREATE TABLE IF NOT EXISTS public.event_coverage_metrics (
+    id BIGSERIAL PRIMARY KEY,
+    date DATE UNIQUE NOT NULL,
+    scheduled_expected INTEGER NOT NULL DEFAULT 0,
+    scheduled_detected INTEGER NOT NULL DEFAULT 0,
+    scheduled_coverage_pct NUMERIC NOT NULL DEFAULT 100.0,
+    source_available INTEGER NOT NULL DEFAULT 0,
+    source_processed INTEGER NOT NULL DEFAULT 0,
+    source_coverage_pct NUMERIC NOT NULL DEFAULT 100.0,
+    material_detected INTEGER NOT NULL DEFAULT 0,
+    material_processed INTEGER NOT NULL DEFAULT 0,
+    material_processing_pct NUMERIC NOT NULL DEFAULT 100.0,
+    recorded_at TIMESTAMPTZ DEFAULT now()
+);
+ALTER TABLE public.event_coverage_metrics ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Service Role All Coverage Metrics" ON public.event_coverage_metrics FOR ALL USING (true);
+CREATE POLICY "Public Read Coverage Metrics" ON public.event_coverage_metrics FOR SELECT USING (true);
+
+
 

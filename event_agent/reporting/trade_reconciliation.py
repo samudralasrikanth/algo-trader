@@ -183,6 +183,39 @@ class TradeReconciliationEngine:
         except Exception:
             pass
 
+        # Query closed trades from agent_positions
+        try:
+            with get_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    SELECT 
+                        position_id as trade_id,
+                        agent_id,
+                        strategy_version,
+                        symbol,
+                        instrument_type,
+                        direction,
+                        quantity,
+                        entry_price as price,
+                        exit_price,
+                        realized_pnl as net_pnl,
+                        realized_pnl as gross_pnl,
+                        brokerage_costs as transaction_costs,
+                        opened_at,
+                        closed_at,
+                        exit_reason as decision_reason,
+                        status
+                    FROM agent_positions 
+                    WHERE status = 'CLOSED' AND (closed_at LIKE ? OR opened_at LIKE ?)
+                    """,
+                    (f"{target_date}%", f"{target_date}%")
+                )
+                for r in cursor.fetchall():
+                    trades.append(dict(r))
+        except Exception as e:
+            logger.debug("Could not fetch closed agent_positions: %s", e)
+
         return trades
 
     @classmethod

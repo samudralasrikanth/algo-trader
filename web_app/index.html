@@ -1099,6 +1099,7 @@
               <select id="dedicated-trades-status-filter" onchange="onDedicatedTradesFilterChange()" style="padding: 6px 10px; font-size: 12px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg-surface); color: var(--text-primary);">
                 <option value="ALL">All Statuses</option>
                 <option value="OPEN">Open Positions</option>
+                <option value="CLOSED">Completed / Closed Trades</option>
                 <option value="FILLED">Filled Orders</option>
                 <option value="REJECTED">Rejected Orders</option>
               </select>
@@ -1130,7 +1131,7 @@
                   <th>TYPE</th>
                   <th>SIDE</th>
                   <th class="numeric">QTY</th>
-                  <th class="numeric">AVG ENTRY</th>
+                  <th class="numeric">BUY PRICE (AVG ENTRY)</th>
                   <th class="numeric">CURRENT PRICE</th>
                   <th class="numeric">STOP / TARGET</th>
                   <th class="numeric">UNREALIZED P&amp;L</th>
@@ -1145,7 +1146,47 @@
           </div>
         </section>
 
-        <!-- SECTION B: ALL TRADES PLACED BY BOT (EXECUTION ORDER LEDGER) -->
+        <!-- SECTION B: TRADE HISTORY & COMPLETED TRADES (CLOSED POSITIONS) -->
+        <section class="section-panel" id="section-dedicated-history" style="margin-top: 24px;">
+          <div class="section-header">
+            <div class="section-title-group">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="material-symbols-outlined" style="color: var(--success);">history_edu</span>
+                <h3 style="margin: 0; font-size: 15px;">Trade History — Completed / Closed Positions (<span id="dedicated-history-count-badge">0</span>)</h3>
+              </div>
+              <p>Audited historical log of all closed positions showing entry buy price, exit sell price, realized profit/loss, and stop/target status.</p>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span class="badge badge-green" id="dedicated-history-pnl-badge">Realized P&amp;L: +₹0.00</span>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table" id="dedicated-history-table">
+              <thead>
+                <tr>
+                  <th>SYMBOL &amp; ASSET</th>
+                  <th>BOT AGENT</th>
+                  <th>TYPE</th>
+                  <th>SIDE</th>
+                  <th class="numeric">QTY</th>
+                  <th class="numeric">BUY PRICE</th>
+                  <th class="numeric">SELL PRICE</th>
+                  <th class="numeric">STOP / TARGET</th>
+                  <th class="numeric">REALIZED P&amp;L</th>
+                  <th>OPENED AT</th>
+                  <th>CLOSED AT</th>
+                  <th style="text-align: right;">ACTION</th>
+                </tr>
+              </thead>
+              <tbody id="dedicated-history-tbody">
+                <!-- Injected via app.js -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- SECTION C: ALL TRADES PLACED BY BOT (EXECUTION ORDER LEDGER) -->
         <section class="section-panel" id="section-dedicated-placed-orders" style="margin-top: 24px;">
           <div class="section-header">
             <div class="section-title-group">
@@ -2127,6 +2168,24 @@
               🔒 <strong>Security Invariant:</strong> Server-side proxy execution only. OPENROUTER_API_KEY is isolated server-side and never reaches browser.
             </div>
           </section>
+
+          <!-- V4.2.1 Continuous Event Sentinel & Active Thesis Card -->
+          <section class="section-panel" id="event-sentinel-panel" style="margin-bottom: 20px; grid-column: 1 / -1;">
+            <div class="section-header">
+              <div class="section-title-group">
+                <h3>CONTINUOUS EVENT SENTINEL &amp; ACTIVE THESIS (V4.2.1)</h3>
+                <p>24/7 Macro monitoring, news-independent market shock detector &amp; authoritative Supabase lineage</p>
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="badge" id="sentinel-status-badge">HEALTHY</span>
+                <button class="btn-action primary" id="trigger-sentinel-scan-btn" onclick="triggerSentinelScan()">⚡ Trigger Sentinel Scan</button>
+              </div>
+            </div>
+
+            <div id="event-sentinel-content" style="padding: 10px 0;">
+              <!-- Injected via app.js -->
+            </div>
+          </section>
         </div>
 
         <!-- 3.5. Daily Automated Video Report & Social Broadcast Card -->
@@ -2464,8 +2523,8 @@
         </div>
         <div style="display: flex; flex-direction: column; gap: 12px; font-size: 12px;">
           <div><strong>Symbol:</strong> <span id="fm-symbol">TCS.NS</span></div>
-          <div><strong>Diagnostic Explanation:</strong> <p style="color: var(--text-secondary); margin-top: 4px;" id="fm-explanation">--</p></div>
-          <div><strong>Refactoring Recommendation:</strong> <p style="color: var(--primary); margin-top: 4px;" id="fm-recommendation">--</p></div>
+          <div><strong>Diagnostic Explanation:</strong> <p style="color: var(--text-secondary); margin-top: 4px;" id="fm-explanation">F06 Empirical Whipsaw: Realized Volatility was 2.1x predicted (threshold >= 1.8x), MAE reached 1.85x target (threshold >= 1.5x) with 2 confirmed intraday reversals following morning tech sector contagion.</p></div>
+          <div><strong>Refactoring Recommendation:</strong> <p style="color: var(--primary); margin-top: 4px;" id="fm-recommendation">Tighten stop-loss bands and incorporate 15-minute volume cluster confirmation during high beta earnings contagion.</p></div>
         </div>
       </div>
     </div>

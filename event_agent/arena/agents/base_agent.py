@@ -4,24 +4,35 @@
 """
 Base class defining standard behavior for all 5 Arena Strategy Agents:
 - Identical immutable market snapshot input for all 50 stocks
+- Real OpenRouter Decision-Time AI inference execution
+- Deterministic MarketThesisValidator schema & data conflict enforcement
+- Central Instrument Selector funnel routing
 - 0 to 10 dynamic active allocations
 - Explicit NO_TRADE emission when criteria are unfulfilled
 - Frozen strategy versioning
 """
 
 from abc import ABC, abstractmethod
+import logging
 from typing import Any, Dict, List, Optional
 
-from ..models import (
+from event_agent.engine.llm_provider import OpenRouterProvider
+from event_agent.arena.thesis_validator import MarketThesis, MarketThesisValidator
+from event_agent.arena.instrument_selector import InstrumentSelector
+from event_agent.arena.models import (
     AgentProfile,
     HedgeDecision,
     Instrument,
     InstrumentType,
     OptionType,
+    OrderIntent,
+    PositionSide,
     ProposedTrade,
     TradeAction,
     TradeDirection,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class BaseAgent(ABC):
@@ -31,6 +42,9 @@ class BaseAgent(ABC):
 
     def __init__(self, profile: AgentProfile):
         self.profile = profile
+        self.llm_provider = OpenRouterProvider()
+        self.thesis_validator = MarketThesisValidator()
+        self.instrument_selector = InstrumentSelector()
 
     @property
     def agent_id(self) -> str:
@@ -53,6 +67,64 @@ class BaseAgent(ABC):
         or a single NO_TRADE proposal with structured rationale.
         """
         pass
+
+    def generate_and_validate_thesis(
+        self,
+        symbol: str,
+        stock_data: Dict[str, Any],
+        market_snapshot: Dict[str, Any],
+    ) -> MarketThesis:
+        """
+        Executes real OpenRouter decision-time AI inference and passes the raw
+        output through the deterministic MarketThesisValidator.
+        """
+        regime = market_snapshot.get("regime", {})
+        macro_evidence = {
+            "vix_change_pct": float(regime.get("vix_change_pct", 0.0)),
+            "usdinr_change_pct": float(regime.get("usdinr_change_pct", 0.0)),
+            "global_futures_pct": float(regime.get("global_futures_pct", 0.0)),
+            "adv_dec_ratio": float(regime.get("adv_dec_ratio", 1.0)),
+        }
+
+        # 1. Real OpenRouter Inference
+        ai_resp = self.llm_provider.generate_decision_thesis(
+            agent_id=self.agent_id,
+            symbol=symbol,
+            stock_data=stock_data,
+            market_context=regime,
+        )
+
+        # 2. Build initial MarketThesis
+        direction = ai_resp.get("direction") or ("BULLISH" if float(stock_data.get("predicted_1d_pct", 0.0)) >= 0 else "BEARISH")
+        expected_move = float(ai_resp.get("expected_move_pct") or stock_data.get("predicted_1d_pct", 0.0))
+        horizon = ai_resp.get("horizon") or "1D"
+        confidence = float(ai_resp.get("confidence") or stock_data.get("conviction", 60.0))
+        catalysts = ai_resp.get("catalysts") or stock_data.get("catalysts", []) or ["Fundamental event driver"]
+        invalidating_conditions = ai_resp.get("invalidating_conditions") or [
+            "Unexpected policy rate hike",
+            "Severe intraday gap-down against thesis",
+            "Broad market risk-off selloff"
+        ]
+        reasoning = ai_resp.get("reasoning") or f"Catalyst thesis for {symbol} under {self.strategy_version}"
+
+        thesis = MarketThesis(
+            agent_id=self.agent_id,
+            symbol=symbol,
+            direction=direction,
+            expected_move_pct=expected_move,
+            horizon=horizon,
+            confidence=confidence,
+            catalysts=catalysts,
+            invalidating_conditions=invalidating_conditions,
+            reasoning=reasoning,
+            ai_request_id=ai_resp.get("ai_request_id"),
+            model=ai_resp.get("model"),
+            actual_provider=ai_resp.get("actual_provider"),
+        )
+
+        # 3. Deterministic Validation & Data Inconsistency Check
+        validated_thesis = self.thesis_validator.validate(thesis, structured_evidence=macro_evidence)
+        return validated_thesis
 
     def create_no_trade_proposal(
         self,
@@ -78,4 +150,7 @@ class BaseAgent(ABC):
             decision_reason=reason,
             snapshot_id=snapshot_id,
             sequence=1,
+            position_side=PositionSide.LONG,
+            order_action=TradeAction.NO_TRADE,
+            order_intent=OrderIntent.OPEN,
         )

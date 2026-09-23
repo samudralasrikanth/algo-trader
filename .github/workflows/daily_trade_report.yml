@@ -135,6 +135,7 @@ jobs:
           ELEVENLABS_VOICE_ID: ${{ vars.ELEVENLABS_VOICE_ID || 'JBFqnCBsd6RMkjVDRZzb' }}
           CREATOMATE_API_KEY: ${{ secrets.CREATOMATE_API_KEY }}
           CREATOMATE_TEMPLATE_ID: ${{ vars.CREATOMATE_TEMPLATE_ID || '' }}
+          VIDEO_ENGINE: ${{ vars.VIDEO_ENGINE || 'local' }}
           YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
           YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
           YOUTUBE_REFRESH_TOKEN: ${{ secrets.YOUTUBE_REFRESH_TOKEN }}
@@ -163,7 +164,7 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
         run: |
           if [ -n "$NETLIFY_AUTH_TOKEN" ]; then
-            npx -y netlify-cli deploy --dir=web_app --site-name nifty50-event-agent --prod --no-build || true
+            npx -y netlify-cli deploy --dir=web_app --site f5474525-5305-4487-b0d8-e5b66d0566cb --prod --no-build || true
           else
             echo "NETLIFY_AUTH_TOKEN not provided; skipping static deploy."
           fi

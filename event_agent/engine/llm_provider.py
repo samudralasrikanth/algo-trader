@@ -17,6 +17,7 @@ import logging
 import os
 import time
 import urllib.request
+import hashlib
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
 from pathlib import Path
@@ -245,20 +246,26 @@ class OpenRouterProvider(LLMProvider):
             "timestamp": None,
         }
 
+    def check_runtime_connection(self) -> Dict[str, Any]:
+        return self.ping_health()
+
     def ping_health(self) -> Dict[str, Any]:
-        """Performs a lightweight connectivity & credential verification test."""
+        """Performs a lightweight connectivity & credential verification test with zero key leak."""
+        fingerprint = f"SHA256:{hashlib.sha256(self.api_key.encode()).hexdigest()[:16]}" if self.api_key else None
         if not self.api_key:
             return {
                 "provider": "openrouter",
                 "configured": False,
+                "credential_fingerprint": None,
                 "status": "NOT_CONFIGURED",
-                "inference_mode": "HEURISTIC_FALLBACK",
+                "inference_mode": "UNAVAILABLE",
                 "model": self.model,
                 "request_id": None,
                 "latency_ms": None,
                 "input_tokens": 0,
                 "output_tokens": 0,
                 "total_tokens": 0,
+                "cost_usd": 0.0,
                 "last_success": None,
                 "last_failure": "OPENROUTER_API_KEY is not configured",
             }
@@ -282,37 +289,272 @@ class OpenRouterProvider(LLMProvider):
                 latency_ms = int((time.perf_counter() - start_t) * 1000)
                 data = json.loads(resp.read().decode("utf-8"))
                 usage = data.get("usage", {})
+                in_tok = usage.get("prompt_tokens", 0)
+                out_tok = usage.get("completion_tokens", 0)
+                tot_tok = usage.get("total_tokens", 0)
+                cost = (in_tok * 0.15 + out_tok * 0.60) / 1_000_000.0
                 return {
                     "status": "SUCCESS",
+                    "substatus": "AUTHENTICATED",
                     "provider": "openrouter",
                     "configured": True,
+                    "credential_fingerprint": fingerprint,
                     "inference_mode": "OPENROUTER_LIVE",
-                    "model": self.model,
+                    "model": data.get("model", self.model),
                     "request_id": data.get("id"),
                     "latency_ms": latency_ms,
-                    "input_tokens": usage.get("prompt_tokens", 0),
-                    "output_tokens": usage.get("completion_tokens", 0),
-                    "total_tokens": usage.get("total_tokens", 0),
+                    "input_tokens": in_tok,
+                    "output_tokens": out_tok,
+                    "total_tokens": tot_tok,
+                    "cost_usd": round(cost, 6),
                     "last_success": datetime.now(timezone.utc).isoformat(),
                     "last_failure": None,
                 }
         except Exception as exc:
             latency_ms = int((time.perf_counter() - start_t) * 1000)
+            status_code = getattr(exc, "code", 500) if hasattr(exc, "code") else 500
+            err_substatus = "INVALID_KEY" if status_code in (401, 403) else ("RATE_LIMITED" if status_code == 429 else "UNREACHABLE")
             return {
                 "status": "FAILED",
+                "substatus": err_substatus,
                 "provider": "openrouter",
                 "configured": True,
-                "inference_mode": "HEURISTIC_FALLBACK",
+                "credential_fingerprint": fingerprint,
+                "inference_mode": "UNAVAILABLE",
                 "model": self.model,
                 "request_id": None,
                 "latency_ms": latency_ms,
                 "input_tokens": 0,
                 "output_tokens": 0,
                 "total_tokens": 0,
+                "cost_usd": 0.0,
                 "error_reason": str(exc),
                 "last_success": None,
                 "last_failure": datetime.now(timezone.utc).isoformat(),
             }
+
+    def generate_decision_thesis(
+        self,
+        agent_id: str,
+        symbol: str,
+        stock_data: Dict[str, Any],
+        market_context: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Executes real decision-time OpenRouter inference for an agent.
+        Logs verified execution telemetry directly to SQLite ledger.
+        """
+        now_utc = datetime.now(timezone.utc).isoformat()
+        if not self.api_key:
+            return {
+                "status": "UNCONFIGURED",
+                "error": "OPENROUTER_API_KEY environment variable not configured",
+                "direction": None,
+                "expected_move_pct": 0.0,
+                "horizon": "1D",
+                "confidence": 0.0,
+                "catalysts": [],
+                "invalidating_conditions": [],
+                "reasoning": "AI intelligence unavailable: OPENROUTER_API_KEY not configured.",
+                "ai_request_id": None,
+                "model": self.model,
+                "actual_provider": "none",
+            }
+
+        ctx = market_context or {}
+        news_items = stock_data.get("catalysts", [])[:3] or ["Consolidation in line with sector"]
+        base_p = stock_data.get("base_price", 0.0)
+
+        prompt = (
+            f"You are the Decision-Time AI for Autonomous Trading Agent {agent_id}.\n"
+            f"Asset: {symbol} (Current Price: ₹{base_p:,.2f})\n"
+            f"Recent News / Catalysts: {json.dumps(news_items)}\n"
+            f"Market Context: NIFTY Regime={ctx.get('regime', 'NORMAL')}, VIX={ctx.get('vix', 'NORMAL')}, USDINR={ctx.get('usdinr', 'FLAT')}\n"
+            f"Agent Philosophy: Evaluate catalyst vs macro headwinds. Produce a calibrated market thesis.\n"
+            f"Respond strictly in valid JSON with these keys:\n"
+            f"- direction: 'BULLISH' or 'BEARISH'\n"
+            f"- expected_move_pct: float between -10.0 and +10.0\n"
+            f"- horizon: '1D', '3D', or '7D'\n"
+            f"- confidence: float between 35.0 and 90.0\n"
+            f"- catalysts: list of 1 to 3 specific driving catalysts\n"
+            f"- invalidating_conditions: list of 1 to 3 specific conditions that cancel this thesis\n"
+            f"- reasoning: concise 2-sentence economic thesis"
+        )
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
+            "HTTP-Referer": "https://github.com/samudralasrikanth/algo-trader",
+            "X-Title": "NEXUS Decision Engine",
+        }
+        body_str = json.dumps({
+            "model": self.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "response_format": {"type": "json_object"},
+            "temperature": 0.1,
+            "max_tokens": 400,
+        })
+        body = body_str.encode("utf-8")
+        in_hash = hashlib.sha256(body).hexdigest()
+
+        start_t = time.perf_counter()
+        try:
+            req = urllib.request.Request("https://openrouter.ai/api/v1/chat/completions", data=body, headers=headers)
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                latency_ms = int((time.perf_counter() - start_t) * 1000)
+                raw_bytes = resp.read()
+                out_hash = hashlib.sha256(raw_bytes).hexdigest()
+                data = json.loads(raw_bytes.decode("utf-8"))
+                content_str = data["choices"][0]["message"]["content"]
+                parsed = json.loads(content_str)
+                usage = data.get("usage", {})
+                in_tok = usage.get("prompt_tokens", 0)
+                out_tok = usage.get("completion_tokens", 0)
+                tot_tok = usage.get("total_tokens", 0)
+                cost = (in_tok * 0.15 + out_tok * 0.60) / 1_000_000.0
+                req_id = data.get("id")
+                act_model = data.get("model", self.model)
+
+                # Persist telemetry to SQLite
+                try:
+                    from event_agent.storage.ledger import record_ai_telemetry
+                    record_ai_telemetry({
+                        "ai_request_id": req_id,
+                        "market_date": datetime.now().strftime("%Y-%m-%d"),
+                        "call_type": "DECISION_THESIS",
+                        "agent_id": agent_id,
+                        "symbol": symbol,
+                        "model": act_model,
+                        "model_provider": "openrouter",
+                        "input_hash": in_hash,
+                        "output_hash": out_hash,
+                        "input_tokens": in_tok,
+                        "output_tokens": out_tok,
+                        "total_tokens": tot_tok,
+                        "cost_usd": cost,
+                        "latency_ms": latency_ms,
+                        "http_status": 200,
+                        "status": "SUCCESS",
+                    })
+                except Exception as db_err:
+                    logger.debug(f"Telemetry logging error: {db_err}")
+
+                parsed["status"] = "SUCCESS"
+                parsed["ai_request_id"] = req_id
+                parsed["model"] = act_model
+                parsed["actual_provider"] = "openrouter"
+                parsed["latency_ms"] = latency_ms
+                parsed["tokens"] = tot_tok
+                return parsed
+
+        except Exception as exc:
+            latency_ms = int((time.perf_counter() - start_t) * 1000)
+            logger.warning(f"OpenRouter thesis inference failed ({exc}) for {agent_id} on {symbol}")
+            try:
+                from event_agent.storage.ledger import record_ai_telemetry
+                record_ai_telemetry({
+                    "ai_request_id": f"failed_{int(time.time()*1000)}",
+                    "market_date": datetime.now().strftime("%Y-%m-%d"),
+                    "call_type": "DECISION_THESIS",
+                    "agent_id": agent_id,
+                    "symbol": symbol,
+                    "model": self.model,
+                    "model_provider": "openrouter",
+                    "input_hash": in_hash,
+                    "output_hash": "",
+                    "input_tokens": 0,
+                    "output_tokens": 0,
+                    "total_tokens": 0,
+                    "cost_usd": 0.0,
+                    "latency_ms": latency_ms,
+                    "http_status": 500,
+                    "status": "FAILED",
+                    "error_message": str(exc),
+                })
+            except Exception:
+                pass
+
+            return {
+                "status": "FAILED",
+                "error": str(exc),
+                "direction": None,
+                "expected_move_pct": 0.0,
+                "horizon": "1D",
+                "confidence": 0.0,
+                "catalysts": [],
+                "invalidating_conditions": [],
+                "reasoning": f"Inference failed: {exc}",
+                "ai_request_id": None,
+                "model": self.model,
+                "actual_provider": "openrouter",
+            }
+
+    def format_post_trade_diagnosis(self, audit_evidence: Dict[str, Any]) -> str:
+        """
+        Post-Trade AI Formatter: converts pre-computed 8D quantitative forensic evidence
+        into human-readable analysis without inventing causes or changing root-cause codes.
+        """
+        if not self.api_key:
+            return audit_evidence.get("deterministic_summary", "Audit completed via deterministic engine.")
+
+        prompt = (
+            f"You are the NEXUS Quantitative Forensic Auditor.\n"
+            f"Translate this PRE-COMPUTED 8-dimensional evidence into a concise, institutional post-trade diagnosis.\n"
+            f"CRITICAL INVARIANT: You are a FORMATTER ONLY. Do NOT invent alternative explanations or modify root-cause codes.\n"
+            f"Evidence JSON:\n{json.dumps(audit_evidence, indent=2)}\n\n"
+            f"Format as structured markdown: Direction, Magnitude, Timing, Regime, Intraday Path, Catalyst Realization, Cross-Asset Confirmation, Root Cause."
+        )
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
+            "HTTP-Referer": "https://github.com/samudralasrikanth/algo-trader",
+            "X-Title": "NEXUS Forensic Engine",
+        }
+        body = json.dumps({
+            "model": self.model,
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.1,
+            "max_tokens": 350,
+        }).encode("utf-8")
+
+        start_t = time.perf_counter()
+        try:
+            req = urllib.request.Request("https://openrouter.ai/api/v1/chat/completions", data=body, headers=headers)
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                latency_ms = int((time.perf_counter() - start_t) * 1000)
+                data = json.loads(resp.read().decode("utf-8"))
+                text = data["choices"][0]["message"]["content"]
+                usage = data.get("usage", {})
+                req_id = data.get("id")
+
+                try:
+                    from event_agent.storage.ledger import record_ai_telemetry
+                    record_ai_telemetry({
+                        "ai_request_id": req_id,
+                        "market_date": datetime.now().strftime("%Y-%m-%d"),
+                        "call_type": "POST_TRADE_AUDIT",
+                        "symbol": audit_evidence.get("symbol"),
+                        "model": data.get("model", self.model),
+                        "model_provider": "openrouter",
+                        "input_hash": hashlib.sha256(body).hexdigest(),
+                        "output_hash": hashlib.sha256(text.encode()).hexdigest(),
+                        "input_tokens": usage.get("prompt_tokens", 0),
+                        "output_tokens": usage.get("completion_tokens", 0),
+                        "total_tokens": usage.get("total_tokens", 0),
+                        "cost_usd": (usage.get("total_tokens", 0) * 0.30) / 1_000_000.0,
+                        "latency_ms": latency_ms,
+                        "http_status": 200,
+                        "status": "SUCCESS",
+                    })
+                except Exception:
+                    pass
+
+                return text.strip()
+        except Exception as exc:
+            logger.warning(f"Post-trade AI formatting fallback: {exc}")
+            return audit_evidence.get("deterministic_summary", "Audit completed via deterministic engine.")
+
 
     def interpret_event(
         self,

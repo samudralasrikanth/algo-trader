@@ -1,0 +1,261 @@
+# =============================================================================
+# event_agent/arena/instrument_selector.py — Central Deterministic Instrument Selector
+# =============================================================================
+"""
+Central Deterministic Instrument Selector for V4.2 Institutional Architecture:
+Decouples pure market thesis from instrument execution:
+1. Capacity-constrained Funnel:
+   Market Thesis -> Quality Gate -> Net Edge Hurdle -> Greeks/Exposure Pre-check -> Instrument Selection
+2. First-Class NO_TRADE:
+   Emits structured NO_TRADE if net edge <= 0, risk/reward < 1.4, or exposure ceiling breached.
+3. Multi-Asset Two-Way Support:
+   - Equity: LONG / SHORT
+   - Futures: LONG / SHORT
+   - Options: Single Leg / Defined-Risk Spread (strictly governed by OptionDataMode)
+4. Runtime Invariant:
+   OPTION_DATA_MODE = LIVE -> OPTIONS MAY TRADE
+   OPTION_DATA_MODE = MODELLED -> PAPER RESEARCH ONLY
+   OPTION_DATA_MODE = UNAVAILABLE -> NO OPTIONS TRADE (fallback to Equity/Futures or NO_TRADE)
+"""
+
+import logging
+from typing import Any, Dict, List, Optional
+
+from .asset_models import MultiLegStrategy, StrategyType
+from .greeks_engine import PortfolioGreeksEngine
+from .models import (
+    HedgeDecision,
+    Instrument,
+    InstrumentType,
+    OptionType,
+    OrderIntent,
+    PositionSide,
+    ProposedTrade,
+    TradeAction,
+    TradeDirection,
+)
+from .option_chain_provider import OptionChainProvider, OptionDataMode
+from .portfolio_exposure import PortfolioExposureEngine
+from .strike_selector import StrikeSelector
+from .thesis_validator import MarketThesis
+
+logger = logging.getLogger(__name__)
+
+
+class InstrumentSelector:
+    """
+    Central engine selecting the optimal instrument for a validated MarketThesis.
+    """
+
+    MIN_NET_EDGE_PCT: float = 0.35     # Minimum move to cover brokerage + slippage + STT
+    MIN_RISK_REWARD: float = 1.40      # Minimum reward-to-risk ratio
+
+    def __init__(
+        self,
+        option_chain_provider: Optional[OptionChainProvider] = None,
+        execution_environment: str = "PAPER",
+    ):
+        self.option_provider = option_chain_provider or OptionChainProvider()
+        self.execution_env = execution_environment
+
+    def select_instrument(
+        self,
+        thesis: MarketThesis,
+        stock_data: Dict[str, Any],
+        portfolio_equity: float,
+        current_open_positions: List[Dict[str, Any]],
+        snapshot_id: str = "",
+        sequence: int = 1,
+    ) -> ProposedTrade:
+        """
+        Processes a MarketThesis through the deterministic funnel and outputs
+        either an actionable ProposedTrade or a structured NO_TRADE.
+        """
+        symbol = thesis.symbol
+        base_price = float(stock_data.get("base_price", 0.0))
+        sector = stock_data.get("sector", "Diversified")
+        beta = float(stock_data.get("beta", 1.0))
+        direction_str = thesis.direction.upper()
+
+        # Gate 0: Valid base price
+        if base_price <= 0:
+            return self._build_no_trade(
+                thesis,
+                f"Base market price invalid or zero for {symbol}.",
+                snapshot_id,
+                sequence,
+            )
+
+        # Gate 1: Neutral direction -> immediate NO_TRADE
+        if direction_str == "NEUTRAL":
+            return self._build_no_trade(
+                thesis,
+                "Market thesis has NEUTRAL bias; capital preserved in cash.",
+                snapshot_id,
+                sequence,
+            )
+
+        # Gate 2: Net Edge Hurdle (Gross expected move must clear roundtrip costs)
+        gross_move = abs(thesis.expected_move_pct)
+        if gross_move < self.MIN_NET_EDGE_PCT:
+            return self._build_no_trade(
+                thesis,
+                f"Expected move {thesis.expected_move_pct:+.2f}% is below net edge hurdle of {self.MIN_NET_EDGE_PCT:.2f}% after brokerage and friction.",
+                snapshot_id,
+                sequence,
+            )
+
+        # Gate 3: Thesis Conflict handling (if macro opposes AI, require higher confidence)
+        if thesis.is_conflicted:
+            if thesis.confidence < 70.0:
+                return self._build_no_trade(
+                    thesis,
+                    f"Macro conflict detected ({thesis.conflict_reason}). Conviction {thesis.confidence:.1f}% below 70.0% threshold for conflicting setup.",
+                    snapshot_id,
+                    sequence,
+                )
+
+        # Gate 4: Portfolio Sector & Beta Exposure Pre-check
+        exposure_eval = PortfolioExposureEngine.evaluate_exposure(
+            open_positions=current_open_positions,
+            portfolio_equity=portfolio_equity,
+            candidate_sector=sector,
+            candidate_beta=beta,
+        )
+        if not exposure_eval.is_compliant:
+            return self._build_no_trade(
+                thesis,
+                f"Portfolio diversification gate: {exposure_eval.rejection_reason}",
+                snapshot_id,
+                sequence,
+            )
+
+        # Gate 5: Direction & Two-Way Semantics
+        is_bullish = direction_str == "BULLISH"
+        pos_side = PositionSide.LONG if is_bullish else PositionSide.SHORT
+        trade_action = TradeAction.BUY if is_bullish else TradeAction.SELL
+        trade_dir = TradeDirection.BUY if is_bullish else TradeDirection.SELL
+        order_intent = OrderIntent.OPEN
+
+        # Compute price targets and stops
+        if is_bullish:
+            target = base_price * (1.0 + gross_move / 100.0)
+            stop = base_price * (1.0 - (gross_move / 100.0) / self.MIN_RISK_REWARD)
+        else:
+            target = base_price * (1.0 - gross_move / 100.0)
+            stop = base_price * (1.0 + (gross_move / 100.0) / self.MIN_RISK_REWARD)
+
+        # Gate 6: Asset Class / Instrument Selection
+        inst_type = InstrumentType.EQUITY
+        selected_strategy: Optional[MultiLegStrategy] = None
+        contract_name: Optional[str] = None
+        reason_extra = ""
+
+        # Check options eligibility
+        can_trade_opts = self.option_provider.can_trade_options(self.execution_env)
+        agent_id = thesis.agent_id.upper()
+        high_conviction_event = thesis.confidence >= 75.0 and gross_move >= 1.0
+
+        if high_conviction_event or agent_id in ("DEFENSIVE", "ALPHA"):
+            if can_trade_opts:
+                chain, mode = self.option_provider.get_chain(
+                    underlying=symbol,
+                    spot_price=base_price,
+                    days_to_expiry=7,
+                    implied_volatility=0.18,
+                )
+                if chain and chain.strikes:
+                    is_call = is_bullish
+                    opt_info = StrikeSelector.select_strike(chain=chain, is_call=is_call)
+                    if opt_info:
+                        inst_type = InstrumentType.OPTION
+                        contract_name = opt_info["contract_symbol"]
+                        strat_rec = StrikeSelector.recommend_strategy_structure(
+                            iv_rank=45.0,
+                            expected_move_pct=thesis.expected_move_pct,
+                            confidence=thesis.confidence,
+                        )
+                        reason_extra = f" [{mode.value} Option Selected: Strike {opt_info['strike']} {opt_info['option_type'].value}, Delta {opt_info['delta']:.2f}, Structure: {strat_rec.value}]"
+            else:
+                # Options forbidden by mode
+                if self.option_provider.current_mode == OptionDataMode.UNAVAILABLE:
+                    reason_extra = " [OPTION_DATA_MODE is UNAVAILABLE: Options trading strictly prohibited. Falling back to underlying instrument.]"
+                elif self.option_provider.current_mode == OptionDataMode.MODELLED and self.execution_env == "LIVE":
+                    reason_extra = " [MODELLED options prohibited in LIVE execution. Routing to Cash/Futures.]"
+
+        # If not options, check if Futures should be used for trend gearing
+        if inst_type == InstrumentType.EQUITY and agent_id in ("MOMENTUM", "MACRO") and gross_move >= 1.2:
+            inst_type = InstrumentType.FUTURE
+            contract_name = f"{symbol}-FUT-NEAR"
+            reason_extra = " [Futures contract selected for trend gearing.]"
+
+        # Construct finalized Instrument
+        instrument = Instrument(
+            underlying=symbol,
+            instrument_type=inst_type,
+            contract_name=contract_name,
+            is_simulated_price=(inst_type != InstrumentType.EQUITY),
+        )
+
+        planned_risk = portfolio_equity * 0.005  # 0.5% risk limit per trade
+        decision_reason = f"Validated {thesis.direction} thesis: {thesis.reasoning}{reason_extra}"
+
+        return ProposedTrade(
+            agent_id=thesis.agent_id,
+            strategy_version=f"{thesis.agent_id}-4.2",
+            symbol=symbol,
+            action=trade_action,
+            instrument=instrument,
+            direction=trade_dir,
+            entry_price=base_price,
+            stop_loss=round(stop, 2),
+            target=round(target, 2),
+            confidence=thesis.confidence,
+            expected_move_pct=thesis.expected_move_pct,
+            planned_risk_amount=planned_risk,
+            hedge_decision=HedgeDecision.NO,
+            decision_reason=decision_reason,
+            snapshot_id=snapshot_id,
+            sequence=sequence,
+            strategy=selected_strategy,
+            thesis=thesis.reasoning,
+            evidence=thesis.catalysts,
+            horizon=thesis.horizon,
+            expected_return=thesis.expected_move_pct,
+            position_side=pos_side,
+            order_action=trade_action,
+            order_intent=order_intent,
+        )
+
+    def _build_no_trade(
+        self,
+        thesis: MarketThesis,
+        reason: str,
+        snapshot_id: str,
+        sequence: int,
+    ) -> ProposedTrade:
+        """Helper to create a structured NO_TRADE ProposedTrade."""
+        inst = Instrument(underlying=thesis.symbol or "NIFTY50", instrument_type=InstrumentType.EQUITY)
+        return ProposedTrade(
+            agent_id=thesis.agent_id,
+            strategy_version=f"{thesis.agent_id}-4.2",
+            symbol=thesis.symbol or "NIFTY50",
+            action=TradeAction.NO_TRADE,
+            instrument=inst,
+            direction=TradeDirection.NONE,
+            entry_price=0.0,
+            stop_loss=0.0,
+            target=0.0,
+            confidence=thesis.confidence,
+            expected_move_pct=0.0,
+            planned_risk_amount=0.0,
+            hedge_decision=HedgeDecision.NO,
+            decision_reason=reason,
+            snapshot_id=snapshot_id,
+            sequence=sequence,
+            thesis=thesis.reasoning,
+            horizon=thesis.horizon,
+            position_side=PositionSide.LONG,
+            order_action=TradeAction.NO_TRADE,
+            order_intent=OrderIntent.OPEN,
+        )

@@ -7,6 +7,7 @@ import os
 import sqlite3
 import json
 import urllib.request
+import time
 from datetime import datetime, date, timedelta, timezone
 from typing import List, Dict, Any, Optional
 import yfinance as yf
@@ -371,6 +372,176 @@ def init_db() -> None:
         )
         """)
 
+        # 13. AI Inference Telemetry (OpenRouter Decision & Audit Execution Records)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS ai_inference_telemetry (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ai_request_id TEXT UNIQUE,
+            market_date TEXT NOT NULL,
+            call_type TEXT NOT NULL,
+            agent_id TEXT,
+            symbol TEXT,
+            prediction_id TEXT,
+            decision_id TEXT,
+            model TEXT NOT NULL,
+            model_provider TEXT,
+            input_hash TEXT NOT NULL,
+            output_hash TEXT NOT NULL,
+            input_tokens INTEGER NOT NULL,
+            output_tokens INTEGER NOT NULL,
+            total_tokens INTEGER NOT NULL,
+            cost_usd REAL NOT NULL,
+            latency_ms INTEGER NOT NULL,
+            http_status INTEGER NOT NULL,
+            status TEXT NOT NULL,
+            error_message TEXT,
+            finish_reason TEXT,
+            created_at TEXT NOT NULL
+        )
+        """)
+
+        # 14. Prediction Calibration & Brier Tracking
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS prediction_calibrations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            prediction_id TEXT NOT NULL,
+            market_date TEXT NOT NULL,
+            symbol TEXT NOT NULL,
+            predicted_confidence REAL NOT NULL,
+            calibrated_probability REAL NOT NULL,
+            outcome INTEGER NOT NULL,
+            brier_contribution REAL NOT NULL,
+            recorded_at TEXT NOT NULL
+        )
+        """)
+
+        # 15. Event Ledger (V4.2.1 Continuous Event Intelligence)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS event_ledger (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_id TEXT UNIQUE NOT NULL,
+            category TEXT NOT NULL,
+            source TEXT NOT NULL,
+            title TEXT NOT NULL,
+            description TEXT,
+            raw_payload_hash TEXT NOT NULL,
+            importance_score REAL NOT NULL,
+            india_relevance TEXT NOT NULL,
+            novelty TEXT NOT NULL,
+            market_reaction_score REAL NOT NULL,
+            thesis_relation TEXT NOT NULL,
+            verdict TEXT NOT NULL,
+            associated_thesis_id TEXT,
+            details_json TEXT,
+            timestamp TEXT NOT NULL
+        )
+        """)
+
+        # 16. Active Theses State Table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS active_theses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            thesis_id TEXT UNIQUE NOT NULL,
+            revision INTEGER DEFAULT 1,
+            bias TEXT NOT NULL,
+            confidence REAL NOT NULL,
+            expected_move REAL NOT NULL,
+            valid_until TEXT NOT NULL,
+            invalidation_conditions_json TEXT NOT NULL,
+            last_material_event_id TEXT,
+            status TEXT NOT NULL,
+            volatility_regime TEXT DEFAULT 'NORMAL',
+            risk_multiplier REAL DEFAULT 1.0,
+            stop_multiplier REAL DEFAULT 1.0,
+            created_at TEXT NOT NULL
+        )
+        """)
+
+        # 17. Thesis Revisions Table (Deterministic UPDATE_THESIS Audit Trail)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS thesis_revisions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            thesis_id TEXT NOT NULL,
+            thesis_revision INTEGER NOT NULL,
+            parent_thesis_id TEXT NOT NULL,
+            event_id TEXT NOT NULL,
+            adjustment_reason TEXT NOT NULL,
+            confidence_delta REAL NOT NULL,
+            expected_move_delta REAL NOT NULL,
+            volatility_regime TEXT NOT NULL,
+            risk_multiplier REAL NOT NULL,
+            stop_multiplier REAL NOT NULL,
+            before_state_json TEXT NOT NULL,
+            after_state_json TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            UNIQUE(thesis_id, thesis_revision)
+        )
+        """)
+
+        # 18. Economic Calendar Events Table (Scheduled High-Impact Registry)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS economic_calendar_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_code TEXT UNIQUE NOT NULL,
+            category TEXT NOT NULL,
+            title TEXT NOT NULL,
+            scheduled_at TEXT NOT NULL,
+            current_stage TEXT NOT NULL,
+            consensus_forecast TEXT,
+            prior_value TEXT,
+            actual_value TEXT,
+            surprise_delta REAL,
+            pre_baseline_json TEXT,
+            reaction_1m_json TEXT,
+            india_transmission_json TEXT,
+            updated_at TEXT NOT NULL
+        )
+        """)
+
+        # 19. Sentinel Invocations (Cloud Runtime Telemetry)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sentinel_invocations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            scheduled_invocation_id TEXT NOT NULL,
+            sentinel_invocation_id TEXT UNIQUE NOT NULL,
+            started_at TEXT NOT NULL,
+            completed_at TEXT NOT NULL,
+            sources_checked INTEGER NOT NULL,
+            events_seen INTEGER NOT NULL,
+            events_new INTEGER NOT NULL,
+            events_duplicate INTEGER NOT NULL,
+            events_material INTEGER NOT NULL,
+            events_triggered INTEGER NOT NULL,
+            status TEXT NOT NULL,
+            error TEXT,
+            lineage_json TEXT
+        )
+        """)
+        try:
+            cursor.execute("ALTER TABLE sentinel_invocations ADD COLUMN lineage_json TEXT")
+        except Exception:
+            pass
+
+
+        # 20. Event Coverage Metrics Table (Dual-Denominator Reliability Tracking)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS event_coverage_metrics (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT UNIQUE NOT NULL,
+            scheduled_expected INTEGER NOT NULL,
+            scheduled_detected INTEGER NOT NULL,
+            scheduled_coverage_pct REAL NOT NULL,
+            source_available INTEGER NOT NULL,
+            source_processed INTEGER NOT NULL,
+            source_coverage_pct REAL NOT NULL,
+            material_detected INTEGER NOT NULL,
+            material_processed INTEGER NOT NULL,
+            material_processing_pct REAL NOT NULL,
+            recorded_at TEXT NOT NULL
+        )
+        """)
+
+
         # Add missing provenance columns dynamically if upgrading existing DB
         for col, col_type in [
             ("prediction_id", "TEXT"),
@@ -383,8 +554,20 @@ def init_db() -> None:
                 cursor.execute(f"ALTER TABLE night_predictions ADD COLUMN {col} {col_type}")
             except Exception:
                 pass
-                
-        # Create indexes for fast lookup
+
+        # Add two-way trading and exit audit columns dynamically to agent_positions
+        for col, col_type in [
+            ("exit_price", "REAL"),
+            ("realized_pnl", "REAL"),
+            ("exit_reason", "TEXT"),
+            ("brokerage_costs", "REAL"),
+            ("position_side", "TEXT DEFAULT 'LONG'"),
+            ("order_intent", "TEXT DEFAULT 'OPEN'")
+        ]:
+            try:
+                cursor.execute(f"ALTER TABLE agent_positions ADD COLUMN {col} {col_type}")
+            except Exception:
+                pass
 
         # 13. Paper Broker V2 Orders
         cursor.execute("""
@@ -1399,7 +1582,13 @@ def save_agent_position(pos: Dict[str, Any]) -> None:
         conn.commit()
 
 
-def close_agent_position(position_id: str, exit_price: Optional[float] = None, exit_reason: str = "MANUAL_CLOSE") -> bool:
+def close_agent_position(
+    position_id: str,
+    exit_price: Optional[float] = None,
+    exit_reason: str = "MANUAL_CLOSE",
+    brokerage_costs: float = 0.0,
+    net_pnl: Optional[float] = None,
+) -> bool:
     """Close an open position in agent_positions, marking status = CLOSED and recording exit details."""
     init_db()
     with get_connection() as conn:
@@ -1420,8 +1609,9 @@ def close_agent_position(position_id: str, exit_price: Optional[float] = None, e
         else:
             gross_pnl = (ep - xp) * qty
             
+        realized = net_pnl if net_pnl is not None else (gross_pnl - float(brokerage_costs))
         cost_basis = float(pos.get("cost_basis", ep * qty))
-        pnl_pct = (gross_pnl / cost_basis * 100.0) if cost_basis > 0 else 0.0
+        pnl_pct = (realized / cost_basis * 100.0) if cost_basis > 0 else 0.0
         now_iso = datetime.now().isoformat()
         
         cursor.execute("""
@@ -1431,9 +1621,13 @@ def close_agent_position(position_id: str, exit_price: Optional[float] = None, e
                 market_value = ?,
                 unrealized_pnl = 0.0,
                 unrealized_pnl_pct = 0.0,
+                exit_price = ?,
+                realized_pnl = ?,
+                exit_reason = ?,
+                brokerage_costs = ?,
                 closed_at = ?
             WHERE position_id = ?
-        """, (xp, xp * qty, now_iso, position_id))
+        """, (xp, xp * qty, xp, round(realized, 2), exit_reason, round(float(brokerage_costs), 2), now_iso, position_id))
         conn.commit()
         return True
 
@@ -1619,15 +1813,21 @@ def get_agent_portfolios() -> List[Dict[str, Any]]:
         return [dict(r) for r in cursor.fetchall()]
 
 
-def get_agent_positions(agent_id: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Retrieve positions, optionally filtered by agent."""
+def get_agent_positions(agent_id: Optional[str] = None, status: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Retrieve positions, optionally filtered by agent and status (e.g. 'OPEN', 'CLOSED', or None for all)."""
     init_db()
     with get_connection() as conn:
         cursor = conn.cursor()
+        conditions = []
+        params = []
         if agent_id:
-            cursor.execute("SELECT * FROM agent_positions WHERE agent_id = ? AND status = 'OPEN' ORDER BY id DESC", (agent_id,))
-        else:
-            cursor.execute("SELECT * FROM agent_positions WHERE status = 'OPEN' ORDER BY id DESC")
+            conditions.append("agent_id = ?")
+            params.append(agent_id)
+        if status:
+            conditions.append("status = ?")
+            params.append(status)
+        where_clause = f" WHERE {' AND '.join(conditions)}" if conditions else ""
+        cursor.execute(f"SELECT * FROM agent_positions{where_clause} ORDER BY id DESC", tuple(params))
         return [dict(r) for r in cursor.fetchall()]
 
 
@@ -2113,4 +2313,385 @@ def get_recent_daily_trade_reports(limit: int = 10) -> List[Dict[str, Any]]:
                         pass
             results.append(d)
         return results
+
+
+def record_ai_telemetry(record: Dict[str, Any]) -> bool:
+    """Record a real OpenRouter AI inference execution into SQLite ledger."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        now_iso = datetime.now(timezone.utc).isoformat()
+        try:
+            cursor.execute("""
+            INSERT INTO ai_inference_telemetry (
+                ai_request_id, market_date, call_type, agent_id, symbol,
+                prediction_id, decision_id, model, model_provider, input_hash,
+                output_hash, input_tokens, output_tokens, total_tokens, cost_usd,
+                latency_ms, http_status, status, error_message, finish_reason, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                record.get("ai_request_id") or f"req_{int(time.time()*1000)}",
+                record.get("market_date", datetime.now().strftime("%Y-%m-%d")),
+                record.get("call_type", "DECISION_THESIS"),
+                record.get("agent_id"),
+                record.get("symbol"),
+                record.get("prediction_id"),
+                record.get("decision_id"),
+                record.get("model", "openai/gpt-4o-mini"),
+                record.get("model_provider", "openrouter"),
+                record.get("input_hash", ""),
+                record.get("output_hash", ""),
+                int(record.get("input_tokens", 0)),
+                int(record.get("output_tokens", 0)),
+                int(record.get("total_tokens", 0)),
+                float(record.get("cost_usd", 0.0)),
+                int(record.get("latency_ms", 0)),
+                int(record.get("http_status", 200)),
+                record.get("status", "SUCCESS"),
+                record.get("error_message"),
+                record.get("finish_reason", "stop"),
+                record.get("created_at", now_iso),
+            ))
+            conn.commit()
+            return True
+        except Exception as exc:
+            logger.warning(f"Failed to insert AI telemetry: {exc}")
+            return False
+
+
+def get_latest_ai_telemetry(limit: int = 10) -> List[Dict[str, Any]]:
+    """Retrieve recent AI inference telemetry records ordered by id DESC."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM ai_inference_telemetry ORDER BY id DESC LIMIT ?", (limit,))
+        rows = cursor.fetchall()
+        return [dict(r) for r in rows]
+
+
+# -----------------------------------------------------------------------------
+# Event Sentinel Persistence Helpers
+# -----------------------------------------------------------------------------
+
+def record_sentinel_event(event: Dict[str, Any]) -> bool:
+    """Record a classified event into the immutable event_ledger."""
+    init_db()
+    now_iso = datetime.now(timezone.utc).isoformat()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute("""
+            INSERT OR REPLACE INTO event_ledger (
+                event_id, category, source, title, description,
+                raw_payload_hash, importance_score, india_relevance, novelty,
+                market_reaction_score, thesis_relation, verdict,
+                associated_thesis_id, details_json, timestamp
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                event.get("event_id"),
+                event.get("category"),
+                event.get("source"),
+                event.get("title"),
+                event.get("description", ""),
+                event.get("raw_payload_hash", ""),
+                float(event.get("importance_score", 0.0)),
+                event.get("india_relevance", "MEDIUM"),
+                event.get("novelty", "MEDIUM"),
+                float(event.get("market_reaction_score", 0.0)),
+                event.get("thesis_relation", "NEUTRAL"),
+                event.get("verdict", "STORE_ONLY"),
+                event.get("associated_thesis_id"),
+                json.dumps(event.get("details_json", {})),
+                event.get("timestamp", now_iso),
+            ))
+            conn.commit()
+            return True
+        except Exception as exc:
+            logger.warning(f"Failed to record sentinel event: {exc}")
+            return False
+
+
+def get_recent_sentinel_events(limit: int = 50) -> List[Dict[str, Any]]:
+    """Retrieve recent sentinel events ordered by timestamp DESC."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM event_ledger ORDER BY id DESC LIMIT ?", (limit,))
+        rows = cursor.fetchall()
+        results = []
+        for r in rows:
+            d = dict(r)
+            if d.get("details_json"):
+                try:
+                    d["details_json"] = json.loads(d["details_json"])
+                except Exception:
+                    pass
+            results.append(d)
+        return results
+
+
+def save_active_thesis(thesis: Dict[str, Any]) -> bool:
+    """Record or update active NIFTY thesis."""
+    init_db()
+    now_iso = datetime.now(timezone.utc).isoformat()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute("""
+            INSERT OR REPLACE INTO active_theses (
+                thesis_id, revision, bias, confidence, expected_move,
+                valid_until, invalidation_conditions_json, last_material_event_id,
+                status, volatility_regime, risk_multiplier, stop_multiplier, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                thesis.get("thesis_id"),
+                int(thesis.get("revision", 1)),
+                thesis.get("bias", "NEUTRAL"),
+                float(thesis.get("confidence", 50.0)),
+                float(thesis.get("expected_move", 0.0)),
+                thesis.get("valid_until", ""),
+                json.dumps(thesis.get("invalidation_conditions", [])),
+                thesis.get("last_material_event_id"),
+                thesis.get("status", "ACTIVE"),
+                thesis.get("volatility_regime", "NORMAL"),
+                float(thesis.get("risk_multiplier", 1.0)),
+                float(thesis.get("stop_multiplier", 1.0)),
+                thesis.get("created_at", now_iso),
+            ))
+            conn.commit()
+            return True
+        except Exception as exc:
+            logger.warning(f"Failed to save active thesis: {exc}")
+            return False
+
+
+def get_current_active_thesis() -> Optional[Dict[str, Any]]:
+    """Retrieve the currently ACTIVE NIFTY thesis."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM active_theses WHERE status = 'ACTIVE' ORDER BY id DESC LIMIT 1")
+        row = cursor.fetchone()
+        if not row:
+            return None
+        d = dict(row)
+        if d.get("invalidation_conditions_json"):
+            try:
+                d["invalidation_conditions"] = json.loads(d["invalidation_conditions_json"])
+            except Exception:
+                d["invalidation_conditions"] = []
+        return d
+
+
+def save_thesis_revision(rev: Dict[str, Any]) -> bool:
+    """Record an audited deterministic thesis revision."""
+    init_db()
+    now_iso = datetime.now(timezone.utc).isoformat()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute("""
+            INSERT OR REPLACE INTO thesis_revisions (
+                thesis_id, thesis_revision, parent_thesis_id, event_id,
+                adjustment_reason, confidence_delta, expected_move_delta,
+                volatility_regime, risk_multiplier, stop_multiplier,
+                before_state_json, after_state_json, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                rev.get("thesis_id"),
+                int(rev.get("thesis_revision", 1)),
+                rev.get("parent_thesis_id", ""),
+                rev.get("event_id", ""),
+                rev.get("adjustment_reason", ""),
+                float(rev.get("confidence_delta", 0.0)),
+                float(rev.get("expected_move_delta", 0.0)),
+                rev.get("volatility_regime", "NORMAL"),
+                float(rev.get("risk_multiplier", 1.0)),
+                float(rev.get("stop_multiplier", 1.0)),
+                json.dumps(rev.get("before_state", {})),
+                json.dumps(rev.get("after_state", {})),
+                rev.get("created_at", now_iso),
+            ))
+            conn.commit()
+            return True
+        except Exception as exc:
+            logger.warning(f"Failed to save thesis revision: {exc}")
+            return False
+
+
+def get_thesis_revisions(thesis_id: str) -> List[Dict[str, Any]]:
+    """Retrieve all revisions for a given thesis_id."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM thesis_revisions WHERE thesis_id = ? ORDER BY thesis_revision ASC", (thesis_id,))
+        rows = cursor.fetchall()
+        results = []
+        for r in rows:
+            d = dict(r)
+            for k in ("before_state_json", "after_state_json"):
+                if d.get(k):
+                    try:
+                        d[k.replace("_json", "")] = json.loads(d[k])
+                    except Exception:
+                        pass
+            results.append(d)
+        return results
+
+
+def upsert_calendar_event(event: Dict[str, Any]) -> bool:
+    """Insert or update a scheduled economic calendar event."""
+    init_db()
+    now_iso = datetime.now(timezone.utc).isoformat()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute("""
+            INSERT OR REPLACE INTO economic_calendar_events (
+                event_code, category, title, scheduled_at, current_stage,
+                consensus_forecast, prior_value, actual_value, surprise_delta,
+                pre_baseline_json, reaction_1m_json, india_transmission_json, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                event.get("event_code"),
+                event.get("category"),
+                event.get("title"),
+                event.get("scheduled_at"),
+                event.get("current_stage", "SCHEDULED"),
+                event.get("consensus_forecast"),
+                event.get("prior_value"),
+                event.get("actual_value"),
+                event.get("surprise_delta"),
+                json.dumps(event.get("pre_baseline", {})),
+                json.dumps(event.get("reaction_1m", {})),
+                json.dumps(event.get("india_transmission", {})),
+                now_iso,
+            ))
+            conn.commit()
+            return True
+        except Exception as exc:
+            logger.warning(f"Failed to upsert calendar event: {exc}")
+            return False
+
+
+def get_all_calendar_events() -> List[Dict[str, Any]]:
+    """Retrieve all scheduled calendar events."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM economic_calendar_events ORDER BY scheduled_at ASC")
+        rows = cursor.fetchall()
+        results = []
+        for r in rows:
+            d = dict(r)
+            for k in ("pre_baseline_json", "reaction_1m_json", "india_transmission_json"):
+                if d.get(k):
+                    try:
+                        d[k.replace("_json", "")] = json.loads(d[k])
+                    except Exception:
+                        pass
+            results.append(d)
+        return results
+
+
+def record_sentinel_invocation(inv: Dict[str, Any]) -> bool:
+    """Record a cloud sentinel invocation audit entry."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        try:
+            lineage_val = inv.get("lineage")
+            lineage_str = json.dumps(lineage_val) if isinstance(lineage_val, (dict, list)) else (str(lineage_val) if lineage_val else None)
+            cursor.execute("""
+            INSERT OR REPLACE INTO sentinel_invocations (
+                scheduled_invocation_id, sentinel_invocation_id, started_at, completed_at,
+                sources_checked, events_seen, events_new, events_duplicate,
+                events_material, events_triggered, status, error, lineage_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                inv.get("scheduled_invocation_id", f"sched_{int(time.time()*1000)}"),
+                inv.get("sentinel_invocation_id", f"sent_{int(time.time()*1000)}"),
+                inv.get("started_at"),
+                inv.get("completed_at"),
+                int(inv.get("sources_checked", 0)),
+                int(inv.get("events_seen", 0)),
+                int(inv.get("events_new", 0)),
+                int(inv.get("events_duplicate", 0)),
+                int(inv.get("events_material", 0)),
+                int(inv.get("events_triggered", 0)),
+                inv.get("status", "SUCCESS"),
+                inv.get("error"),
+                lineage_str,
+            ))
+            conn.commit()
+            return True
+        except Exception as exc:
+            logger.warning(f"Failed to record sentinel invocation: {exc}")
+            return False
+
+
+def get_latest_sentinel_invocation() -> Optional[Dict[str, Any]]:
+    """Retrieve the most recent sentinel invocation telemetry record."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM sentinel_invocations ORDER BY id DESC LIMIT 1")
+        row = cursor.fetchone()
+        if not row:
+            return None
+        res = dict(row)
+        if res.get("lineage_json"):
+            try:
+                res["lineage"] = json.loads(res["lineage_json"])
+            except Exception:
+                res["lineage"] = {}
+        return res
+
+
+def record_event_coverage_metric(metric: Dict[str, Any]) -> bool:
+    """Record daily event coverage audit statistics."""
+    init_db()
+    now_iso = datetime.now(timezone.utc).isoformat()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute("""
+            INSERT OR REPLACE INTO event_coverage_metrics (
+                date, scheduled_expected, scheduled_detected, scheduled_coverage_pct,
+                source_available, source_processed, source_coverage_pct,
+                material_detected, material_processed, material_processing_pct, recorded_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                metric.get("date"),
+                int(metric.get("scheduled_expected", 0)),
+                int(metric.get("scheduled_detected", 0)),
+                float(metric.get("scheduled_coverage_pct", 100.0)),
+                int(metric.get("source_available", 0)),
+                int(metric.get("source_processed", 0)),
+                float(metric.get("source_coverage_pct", 100.0)),
+                int(metric.get("material_detected", 0)),
+                int(metric.get("material_processed", 0)),
+                float(metric.get("material_processing_pct", 100.0)),
+                metric.get("recorded_at", now_iso),
+            ))
+            conn.commit()
+            return True
+        except Exception as exc:
+            logger.warning(f"Failed to record event coverage metric: {exc}")
+            return False
+
+
+def get_latest_event_coverage_metric(target_date: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    """Retrieve the latest event coverage metric."""
+    init_db()
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        if target_date:
+            cursor.execute("SELECT * FROM event_coverage_metrics WHERE date = ? LIMIT 1", (target_date,))
+        else:
+            cursor.execute("SELECT * FROM event_coverage_metrics ORDER BY id DESC LIMIT 1")
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+
 

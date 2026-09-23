@@ -17,6 +17,19 @@
 [functions.nexus_scheduler]
   schedule = "0 13 * * 1-5"
 
+[functions.sentinel_tick]
+  schedule = "*/5 * * * *"
+
+[[redirects]]
+  from = "/api/health/sentinel"
+  to = "/.netlify/functions/health_sentinel"
+  status = 200
+
+[[redirects]]
+  from = "/api/sentinel/tick"
+  to = "/.netlify/functions/health_sentinel"
+  status = 200
+
 [[redirects]]
   from = "/api/health/ai"
   to = "/.netlify/functions/health_ai"

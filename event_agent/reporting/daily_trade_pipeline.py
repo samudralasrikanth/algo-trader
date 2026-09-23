@@ -96,7 +96,7 @@ class DailyTradeReportPipeline:
             import shutil, subprocess
             shutil.copyfile(audio_local_path, dest_dated)
             shutil.copyfile(audio_local_path, dest_latest)
-            cmd = ["npx", "-y", "netlify-cli", "deploy", "--dir=web_app", "--site-name", "nifty50-event-agent", "--prod", "--no-build"]
+            cmd = ["npx", "-y", "netlify-cli", "deploy", "--dir=web_app", "--site", "f5474525-5305-4487-b0d8-e5b66d0566cb", "--prod", "--no-build"]
             res = subprocess.run(cmd, cwd=str(repo_dir), capture_output=True, text=True, timeout=60)
             if res.returncode == 0:
                 audio_url = f"https://nifty50-event-agent.netlify.app/reports/audio/nexus_report_{target_date}.mp3"

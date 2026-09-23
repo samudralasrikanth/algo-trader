@@ -472,6 +472,10 @@ class OptionChain:
     price_source: str = "MODELLED_BLACK_SCHOLES"
     as_of: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
+    @property
+    def is_modelled_data(self) -> bool:
+        return self.price_source == "MODELLED_BLACK_SCHOLES"
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             "underlying": self.underlying,

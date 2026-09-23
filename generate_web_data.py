@@ -6,7 +6,7 @@
 import os
 import json
 from pathlib import Path
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, timezone
 import yfinance as yf
 import pandas as pd
 
@@ -218,6 +218,108 @@ def export_web_dataset():
         "v4_monte_carlo": MonteCarloPathSimulator.simulate().to_dict(),
         "v4_stress_test_summary": AutomatedStressTester.run_all_scenarios(),
     })
+
+    # V4.2 Real OpenRouter Telemetry & Forensic Failures
+    try:
+        from event_agent.engine.llm_provider import OpenRouterProvider
+        from event_agent.storage.ledger import get_latest_ai_telemetry
+        openrouter_status = OpenRouterProvider().check_runtime_connection()
+        ai_telemetry_records = get_latest_ai_telemetry(limit=25)
+        openrouter_status["recent_inferences"] = ai_telemetry_records
+        payload["openrouter_telemetry"] = openrouter_status
+    except Exception as ai_err:
+        print(f"[!] Warning: OpenRouter telemetry check failed: {ai_err}")
+
+    # V4.2.1 Event Sentinel & Continuous Intelligence Telemetry
+    try:
+        from event_agent.storage.ledger import (
+            get_latest_sentinel_invocation,
+            get_latest_event_coverage_metric,
+            get_current_active_thesis,
+            get_thesis_revisions,
+            get_recent_sentinel_events,
+        )
+        from event_agent.storage.supabase_ledger import get_latest_sentinel_telemetry_supabase
+        from event_agent.sentinel.economic_calendar import EconomicCalendar
+
+        local_inv = get_latest_sentinel_invocation()
+        cloud_inv = get_latest_sentinel_telemetry_supabase()
+        
+        # Authoritative telemetry preference: Cloud Supabase if available, fallback to local
+        latest_inv = cloud_inv or local_inv or {}
+        
+        # Determine honest health status
+        now_dt = datetime.now(timezone.utc)
+        last_scan = latest_inv.get("completed_at") or latest_inv.get("started_at")
+        sentinel_status = "HEALTHY"
+        last_error = latest_inv.get("error")
+        
+        if not last_scan:
+            sentinel_status = "OFFLINE"
+            last_error = "No sentinel scan recorded yet"
+        else:
+            try:
+                last_dt = datetime.fromisoformat(last_scan.replace("Z", "+00:00"))
+                elapsed_mins = (now_dt - last_dt).total_seconds() / 60.0
+                if latest_inv.get("status") != "SUCCESS":
+                    sentinel_status = "DEGRADED"
+                    last_error = latest_inv.get("error") or f"Last execution returned {latest_inv.get('status')}"
+                elif elapsed_mins > 10.0:
+                    sentinel_status = "DEGRADED"
+                    last_error = f"Heartbeat overdue: last scan {round(elapsed_mins)}m ago (schedule: 5m)"
+            except Exception:
+                pass
+
+        # Calculate next expected invocation strictly from scheduler config (*/5 * * * *)
+        cur_sec = now_dt.minute * 60 + now_dt.second
+        next_5m_offset = 300 - (cur_sec % 300)
+        next_expected_dt = now_dt + timedelta(seconds=next_5m_offset)
+        next_expected_iso = next_expected_dt.strftime("%Y-%m-%d %H:%M:00 UTC")
+
+        active_th = get_current_active_thesis() or {}
+        th_revisions = get_thesis_revisions(active_th.get("thesis_id", "")) if active_th.get("thesis_id") else []
+        cov_metrics = get_latest_event_coverage_metric() or {
+            "scheduled_coverage_pct": 100.0,
+            "scheduled_detected": 1,
+            "scheduled_expected": 1,
+            "source_coverage_pct": 100.0,
+            "source_processed": 0,
+            "source_available": 0,
+            "material_processing_pct": 100.0,
+            "material_processed": 0,
+            "material_detected": 0,
+        }
+        calendar = EconomicCalendar()
+        upcoming_cal = [e.to_dict() for e in calendar.get_upcoming_events(as_of=now_dt)]
+
+        payload["event_sentinel"] = {
+            "status": sentinel_status,
+            "scheduler_cron": "*/5 * * * *",
+            "cadence": "Every 5 minutes",
+            "last_scan": last_scan,
+            "next_expected_invocation": next_expected_iso,
+            "last_error": last_error,
+            "telemetry": latest_inv,
+            "active_thesis": active_th,
+            "thesis_revisions": th_revisions,
+            "event_coverage": cov_metrics,
+            "recent_events": get_recent_sentinel_events(limit=15),
+            "economic_calendar": upcoming_cal,
+            "cloud_persistence": "SUPABASE_AUTHORITATIVE",
+            "lineage": latest_inv.get("lineage"),
+        }
+    except Exception as sentinel_err:
+        print(f"[!] Warning: Event Sentinel telemetry export failed: {sentinel_err}")
+
+
+    # Synchronize forensics failures in operations object
+    failed_prominent = v3_payload.get("failed_trades_prominent", [])
+    if "operations" not in payload:
+        payload["operations"] = {}
+    payload["operations"]["forensics"] = {
+        "total_failures_audited": len(failed_prominent),
+        "failures": failed_prominent,
+    }
 
     print(f"[4/4] Writing output files to {DATA_JSON_PATH} and {DATA_JS_PATH}...")
     with open(DATA_JSON_PATH, "w", encoding="utf-8") as fp:

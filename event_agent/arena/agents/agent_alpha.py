@@ -86,78 +86,34 @@ class AgentAlpha(BaseAgent):
                 )
             ]
 
-        # Select at most 0 to 10 opportunities (limit to open slots)
+        # Select top opportunities (limit to open slots)
         available_slots = max(0, 10 - len(existing_symbols))
-        selected = candidates[:min(available_slots, 6)]
+        selected = candidates[:min(available_slots, 3)]
 
         proposals = []
         for seq, (symbol, data, _) in enumerate(selected, 1):
-            base_price = float(data.get("base_price", 0.0))
-            pred_pct = float(data.get("predicted_1d_pct", 0.0))
-            conviction = float(data.get("conviction", 65.0))
-            direction = TradeDirection.BUY if pred_pct >= 0 else TradeDirection.SELL
-            action = TradeAction.BUY if pred_pct >= 0 else TradeAction.SELL
-
-            # Calculate levels
-            if direction == TradeDirection.BUY:
-                target = base_price * (1.0 + abs(pred_pct) / 100.0)
-                stop = base_price * (1.0 - (abs(pred_pct) * 0.6) / 100.0)
-            else:
-                target = base_price * (1.0 - abs(pred_pct) / 100.0)
-                stop = base_price * (1.0 + (abs(pred_pct) * 0.6) / 100.0)
-
-            # Optional Hedge Decision
-            needs_hedge = macro_risk in ("RISK_OFF", "HOT", "HIGH_VOLATILITY")
-            hedge_dec = HedgeDecision.YES if needs_hedge else HedgeDecision.NO
-            hedge_inst = "NIFTY-PE-24500" if needs_hedge else None
-
-            catalyst_summary = ", ".join(data.get("catalysts", [])[:2]) or "Fundamental sentiment catalyst"
-            reason = f"Event catalyst confirmed: {catalyst_summary}. Predicted move {pred_pct:+.2f}% with {conviction:.0f}% conviction."
-            if needs_hedge:
-                reason += " Elevated macro risk detected; NIFTY PUT hedge attached."
-
-
-            # If highest conviction catalyst (>= 75%) and predicted move >= 1.0%, generate a deterministic multi-leg options strategy
-            strat = None
-            if seq <= 2 and conviction >= 72.0 and abs(pred_pct) >= 0.8:
-                bias = "BULLISH" if pred_pct > 0 else "BEARISH"
-                strat = OptionsStrategySelector.select_strategy(
-                    underlying=symbol,
-                    spot_price=base_price,
-                    directional_bias=bias,
-                    expected_move_pct=pred_pct,
-                    confidence=conviction,
-                    agent_id=self.agent_id,
-                    snapshot_id=snapshot_id,
-                )
-                if strat:
-                    inst_type = InstrumentType.OPTION
-                    reason += f" High catalyst conviction triggered multi-leg {strat.strategy_type.value} strategy (Risk: ₹{strat.max_loss:,.0f}, Target: ₹{strat.max_profit:,.0f})."
-
-            inst_type = InstrumentType.OPTION if strat else InstrumentType.EQUITY
-            inst = Instrument(underlying=symbol, instrument_type=inst_type)
-
-            proposals.append(
-                ProposedTrade(
-                    agent_id=self.agent_id,
-                    strategy_version=self.strategy_version,
-                    symbol=symbol,
-                    action=action,
-                    instrument=inst,
-                    direction=direction,
-                    entry_price=base_price,
-                    stop_loss=stop,
-                    target=target,
-                    confidence=conviction,
-                    expected_move_pct=pred_pct,
-                    planned_risk_amount=current_equity * 0.005,
-                    hedge_decision=hedge_dec,
-                    hedge_instrument=hedge_inst,
-                    decision_reason=reason,
-                    snapshot_id=snapshot_id,
-                    sequence=seq,
-                    strategy=strat,
-                )
+            # 1. Real Decision-Time AI inference & deterministic thesis validation
+            thesis = self.generate_and_validate_thesis(
+                symbol=symbol,
+                stock_data=data,
+                market_snapshot=market_snapshot,
             )
 
-        return proposals
+            # 2. Route thesis through Central Deterministic Instrument Selector
+            proposal = self.instrument_selector.select_instrument(
+                thesis=thesis,
+                stock_data=data,
+                portfolio_equity=current_equity,
+                current_open_positions=current_open_positions,
+                snapshot_id=snapshot_id,
+                sequence=seq,
+            )
+            proposals.append(proposal)
+
+        return proposals if proposals else [
+            self.create_no_trade_proposal(
+                reason="All event candidates failed quality, risk hurdle, or portfolio exposure checks.",
+                snapshot_id=snapshot_id,
+                confidence=55.0,
+            )
+        ]

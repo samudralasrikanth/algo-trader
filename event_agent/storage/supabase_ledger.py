@@ -232,3 +232,226 @@ def save_prediction_snapshot_supabase(snapshot: Dict[str, Any]) -> bool:
         return res.status_code in [200, 201]
     except Exception as e:
         return False
+
+
+# -----------------------------------------------------------------------------
+# Event Sentinel Cloud Sync (Authoritative Production Ledger)
+# -----------------------------------------------------------------------------
+
+def save_sentinel_invocation_supabase(inv: Dict[str, Any]) -> bool:
+    """
+    Persist cloud sentinel invocation telemetry and full lineage to Supabase.
+    Primary target: public.sentinel_invocations
+    Authoritative fallback: public.scheduler_invocations (trigger_source='NETLIFY_SENTINEL')
+    """
+    if not is_supabase_configured():
+        return False
+
+    # 1. Attempt dedicated sentinel_invocations table
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/sentinel_invocations"
+        res = requests.post(url, headers=get_headers(True), json=inv, timeout=10)
+        if res.status_code in [200, 201]:
+            return True
+    except Exception:
+        pass
+
+    # 2. Authoritative Fallback: persist to existing scheduler_invocations
+    try:
+        url_sched = f"{SUPABASE_URL}/rest/v1/scheduler_invocations"
+        now_iso = datetime.utcnow().isoformat() + "Z"
+        lineage_payload = {
+            "scheduled_invocation_id": inv.get("scheduled_invocation_id"),
+            "sentinel_invocation_id": inv.get("sentinel_invocation_id"),
+            "sources_checked": inv.get("sources_checked", 8),
+            "events_seen": inv.get("events_seen", 0),
+            "events_new": inv.get("events_new", 0),
+            "events_duplicate": inv.get("events_duplicate", 0),
+            "events_material": inv.get("events_material", 0),
+            "events_triggered": inv.get("events_triggered", 0),
+            "lineage": inv.get("lineage", {}),
+        }
+        fallback_record = {
+            "invocation_id": inv.get("sentinel_invocation_id") or f"SENT-{int(datetime.utcnow().timestamp())}",
+            "scheduled_for": inv.get("started_at") or now_iso,
+            "started_at": inv.get("started_at") or now_iso,
+            "completed_at": inv.get("completed_at") or now_iso,
+            "status": inv.get("status", "SUCCESS"),
+            "trigger_source": "NETLIFY_SENTINEL",
+            "environment": "PAPER",
+            "workflow_run_id": inv.get("scheduled_invocation_id"),
+            "job_run_id": json.dumps(lineage_payload),
+            "error_message": inv.get("error"),
+        }
+        res_sched = requests.post(url_sched, headers=get_headers(True), json=fallback_record, timeout=10)
+        return res_sched.status_code in [200, 201]
+    except Exception as e:
+        print(f"[!] Supabase save_sentinel_invocation error: {e}")
+        return False
+
+
+def save_sentinel_event_supabase(event: Dict[str, Any]) -> bool:
+    """
+    Persist classified event to Supabase authoritative event_ledger.
+    Fallback: news_archive table.
+    """
+    if not is_supabase_configured():
+        return False
+
+    # 1. Attempt event_ledger
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/event_ledger"
+        res = requests.post(url, headers=get_headers(True), json=event, timeout=10)
+        if res.status_code in [200, 201]:
+            return True
+    except Exception:
+        pass
+
+    # 2. Fallback: news_archive
+    try:
+        url_news = f"{SUPABASE_URL}/rest/v1/news_archive"
+        pub_date = event.get("timestamp") or datetime.utcnow().isoformat() + "Z"
+        evt_id = event.get("event_id", "EV-UNKNOWN")
+        archive_payload = {
+            "title": f"[{event.get('category', 'MACRO')}] {event.get('title', '')}"[:255],
+            "source": f"SENTINEL_{event.get('source', 'FEED')}"[:50],
+            "pub_date": pub_date,
+            "symbol": "NIFTY",
+            "score": float(event.get("importance_score", 50.0)),
+            "polarity": "BEARISH" if "bear" in str(event.get("thesis_relation", "")).lower() else "NEUTRAL",
+            "url": f"sentinel://event/{evt_id}",
+        }
+        res_news = requests.post(url_news, headers=get_headers(True), json=archive_payload, timeout=10)
+        return res_news.status_code in [200, 201]
+    except Exception as e:
+        print(f"[!] Supabase save_sentinel_event error: {e}")
+        return False
+
+
+def save_active_thesis_supabase(thesis: Dict[str, Any]) -> bool:
+    """
+    Persist active NIFTY thesis state to Supabase.
+    Fallback: job_execution_logs table.
+    """
+    if not is_supabase_configured():
+        return False
+
+    # 1. Attempt active_theses table
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/active_theses"
+        res = requests.post(url, headers=get_headers(True), json=thesis, timeout=10)
+        if res.status_code in [200, 201]:
+            return True
+    except Exception:
+        pass
+
+    # 2. Fallback: job_execution_logs
+    try:
+        url_jobs = f"{SUPABASE_URL}/rest/v1/job_execution_logs"
+        now_iso = datetime.utcnow().isoformat() + "Z"
+        today_date = datetime.utcnow().strftime("%Y-%m-%d")
+        job_record = {
+            "job_type": "ACTIVE_THESIS_UPDATE",
+            "started_at": thesis.get("created_at") or now_iso,
+            "completed_at": now_iso,
+            "status": thesis.get("status", "ACTIVE"),
+            "target_date": today_date,
+            "records_stored": int(thesis.get("revision", 1)),
+            "log_summary": json.dumps(thesis),
+        }
+        res_jobs = requests.post(url_jobs, headers=get_headers(True), json=job_record, timeout=10)
+        return res_jobs.status_code in [200, 201]
+    except Exception as e:
+        print(f"[!] Supabase save_active_thesis error: {e}")
+        return False
+
+
+def save_thesis_revision_supabase(rev: Dict[str, Any]) -> bool:
+    """
+    Persist deterministic thesis revision to Supabase.
+    Fallback: job_execution_logs table.
+    """
+    if not is_supabase_configured():
+        return False
+
+    # 1. Attempt thesis_revisions table
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/thesis_revisions"
+        res = requests.post(url, headers=get_headers(True), json=rev, timeout=10)
+        if res.status_code in [200, 201]:
+            return True
+    except Exception:
+        pass
+
+    # 2. Fallback: job_execution_logs
+    try:
+        url_jobs = f"{SUPABASE_URL}/rest/v1/job_execution_logs"
+        now_iso = datetime.utcnow().isoformat() + "Z"
+        today_date = datetime.utcnow().strftime("%Y-%m-%d")
+        job_record = {
+            "job_type": "THESIS_REVISION",
+            "started_at": rev.get("created_at") or now_iso,
+            "completed_at": now_iso,
+            "status": "APPLIED",
+            "target_date": today_date,
+            "records_stored": int(rev.get("revision", 1)),
+            "log_summary": json.dumps(rev),
+        }
+        res_jobs = requests.post(url_jobs, headers=get_headers(True), json=job_record, timeout=10)
+        return res_jobs.status_code in [200, 201]
+    except Exception as e:
+        print(f"[!] Supabase save_thesis_revision error: {e}")
+        return False
+
+
+def get_latest_sentinel_telemetry_supabase() -> Optional[Dict[str, Any]]:
+    """
+    Retrieve the latest sentinel invocation telemetry from Supabase.
+    Checks sentinel_invocations first, falls back to scheduler_invocations.
+    """
+    if not is_supabase_configured():
+        return None
+
+    # 1. Try dedicated table
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/sentinel_invocations?select=*&order=completed_at.desc&limit=1"
+        res = requests.get(url, headers=get_headers(False), timeout=10)
+        if res.status_code == 200 and res.json():
+            return res.json()[0]
+    except Exception:
+        pass
+
+    # 2. Try scheduler_invocations with trigger_source = NETLIFY_SENTINEL
+    try:
+        url_sched = f"{SUPABASE_URL}/rest/v1/scheduler_invocations?trigger_source=eq.NETLIFY_SENTINEL&order=started_at.desc&limit=1"
+        res_sched = requests.get(url_sched, headers=get_headers(False), timeout=10)
+        if res_sched.status_code == 200 and res_sched.json():
+            row = res_sched.json()[0]
+            # Parse payload from job_run_id if present
+            payload = {}
+            if row.get("job_run_id"):
+                try:
+                    payload = json.loads(row["job_run_id"])
+                except Exception:
+                    pass
+
+            return {
+                "scheduled_invocation_id": row.get("workflow_run_id") or payload.get("scheduled_invocation_id"),
+                "sentinel_invocation_id": row.get("invocation_id"),
+                "started_at": row.get("started_at"),
+                "completed_at": row.get("completed_at"),
+                "sources_checked": payload.get("sources_checked", 8),
+                "events_seen": payload.get("events_seen", 0),
+                "events_new": payload.get("events_new", 0),
+                "events_duplicate": payload.get("events_duplicate", 0),
+                "events_material": payload.get("events_material", 0),
+                "events_triggered": payload.get("events_triggered", 0),
+                "status": row.get("status", "SUCCESS"),
+                "error": row.get("error_message"),
+                "lineage": payload.get("lineage", {}),
+            }
+    except Exception as e:
+        print(f"[!] Supabase get_latest_sentinel_telemetry error: {e}")
+
+    return None
+
