@@ -89,6 +89,13 @@ class AgentMomentum(BaseAgent):
                 market_snapshot=market_snapshot,
             )
 
+            # Fundamentals as context modifier (never destroying valid short-term momentum)
+            if thesis.fundamental_context:
+                if thesis.fundamental_context.confirmation:
+                    thesis.reasoning += " [Fundamentals: Strong quality confirms momentum persistence]"
+                elif thesis.fundamental_context.contradiction:
+                    thesis.reasoning += " [Fundamentals: Caution noted on balance sheet; tactical trend momentum preserved]"
+
             # 2. Route thesis through Central Deterministic Instrument Selector
             proposal = self.instrument_selector.select_instrument(
                 thesis=thesis,

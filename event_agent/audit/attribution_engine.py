@@ -48,6 +48,7 @@ class DiagnosticDimensions8D:
     root_cause_name: str
     is_f06_whipsaw: bool
     deterministic_summary: str
+    fundamental_alignment: str = "UNAVAILABLE"  # SUPPORTIVE, CONTRADICTORY, NEUTRAL, STALE, UNAVAILABLE
     evidence: Dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:
@@ -66,6 +67,7 @@ class DiagnosticDimensions8D:
             "root_cause_code": self.root_cause_code,
             "root_cause_name": self.root_cause_name,
             "is_f06_whipsaw": self.is_f06_whipsaw,
+            "fundamental_alignment": self.fundamental_alignment,
             "deterministic_summary": self.deterministic_summary,
             "evidence": self.evidence,
         }
@@ -96,6 +98,7 @@ class ForensicDecomposer8D:
         regime_data: Optional[Dict[str, Any]] = None,
         cross_asset_data: Optional[Dict[str, Any]] = None,
         consensus_data: Optional[Dict[str, Any]] = None,
+        fundamental_data: Optional[Dict[str, Any]] = None,
     ) -> DiagnosticDimensions8D:
         bp = max(0.01, base_price)
         pred_dir = "BULLISH" if predicted_pct >= 0 else "BEARISH"
@@ -179,6 +182,34 @@ class ForensicDecomposer8D:
             name = "DIRECTIONAL_HIT"
             summary = f"Forecast accurately anticipated market direction ({actual_pct:+.2f}% actual vs {predicted_pct:+.2f}% predicted)."
 
+        # 8. Fundamental Alignment Evaluation
+        fa = fundamental_data or {}
+        f_source = fa.get("source", "FUNDAMENTALS_UNAVAILABLE")
+        f_freshness = fa.get("freshness", "UNAVAILABLE")
+        q_score = fa.get("quality_score")
+        v_score = fa.get("valuation_score")
+        f_regime = fa.get("fundamental_regime", "MIXED")
+
+        if f_source == "FUNDAMENTALS_UNAVAILABLE" or q_score is None:
+            fundamental_alignment = "UNAVAILABLE"
+        elif f_freshness in ("STALE", "EXPIRED"):
+            fundamental_alignment = "STALE"
+        else:
+            if pred_dir == "BULLISH":
+                if q_score >= 60.0 and f_regime != "STRESSED":
+                    fundamental_alignment = "SUPPORTIVE"
+                elif f_regime == "STRESSED" or q_score < 35.0:
+                    fundamental_alignment = "CONTRADICTORY"
+                else:
+                    fundamental_alignment = "NEUTRAL"
+            else:  # BEARISH
+                if f_regime in ("STRESSED", "WEAKENING") or q_score < 40.0:
+                    fundamental_alignment = "SUPPORTIVE"
+                elif q_score >= 70.0 and (v_score is not None and v_score >= 60.0):
+                    fundamental_alignment = "CONTRADICTORY"
+                else:
+                    fundamental_alignment = "NEUTRAL"
+
         evidence = {
             "symbol": symbol,
             "predicted_pct": predicted_pct,
@@ -188,6 +219,7 @@ class ForensicDecomposer8D:
             "rv_ratio": round(rv_ratio, 2),
             "reversal_count": reversal_count,
             "intraday_range_pct": round(intraday_range_pct, 2),
+            "fundamental_alignment": fundamental_alignment,
         }
 
         return DiagnosticDimensions8D(
@@ -205,13 +237,14 @@ class ForensicDecomposer8D:
             root_cause_code=code,
             root_cause_name=name,
             is_f06_whipsaw=is_f06,
+            fundamental_alignment=fundamental_alignment,
             deterministic_summary=summary,
             evidence=evidence,
         )
 
 
 class FactorAttributionEngine:
-    """Backward-compatible wrapper for 3-level attribution incorporating 8D forensics."""
+    """Backward-compatible wrapper for 3-level attribution incorporating 8D/9D forensics."""
 
     def attribute(
         self,
@@ -221,11 +254,16 @@ class FactorAttributionEngine:
         state_before: Optional[Dict[str, Any]] = None,
         state_after: Optional[Dict[str, Any]] = None,
         factors: Optional[Dict[str, float]] = None,
+        fundamental_data: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         bp = float((state_before or {}).get("base_price", 1000.0))
         h = float((state_after or {}).get("high", bp * (1.0 + abs(actual_move_pct) / 100.0)))
         l = float((state_after or {}).get("low", bp * (1.0 - abs(actual_move_pct) / 100.0)))
         c = float((state_after or {}).get("close", bp * (1.0 + actual_move_pct / 100.0)))
+
+        f_data = fundamental_data or (state_before or {}).get("fundamental_snapshot") or (state_before or {}).get("fundamentals")
+        if hasattr(f_data, "to_dict"):
+            f_data = f_data.to_dict()
 
         forensics = ForensicDecomposer8D.decompose(
             symbol=symbol,
@@ -235,6 +273,7 @@ class FactorAttributionEngine:
             actual_high=h,
             actual_low=l,
             actual_close=c,
+            fundamental_data=f_data,
         )
 
         return {
@@ -245,6 +284,7 @@ class FactorAttributionEngine:
             "unexplained_move_pct": round(actual_move_pct * 0.25, 2),
             "explained_ratio_pct": 75.0,
             "forensics_8d": forensics.to_dict(),
+            "fundamental_alignment": forensics.fundamental_alignment,
             "root_cause_code": forensics.root_cause_code,
             "root_cause_name": forensics.root_cause_name,
             "diagnostic_explanation": forensics.deterministic_summary,

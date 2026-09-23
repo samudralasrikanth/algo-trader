@@ -77,6 +77,11 @@ class ConsensusEngine:
             }
 
         stocks: Dict[str, Any] = {}
+        from event_agent.fundamentals.market_lens_provider import MarketLensProvider
+        from event_agent.fundamentals.fundamental_score import FundamentalScoreEngine
+        lens_provider = MarketLensProvider()
+        now_dt = datetime.now(timezone.utc)
+        fund_snapshots_map = {}
         sorted_keys = sorted(NIFTY50_UNIVERSE.keys())
 
         for sym in sorted_keys:
@@ -95,6 +100,7 @@ class ConsensusEngine:
                 target = float(pred.get("target_price", pred.get("predicted_1d_target", base_price)))
                 stop = float(pred.get("stop_loss", base_price * 0.98))
                 baselines = pred.get("baselines", {})
+                fund_snap = pred.get("fundamental_snapshot")
             else:
                 base_price = DEFAULT_STOCK_PRICES.get(sym, 1000.0)
                 pred_1d_pct = 0.0
@@ -107,6 +113,16 @@ class ConsensusEngine:
                 target = base_price
                 stop = base_price * 0.98
                 baselines = {}
+                fund_snap = None
+
+            if not fund_snap:
+                fund_snap = lens_provider.get_snapshot(sym, as_of_dt=now_dt)
+
+            if hasattr(fund_snap, "to_dict"):
+                fund_snapshots_map[sym] = fund_snap
+                fund_dict = fund_snap.to_dict()
+            else:
+                fund_dict = fund_snap or {}
 
             stocks[sym] = {
                 "symbol": sym,
@@ -125,6 +141,8 @@ class ConsensusEngine:
                 "target_price": target,
                 "stop_loss": stop,
                 "baselines": baselines,
+                "fundamental_snapshot": fund_dict,
+                "fundamentals": fund_dict,
                 "key_drivers": meta.get("key_drivers", []),
                 "effective_from": meta.get("effective_from"),
                 "effective_to": meta.get("effective_to"),
@@ -164,11 +182,16 @@ class ConsensusEngine:
         ]
         snapshot_hash = hashlib.sha256(json.dumps(payload_data, sort_keys=True).encode()).hexdigest()
 
+        # Compute Nifty 50 fundamental breadth and regime
+        fund_breadth = FundamentalScoreEngine.compute_market_breadth_and_regime(fund_snapshots_map)
+
         return {
             "snapshot_id": snapshot_hash,
             "market_date": market_date,
             "timestamp": now_str,
             "regime": regime_data,
+            "fundamental_breadth": fund_breadth,
+            "fundamental_regime": fund_breadth["fundamental_regime"],
             "stocks": stocks,
             "universe_count": len(stocks),
         }

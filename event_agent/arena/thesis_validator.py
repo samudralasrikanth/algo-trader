@@ -13,6 +13,8 @@ from dataclasses import dataclass, field
 import logging
 from typing import Any, Dict, List, Optional
 
+from event_agent.fundamentals.fundamental_snapshot import FundamentalContext
+
 logger = logging.getLogger(__name__)
 
 CANONICAL_HORIZONS = {"1D", "3D", "7D"}
@@ -38,6 +40,7 @@ class MarketThesis:
     conflict_reasons: List[str] = field(default_factory=list)
     is_valid: bool = True
     validation_errors: List[str] = field(default_factory=list)
+    fundamental_context: Optional[FundamentalContext] = None
 
     @property
     def is_conflicted(self) -> bool:
@@ -65,6 +68,7 @@ class MarketThesis:
             "conflict_reasons": self.conflict_reasons,
             "is_valid": self.is_valid,
             "validation_errors": self.validation_errors,
+            "fundamental_context": self.fundamental_context.to_dict() if self.fundamental_context else None,
         }
 
 
@@ -164,6 +168,12 @@ class MarketThesisValidator:
                     conflicts.append(f"Global equity rally: Futures up {global_futures_chg:+.2f}%.")
                 if adv_dec_ratio >= 2.0:
                     conflicts.append(f"Strong domestic breadth: Advance-Decline ratio is {adv_dec_ratio:.2f}.")
+
+        # 7. Fundamental Evidence Contradiction Check (Context modifier for Momentum, conflict for others)
+        if thesis.fundamental_context and thesis.fundamental_context.contradiction:
+            fc_reason = thesis.fundamental_context.reasoning or "Fundamental profile strongly contradicts short-term directional thesis."
+            if thesis.agent_id.upper() != "MOMENTUM":
+                conflicts.append(f"Fundamental contradiction: {fc_reason}")
 
         thesis.is_valid = (len(errors) == 0)
         thesis.validation_errors = errors

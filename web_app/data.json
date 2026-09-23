@@ -29218,7 +29218,7 @@
   },
   "daily_video_report": {
     "report_date": "2026-09-18",
-    "job_run_id": "RUN-20260923-155343-065785e0",
+    "job_run_id": "RUN-20260923-161703-028d4977",
     "status": "PARTIAL_SUCCESS",
     "data_mode": "TEST_FIXTURE",
     "total_trades": 1,
@@ -29283,7 +29283,7 @@
     "content_theme": "STANDOUT_TRADE",
     "content_score": 96.0,
     "content_data_hash": "c18014b1eb7f374bf5b68cfc9bb1c4c19d345a5c9029bec321338e0d03f3ac1c",
-    "content_generated_at": "2026-09-23T15:53:43.732849+00:00",
+    "content_generated_at": "2026-09-23T16:17:03.210319+00:00",
     "youtube_video_id": "YT-VID-MOCK",
     "youtube_url": "https://youtu.be/YT-VID-MOCK",
     "youtube_status": "SUCCESS",
@@ -29291,7 +29291,7 @@
     "youtube_thumbnail_status": "SUCCESS",
     "email_status": "EMAIL_FAILED",
     "email_sent_at": null,
-    "provenance_hash": "PRV-2026-09-18-2e273e58e37bbb26",
+    "provenance_hash": "PRV-2026-09-18-f8f8c4c377bf42e0",
     "report_payload_json": {
       "data_mode": "TEST_FIXTURE",
       "reconciliation": {
@@ -29401,7 +29401,7 @@
         "best_trade_pnl": 3820.0,
         "data_hash": "c18014b1eb7f374bf5b68cfc9bb1c4c19d345a5c9029bec321338e0d03f3ac1c",
         "data_mode": "TEST_FIXTURE",
-        "generated_at": "2026-09-23T15:53:43.732849+00:00"
+        "generated_at": "2026-09-23T16:17:03.210319+00:00"
       },
       "thumbnail": {
         "status": "SUCCESS",
@@ -29414,7 +29414,7 @@
         "headline": "+\u20b93,820",
         "latency_ms": 0,
         "error_message": null,
-        "created_at": "2026-09-23T15:53:43.731748+00:00",
+        "created_at": "2026-09-23T16:17:03.208897+00:00",
         "completed_at": null,
         "template_id": "RESULT"
       }
@@ -30106,7 +30106,7 @@
     {
       "id": 38,
       "report_date": "2026-09-18",
-      "job_run_id": "RUN-20260923-155343-065785e0",
+      "job_run_id": "RUN-20260923-161703-028d4977",
       "status": "PARTIAL_SUCCESS",
       "total_trades": 1,
       "winning_trades": 1,
@@ -30167,8 +30167,8 @@
       "email_status": "EMAIL_FAILED",
       "email_sent_at": null,
       "created_at": "2026-09-13T17:54:55.801996",
-      "updated_at": "2026-09-23T21:23:43.746403",
-      "provenance_hash": "PRV-2026-09-18-2e273e58e37bbb26",
+      "updated_at": "2026-09-23T21:47:03.221833",
+      "provenance_hash": "PRV-2026-09-18-f8f8c4c377bf42e0",
       "report_payload_json": {
         "data_mode": "TEST_FIXTURE",
         "reconciliation": {
@@ -30278,7 +30278,7 @@
           "best_trade_pnl": 3820.0,
           "data_hash": "c18014b1eb7f374bf5b68cfc9bb1c4c19d345a5c9029bec321338e0d03f3ac1c",
           "data_mode": "TEST_FIXTURE",
-          "generated_at": "2026-09-23T15:53:43.732849+00:00"
+          "generated_at": "2026-09-23T16:17:03.210319+00:00"
         },
         "thumbnail": {
           "status": "SUCCESS",
@@ -30291,7 +30291,7 @@
           "headline": "+\u20b93,820",
           "latency_ms": 0,
           "error_message": null,
-          "created_at": "2026-09-23T15:53:43.731748+00:00",
+          "created_at": "2026-09-23T16:17:03.208897+00:00",
           "completed_at": null,
           "template_id": "RESULT"
         }
@@ -30305,7 +30305,7 @@
       "content_theme": "STANDOUT_TRADE",
       "content_score": 96.0,
       "content_data_hash": "c18014b1eb7f374bf5b68cfc9bb1c4c19d345a5c9029bec321338e0d03f3ac1c",
-      "content_generated_at": "2026-09-23T15:53:43.732849+00:00",
+      "content_generated_at": "2026-09-23T16:17:03.210319+00:00",
       "youtube_upload_status": "SUCCESS",
       "youtube_thumbnail_status": "SUCCESS",
       "data_mode": "TEST_FIXTURE"
@@ -31145,7 +31145,7 @@
       "email_status": null,
       "email_sent_at": null,
       "created_at": "2026-09-10T10:55:12.332906",
-      "updated_at": "2026-09-23T21:13:52.691173",
+      "updated_at": "2026-09-23T21:23:44.565204",
       "provenance_hash": "mock_hash_815",
       "report_payload_json": null,
       "thumbnail_url": null,
@@ -31312,7 +31312,7 @@
       "Baseline 6: NIFTY Direction": 54.2,
       "Baseline 7: Simple RSI-14": 52.1
     },
-    "generated_at": "2026-09-23T15:53:45.059745+00:00"
+    "generated_at": "2026-09-23T16:17:04.062530+00:00"
   },
   "certification_v36": {
     "is_certified": true,
@@ -31389,7 +31389,7 @@
       "is_converged": false,
       "status": "ACCEPTABLE"
     },
-    "timestamp": "2026-09-23T15:54:34.102320+00:00"
+    "timestamp": "2026-09-23T16:17:27.480406+00:00"
   },
   "next_scheduled_runs": {
     "next_run_utc": "2026-09-10T12:30:00+00:00",

@@ -78,10 +78,21 @@ class AgentMacro(BaseAgent):
             pred_pct = float(data.get("predicted_1d_pct", 0.0))
             base_price = float(data.get("base_price", 0.0))
 
-            if base_price <= 0:
+            min_conviction = float(os.getenv("MIN_AGENT_CONVICTION", "48.0"))
+
+            # Macro combines regime + sector + company debt profile
+            fund_snap = data.get("fundamental_snapshot") or data.get("fundamentals")
+            de = 0.5
+            if fund_snap is not None:
+                leverage = getattr(fund_snap, "leverage", {}) or (fund_snap.get("leverage", {}) if isinstance(fund_snap, dict) else {})
+                de = float(leverage.get("debt_to_equity", 0.5))
+
+            # In hawkish / rising-rate regimes, penalize high-debt non-banking candidates
+            is_bank = "bank" in sector.lower() or "financial" in sector.lower()
+            if monetary == "HAWKISH" and not is_bank and de > 1.5 and pred_pct > 0:
+                # Rising rates + high debt = macro fundamental headwind
                 continue
 
-            min_conviction = float(os.getenv("MIN_AGENT_CONVICTION", "48.0"))
             if is_macro_sensitive and conviction >= min_conviction and abs(pred_pct) >= 0.30:
                 candidates.append((symbol, data, conviction))
 

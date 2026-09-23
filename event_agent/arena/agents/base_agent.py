@@ -107,6 +107,64 @@ class BaseAgent(ABC):
         ]
         reasoning = ai_resp.get("reasoning") or f"Catalyst thesis for {symbol} under {self.strategy_version}"
 
+        # 3. Extract and construct deterministic FundamentalContext
+        from event_agent.fundamentals.fundamental_snapshot import FundamentalContext, FundamentalRole
+        fund_snap = stock_data.get("fundamental_snapshot") or stock_data.get("fundamentals")
+        fundamental_context = None
+
+        if fund_snap is not None:
+            if hasattr(fund_snap, "quality_score"):
+                q_score = fund_snap.quality_score
+                v_score = fund_snap.valuation_score
+                g_score = fund_snap.growth_score
+                bs_score = fund_snap.balance_sheet_score
+                f_regime = fund_snap.fundamental_regime
+                f_as_of = fund_snap.as_of.isoformat() if hasattr(fund_snap.as_of, "isoformat") else str(fund_snap.as_of)
+                f_source = fund_snap.source
+            else:
+                q_score = fund_snap.get("quality_score")
+                v_score = fund_snap.get("valuation_score")
+                g_score = fund_snap.growth_score if hasattr(fund_snap, "growth_score") else fund_snap.get("growth_score")
+                bs_score = fund_snap.get("balance_sheet_score")
+                f_regime = fund_snap.get("fundamental_regime", "MIXED")
+                f_as_of = str(fund_snap.get("as_of", ""))
+                f_source = fund_snap.get("source", "UNKNOWN")
+
+            # Determine confirmation vs contradiction deterministically
+            is_bull = (direction == "BULLISH")
+            confirmation = False
+            contradiction = False
+            fc_reason = ""
+
+            if is_bull:
+                if (q_score is not None and q_score >= 60.0) and f_regime != "STRESSED":
+                    confirmation = True
+                    fc_reason = "High quality score confirms bullish event continuation."
+                elif f_regime == "STRESSED" or (q_score is not None and q_score < 35.0):
+                    contradiction = True
+                    fc_reason = f"Fundamental regime is {f_regime} (Quality: {q_score}); opposes bullish stance."
+            else:
+                if f_regime in ("STRESSED", "WEAKENING") or (q_score is not None and q_score < 40.0):
+                    confirmation = True
+                    fc_reason = f"Deteriorating fundamentals ({f_regime}) confirm bearish thesis."
+                elif (q_score is not None and q_score >= 70.0) and (v_score is not None and v_score >= 60.0):
+                    contradiction = True
+                    fc_reason = f"High quality ({q_score}) and attractive valuation ({v_score}) contradict bearish thesis."
+
+            fundamental_context = FundamentalContext(
+                quality_score=q_score,
+                valuation_score=v_score,
+                growth_score=g_score,
+                balance_sheet_score=bs_score,
+                fundamental_regime=f_regime,
+                confirmation=confirmation,
+                contradiction=contradiction,
+                data_as_of=f_as_of,
+                source=f_source,
+                role=FundamentalRole.VALUATION_CONTEXT.value,
+                reasoning=fc_reason,
+            )
+
         thesis = MarketThesis(
             agent_id=self.agent_id,
             symbol=symbol,
@@ -120,9 +178,10 @@ class BaseAgent(ABC):
             ai_request_id=ai_resp.get("ai_request_id"),
             model=ai_resp.get("model"),
             actual_provider=ai_resp.get("actual_provider"),
+            fundamental_context=fundamental_context,
         )
 
-        # 3. Deterministic Validation & Data Inconsistency Check
+        # 4. Deterministic Validation & Data Inconsistency Check
         validated_thesis = self.thesis_validator.validate(thesis, structured_evidence=macro_evidence)
         return validated_thesis
 

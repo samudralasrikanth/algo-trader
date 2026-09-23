@@ -77,12 +77,25 @@ class AgentDefensive(BaseAgent):
             if base_price <= 0:
                 continue
 
-            # Defensive requires low beta (<0.90) or defensive sector, and conviction >= min_conviction
+            # Defensive requires low beta (<0.95) or defensive sector, and conviction >= min_conviction
             min_conviction = float(os.getenv("MIN_AGENT_CONVICTION", "48.0"))
-            is_low_beta = beta < 0.90 or any(ds.lower() in sector.lower() for ds in defensive_sectors)
+            is_low_beta = beta < 0.95 or any(ds.lower() in sector.lower() for ds in defensive_sectors)
+
+            # Defensive applies fundamental quality and solvency filter
+            fund_snap = data.get("fundamental_snapshot") or data.get("fundamentals")
+            q_score = None
+            if fund_snap is not None:
+                q_score = getattr(fund_snap, "quality_score", None) or (fund_snap.get("quality_score") if isinstance(fund_snap, dict) else None)
+                f_regime = getattr(fund_snap, "fundamental_regime", None) or (fund_snap.get("fundamental_regime") if isinstance(fund_snap, dict) else None)
+                # Reject fundamentally stressed companies immediately
+                if f_regime == "STRESSED" or (q_score is not None and q_score < 35.0):
+                    continue
+
             if is_low_beta and conviction >= min_conviction and pred_pct > 0.15:
-                # Defensive primarily trades long high-quality stocks
-                candidates.append((symbol, data, conviction / beta))
+                # Defensive weights candidates by quality / beta
+                quality_mult = (q_score / 50.0) if q_score is not None else 1.0
+                rank_score = (conviction / max(0.5, beta)) * quality_mult
+                candidates.append((symbol, data, rank_score))
 
         candidates.sort(key=lambda x: x[2], reverse=True)
 

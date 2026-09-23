@@ -15,10 +15,10 @@ NEXUS V4.2 / V4.2.1
 CORE ARCHITECTURE            PASS (Institutional Multi-Asset)
 SENTINEL ENGINE              PASS (19 Categories, 3-Tier Verdict)
 SUPABASE PERSISTENCE         PASS (Authoritative Cloud Ledger)
-AUTOMATED TESTS              202 / 202 PASS (190 Baseline + 8 Sentinel + 4 TradeGuard Freshness)
+AUTOMATED TESTS              202 tests collected: 201 passed, 1 skipped
 NETLIFY DEPLOYMENT           PASS (https://nifty50-event-agent.netlify.app)
 API HEALTH                   PASS (/api/health/scheduler, /api/health/sentinel: HTTP 200)
-SCHEDULED RUNTIME            OBSERVED / PENDING PROOF
+SCHEDULED RUNTIME            AUTONOMOUS INVOCATION OBSERVED / CONTINUOUS RELIABILITY PENDING
 EVENT COVERAGE               TRACKING (3 Decoupled Denominators)
 PAPER TRADING                ENABLED (Level 1 Virtual Capital)
 LIVE TRADING                 DISABLED (Hard Latch Enforced)
@@ -35,7 +35,7 @@ NEXT MILESTONE: P0.2 — AUTONOMOUS CLOUD RUNTIME CERTIFICATION
 ## 2. Test Suite Count & Structural Reconciliation
 
 ### A. Mathematical Reconciliation
-$$\mathbf{190\text{ (V4.2 Baseline Institutional Tests)}} + \mathbf{8\text{ (V4.2.1 Event Sentinel Tests)}} + \mathbf{4\text{ (TradeGuard Freshness Tests)}} = \mathbf{202\text{ Total Passing Tests}}$$
+$$\mathbf{190\text{ (V4.2 Baseline Institutional: 189 passed, 1 skipped)}} + \mathbf{8\text{ (V4.2.1 Event Sentinel Tests)}} + \mathbf{4\text{ (TradeGuard Freshness Tests)}} = \mathbf{202\text{ Total Tests Collected (201 passed, 1 skipped)}}$$
 
 ### B. Explanation of the "10-Point Golden FOMC Test Case" vs the 8 Sentinel Test Functions
 In `tests/test_v421_event_sentinel.py`, there are exactly **8 distinct test functions** executed by `pytest`. One of those 8 functions is `test_golden_fomc_september_16_2026()`, which evaluates a **10-point chronological milestone sequence** representing the full end-to-end lifecycle of the September 16, 2026 FOMC event:
@@ -135,6 +135,6 @@ To establish whether NEXUS catches *arbitrary, unexpected* real-world events dur
   with **zero CLI execution, zero local daemon, zero synthetic test fixture, and zero manual operator curl**.
 - **Certification Clock Anchor**: Once this unprompted autonomous cloud paper run is verified in Supabase and the web dashboard, its execution timestamp will serve as the formal anchor date for the V4.0 prospective 6-month paper trading certification clock.
 - **Current State**:
-  - Engineering architecture: **COMPLETE & PASSING (198/198 tests)**
+  - Engineering architecture: **COMPLETE & PASSING (202 tests collected: 201 passed, 1 skipped)**
   - Paper trading: **ENABLED**
   - Live capital trading: **STRICTLY DISABLED**

@@ -62,11 +62,28 @@ class AgentContrarian(BaseAgent):
                 continue
 
             # Contrarian triggers on extreme move (>2.0% or <-2.0%) or extreme negative sentiment (< -0.30)
-            is_oversold_dip = (momentum_5d <= -1.8 or sentiment <= -0.30) and conviction >= 60.0
-            is_overbought_exhaustion = (momentum_5d >= 2.2 and sentiment >= 0.40) and conviction >= 60.0
+            is_oversold_dip = (momentum_5d <= -1.8 or sentiment <= -0.30) and conviction >= 55.0
+            is_overbought_exhaustion = (momentum_5d >= 2.2 and sentiment >= 0.40) and conviction >= 55.0
+
+            # Fundamentals evaluation: distinguishes oversold support from falling knife
+            fund_snap = data.get("fundamental_snapshot") or data.get("fundamentals")
+            q_score = getattr(fund_snap, "quality_score", None) or (fund_snap.get("quality_score") if isinstance(fund_snap, dict) else None)
+            f_regime = getattr(fund_snap, "fundamental_regime", None) or (fund_snap.get("fundamental_regime") if isinstance(fund_snap, dict) else None)
 
             if is_oversold_dip:
-                candidates.append((symbol, data, TradeDirection.BUY, abs(momentum_5d), "Oversold panic dip mean-reversion"))
+                if f_regime == "STRESSED" or (q_score is not None and q_score < 35.0):
+                    # Falling knife with structural fundamental deterioration: avoid buying dip
+                    continue
+
+                if q_score is not None and q_score >= 60.0:
+                    rationale = "Oversold dip with strong fundamental support (Quality confirmed)"
+                    score_boost = 1.3
+                else:
+                    rationale = "Oversold panic dip mean-reversion"
+                    score_boost = 1.0
+
+                candidates.append((symbol, data, TradeDirection.BUY, abs(momentum_5d) * score_boost, rationale))
+
             elif is_overbought_exhaustion:
                 candidates.append((symbol, data, TradeDirection.SELL, abs(momentum_5d), "Overbought consensus exhaustion fade"))
 

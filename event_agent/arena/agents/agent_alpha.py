@@ -68,11 +68,33 @@ class AgentAlpha(BaseAgent):
             if base_price <= 0:
                 continue
 
-            # Alpha requires news/catalysts and conviction >= min_conviction (default 48.0% for paper trading)
+            # Alpha evaluates catalyst credibility using fundamental evidence
+            fund_snap = data.get("fundamental_snapshot") or data.get("fundamentals")
+            catalyst_credibility = "MEDIUM_CREDIBILITY"
+            credibility_mult = 1.0
+
+            if fund_snap is not None:
+                q_score = getattr(fund_snap, "quality_score", None) or (fund_snap.get("quality_score") if isinstance(fund_snap, dict) else None)
+                g_score = getattr(fund_snap, "growth_score", None) or (fund_snap.get("growth_score") if isinstance(fund_snap, dict) else None)
+                f_regime = getattr(fund_snap, "fundamental_regime", None) or (fund_snap.get("fundamental_regime") if isinstance(fund_snap, dict) else None)
+
+                if q_score is not None and g_score is not None:
+                    if q_score >= 65.0 and g_score >= 55.0 and f_regime != "STRESSED":
+                        catalyst_credibility = "HIGH_CREDIBILITY"
+                        credibility_mult = 1.15
+                    elif q_score < 40.0 or f_regime == "STRESSED":
+                        catalyst_credibility = "LOW_CREDIBILITY"
+                        credibility_mult = 0.85
+
+            # Alpha requires news/catalysts and conviction >= min_conviction
             min_conviction = float(os.getenv("MIN_AGENT_CONVICTION", "48.0"))
             has_catalysts = len(catalysts) > 0 or abs(sentiment) >= 0.10
-            if (has_catalysts or conviction >= min_conviction) and conviction >= min_conviction and abs(pred_pct) >= 0.35:
-                candidates.append((symbol, data, max(abs(sentiment), 0.15) * conviction))
+            effective_conviction = conviction * credibility_mult
+
+            if (has_catalysts or effective_conviction >= min_conviction) and effective_conviction >= min_conviction and abs(pred_pct) >= 0.35:
+                # Include catalyst credibility in ranking score
+                rank_score = max(abs(sentiment), 0.15) * effective_conviction
+                candidates.append((symbol, data, rank_score, catalyst_credibility))
 
         # Sort candidates by news impact score descending
         candidates.sort(key=lambda x: x[2], reverse=True)
@@ -91,7 +113,7 @@ class AgentAlpha(BaseAgent):
         selected = candidates[:min(available_slots, 3)]
 
         proposals = []
-        for seq, (symbol, data, _) in enumerate(selected, 1):
+        for seq, (symbol, data, _, credibility) in enumerate(selected, 1):
             # 1. Real Decision-Time AI inference & deterministic thesis validation
             thesis = self.generate_and_validate_thesis(
                 symbol=symbol,

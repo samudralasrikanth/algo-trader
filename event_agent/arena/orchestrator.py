@@ -351,6 +351,8 @@ class ArenaOrchestrator:
         result_dict = {
             "market_date": market_date,
             "snapshot_id": snapshot_id,
+            "fundamental_breadth": market_snapshot.get("fundamental_breadth"),
+            "fundamental_regime": market_snapshot.get("fundamental_regime"),
             "market_clock": clock_status,
             "summary": arena_summary,
             "leaderboard": leaderboard,

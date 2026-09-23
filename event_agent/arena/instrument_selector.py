@@ -147,8 +147,9 @@ class InstrumentSelector:
             )
 
         # Gate 2: Net Edge Hurdle (Gross expected move must clear roundtrip costs)
-        gross_move = abs(thesis.expected_move_pct)
-        if gross_move < self.MIN_NET_EDGE_PCT:
+        raw_gross_move = abs(thesis.expected_move_pct)
+        if raw_gross_move < self.MIN_NET_EDGE_PCT:
+            # Invariant: Fundamental data CANNOT force a trade if raw trading edge < hurdle
             return self._build_no_trade(
                 thesis,
                 f"Expected move {thesis.expected_move_pct:+.2f}% is below net edge hurdle of {self.MIN_NET_EDGE_PCT:.2f}% after brokerage and friction.",
@@ -156,12 +157,35 @@ class InstrumentSelector:
                 sequence,
             )
 
-        # Gate 3: Thesis Conflict handling (if macro opposes AI, require higher confidence)
+        # Bounded Fundamental Confirmation Adjustment: [-0.10%, +0.10%]
+        # Adjusted Expected Edge = Trading Edge + Fundamental Adjustment
+        fundamental_adj = 0.0
+        fc = thesis.fundamental_context
+        if fc is not None and fc.quality_score is not None:
+            if fc.confirmation:
+                # High quality / valuation support gives bounded boost up to +0.10%
+                fundamental_adj = round(min(0.10, max(0.0, ((fc.quality_score or 50.0) - 50.0) / 500.0)), 3)
+            elif fc.contradiction:
+                # Contradictory fundamentals shave off up to -0.10%
+                fundamental_adj = round(max(-0.10, min(0.0, -abs(50.0 - (fc.quality_score or 50.0)) / 500.0)), 3)
+                if fundamental_adj == 0.0:
+                    fundamental_adj = -0.05
+
+        gross_move = max(0.0, raw_gross_move + fundamental_adj)
+        if gross_move < self.MIN_NET_EDGE_PCT:
+            return self._build_no_trade(
+                thesis,
+                f"Adjusted expected move {gross_move:.2f}% (raw {raw_gross_move:.2f}%, fundamental adj {fundamental_adj:+.2f}%) below net edge hurdle {self.MIN_NET_EDGE_PCT:.2f}%.",
+                snapshot_id,
+                sequence,
+            )
+
+        # Gate 3: Thesis Conflict handling (if macro or fundamentals oppose AI, require higher confidence)
         if thesis.is_conflicted:
             if thesis.confidence < 70.0:
                 return self._build_no_trade(
                     thesis,
-                    f"Macro conflict detected ({thesis.conflict_reason}). Conviction {thesis.confidence:.1f}% below 70.0% threshold for conflicting setup.",
+                    f"Conflict detected ({thesis.conflict_reason}). Conviction {thesis.confidence:.1f}% below 70.0% threshold for conflicting setup.",
                     snapshot_id,
                     sequence,
                 )
