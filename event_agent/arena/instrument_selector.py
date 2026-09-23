@@ -19,6 +19,8 @@ Decouples pure market thesis from instrument execution:
 """
 
 import logging
+import os
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from .asset_models import MultiLegStrategy, StrategyType
@@ -49,6 +51,7 @@ class InstrumentSelector:
 
     MIN_NET_EDGE_PCT: float = 0.35     # Minimum move to cover brokerage + slippage + STT
     MIN_RISK_REWARD: float = 1.40      # Minimum reward-to-risk ratio
+    DEFAULT_MAX_PRICE_AGE_SECONDS: float = 300.0  # 5 minutes freshness window
 
     def __init__(
         self,
@@ -66,6 +69,7 @@ class InstrumentSelector:
         current_open_positions: List[Dict[str, Any]],
         snapshot_id: str = "",
         sequence: int = 1,
+        decision_timestamp: Optional[datetime] = None,
     ) -> ProposedTrade:
         """
         Processes a MarketThesis through the deterministic funnel and outputs
@@ -85,6 +89,53 @@ class InstrumentSelector:
                 snapshot_id,
                 sequence,
             )
+
+        # Gate 0.1: Hard TradeGuard Invariant — Base Price Freshness & Causal Ordering
+        # A trade proposal must never use a prediction baseline whose market timestamp is older
+        # than the allowable decision-time freshness window. Must reject with STALE_BASE_PRICE.
+        # Targets and stops must NEVER be rebased silently against a different live price.
+        base_price_ts_raw = stock_data.get("base_price_timestamp") or stock_data.get("price_timestamp")
+        if base_price_ts_raw is not None:
+            try:
+                if isinstance(base_price_ts_raw, (int, float)):
+                    bp_ts = datetime.fromtimestamp(base_price_ts_raw, tz=timezone.utc)
+                elif isinstance(base_price_ts_raw, str):
+                    bp_ts = datetime.fromisoformat(base_price_ts_raw.replace("Z", "+00:00"))
+                else:
+                    bp_ts = base_price_ts_raw
+
+                dec_ts = decision_timestamp or datetime.now(timezone.utc)
+                if isinstance(dec_ts, str):
+                    dec_ts = datetime.fromisoformat(dec_ts.replace("Z", "+00:00"))
+
+                # Ensure both are timezone-aware or naive consistently
+                if bp_ts.tzinfo is not None and dec_ts.tzinfo is None:
+                    dec_ts = dec_ts.replace(tzinfo=timezone.utc)
+                elif bp_ts.tzinfo is None and dec_ts.tzinfo is not None:
+                    bp_ts = bp_ts.replace(tzinfo=timezone.utc)
+
+                max_age_sec = float(stock_data.get("max_price_age_seconds") or self.DEFAULT_MAX_PRICE_AGE_SECONDS)
+
+                # Invariant 1: Causal ordering (base_price_timestamp <= decision_timestamp)
+                if bp_ts > dec_ts:
+                    return self._build_no_trade(
+                        thesis,
+                        f"STALE_BASE_PRICE: Future base price timestamp detected ({bp_ts.isoformat()} > {dec_ts.isoformat()}).",
+                        snapshot_id,
+                        sequence,
+                    )
+
+                # Invariant 2: Freshness window (decision_timestamp - base_price_timestamp <= MAX_PRICE_AGE)
+                age_seconds = (dec_ts - bp_ts).total_seconds()
+                if age_seconds > max_age_sec:
+                    return self._build_no_trade(
+                        thesis,
+                        f"STALE_BASE_PRICE: Base price timestamp age ({age_seconds:.1f}s) exceeds allowable freshness window ({max_age_sec:.1f}s).",
+                        snapshot_id,
+                        sequence,
+                    )
+            except Exception as exc:
+                logger.debug(f"Base price freshness parsing for {symbol}: {exc}")
 
         # Gate 1: Neutral direction -> immediate NO_TRADE
         if direction_str == "NEUTRAL":

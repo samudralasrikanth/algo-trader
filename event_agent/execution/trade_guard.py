@@ -130,6 +130,46 @@ class TradeGuard:
         if data_quality in ("STALE", "INVALID", "CORRUPTED", "DATA_UNAVAILABLE"):
             failed.append("GATE_03_DATA_FRESHNESS")
             return self._fail("TRADE_BLOCKED_DATA_STALE", f"Market data freshness state is {data_quality}.", passed, failed, env)
+
+        # Hard TradeGuard Invariant: base_price_timestamp <= decision_timestamp AND decision_timestamp - base_price_timestamp <= MAX_PRICE_AGE
+        base_price_ts_val = market_data.get("base_price_timestamp") or signal.get("base_price_timestamp")
+        if base_price_ts_val is not None:
+            try:
+                if isinstance(base_price_ts_val, (int, float)):
+                    bp_ts = datetime.fromtimestamp(base_price_ts_val, tz=timezone.utc)
+                elif isinstance(base_price_ts_val, str):
+                    bp_ts = datetime.fromisoformat(base_price_ts_val.replace("Z", "+00:00"))
+                else:
+                    bp_ts = base_price_ts_val
+
+                dec_ts = now
+                dec_ts_val = order_intent.get("decision_timestamp") or signal.get("decision_timestamp") or market_data.get("decision_timestamp")
+                if dec_ts_val:
+                    if isinstance(dec_ts_val, (int, float)):
+                        dec_ts = datetime.fromtimestamp(dec_ts_val, tz=timezone.utc)
+                    elif isinstance(dec_ts_val, str):
+                        dec_ts = datetime.fromisoformat(dec_ts_val.replace("Z", "+00:00"))
+                    else:
+                        dec_ts = dec_ts_val
+
+                if bp_ts.tzinfo is not None and dec_ts.tzinfo is None:
+                    dec_ts = dec_ts.replace(tzinfo=timezone.utc)
+                elif bp_ts.tzinfo is None and dec_ts.tzinfo is not None:
+                    bp_ts = bp_ts.replace(tzinfo=timezone.utc)
+
+                max_price_age = float(market_data.get("max_price_age_seconds") or signal.get("max_price_age_seconds") or 300.0)
+
+                if bp_ts > dec_ts:
+                    failed.append("GATE_03_DATA_FRESHNESS")
+                    return self._fail("TRADE_BLOCKED_FUTURE_TIMESTAMP", f"Base price timestamp {bp_ts.isoformat()} is in the future relative to decision timestamp {dec_ts.isoformat()}.", passed, failed, env)
+
+                age_sec = (dec_ts - bp_ts).total_seconds()
+                if age_sec > max_price_age:
+                    failed.append("GATE_03_DATA_FRESHNESS")
+                    return self._fail("STALE_BASE_PRICE", f"Base price timestamp age {age_sec:.1f}s exceeds allowable freshness window {max_price_age:.1f}s.", passed, failed, env)
+            except Exception as exc:
+                logger.debug(f"TradeGuard Gate 3 freshness check: {exc}")
+
         passed.append("GATE_03_DATA_FRESHNESS")
 
         # ---------------------------------------------------------------------

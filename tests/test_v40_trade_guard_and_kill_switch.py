@@ -323,3 +323,70 @@ def test_environment_manager_5_tiers_and_isolation():
         auth_token=valid_token,
     )
     assert is_valid is True
+
+
+def test_trade_guard_blocks_stale_base_price(trade_guard):
+    """Verify TradeGuard Gate 3 strictly blocks orders with stale base price timestamp."""
+    now_iso = datetime.now(timezone.utc).isoformat()
+    signal = {
+        "signal_id": "SIG-TEST-STALE-BP",
+        "symbol": "APOLLOHOSP.NS",
+        "direction": "BUY",
+        "strategy": "ALPHA",
+        "timestamp": now_iso,
+        "max_age_minutes": 60.0,
+        "model_version": "3.5.0-FROZEN",
+        "model_hash": "c5f2b87e2f5b89a80e1c667a421fbc38",
+        "allocation_amount": 25000.0,
+        "confidence": 0.85,
+    }
+    order_intent = {
+        "order_intent_id": "INT-TEST-002",
+        "symbol": "APOLLOHOSP.NS",
+        "action": "BUY",
+        "quantity": 10,
+        "price": 8769.0,
+        "order_type": "LIMIT",
+        "strategy": "ALPHA",
+        "timestamp": now_iso,
+        "decision_timestamp": "2026-09-23T09:30:00+00:00",
+    }
+    portfolio = {
+        "cash": 10000000.0,
+        "margin_available": 10000000.0,
+        "total_capital": 10000000.0,
+    }
+    # Market data has base_price from 09:10:00 (age 20m > max 5m)
+    market_data = {
+        "price": 8769.0,
+        "base_price_timestamp": "2026-09-23T09:10:00+00:00",
+        "max_price_age_seconds": 300.0,
+        "bid": 8765.0,
+        "ask": 8770.0,
+        "volume": 50000,
+        "avg_volume": 40000,
+        "lower_circuit": 8000.0,
+        "upper_circuit": 9500.0,
+        "circuit_hit": False,
+        "market_open": True,
+        "simulate_open_session": True,
+        "vix": 14.5,
+        "quality": "HEALTHY",
+        "gap_pct": 0.2,
+    }
+
+    result = trade_guard.evaluate(
+        signal=signal,
+        order_intent=order_intent,
+        portfolio=portfolio,
+        market_data=market_data,
+        active_positions=[],
+        environment=TradingEnvironment.PAPER,
+    )
+
+    assert result.verdict == TradeGuardVerdict.NO_TRADE
+    assert result.is_approved is False
+    assert result.rejection_code == "STALE_BASE_PRICE"
+    assert "exceeds allowable freshness window" in result.rejection_message
+    assert "GATE_03_DATA_FRESHNESS" in result.failed_gates
+

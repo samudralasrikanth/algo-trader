@@ -15,10 +15,10 @@ NEXUS V4.2 / V4.2.1
 CORE ARCHITECTURE            PASS (Institutional Multi-Asset)
 SENTINEL ENGINE              PASS (19 Categories, 3-Tier Verdict)
 SUPABASE PERSISTENCE         PASS (Authoritative Cloud Ledger)
-AUTOMATED TESTS              198 / 198 (190 Baseline + 8 Sentinel)
+AUTOMATED TESTS              202 / 202 PASS (190 Baseline + 8 Sentinel + 4 TradeGuard Freshness)
 NETLIFY DEPLOYMENT           PASS (https://nifty50-event-agent.netlify.app)
-API HEALTH                   PASS (/api/health/sentinel: HTTP 200)
-SCHEDULED RUNTIME            OBSERVED / PENDING INDEPENDENT PROOF
+API HEALTH                   PASS (/api/health/scheduler, /api/health/sentinel: HTTP 200)
+SCHEDULED RUNTIME            OBSERVED / PENDING PROOF
 EVENT COVERAGE               TRACKING (3 Decoupled Denominators)
 PAPER TRADING                ENABLED (Level 1 Virtual Capital)
 LIVE TRADING                 DISABLED (Hard Latch Enforced)
@@ -35,33 +35,41 @@ NEXT MILESTONE: P0.2 — AUTONOMOUS CLOUD RUNTIME CERTIFICATION
 ## 2. Test Suite Count & Structural Reconciliation
 
 ### A. Mathematical Reconciliation
-$$\mathbf{190\text{ (V4.2 Baseline Institutional Tests)}} + \mathbf{8\text{ (V4.2.1 Event Sentinel Tests)}} = \mathbf{198\text{ Total Passing Tests}}$$
+$$\mathbf{190\text{ (V4.2 Baseline Institutional Tests)}} + \mathbf{8\text{ (V4.2.1 Event Sentinel Tests)}} + \mathbf{4\text{ (TradeGuard Freshness Tests)}} = \mathbf{202\text{ Total Passing Tests}}$$
 
 ### B. Explanation of the "10-Point Golden FOMC Test Case" vs the 8 Sentinel Test Functions
-In `tests/test_v421_event_sentinel.py`, there are exactly **8 distinct test functions/suites** executed by `pytest`. One of those 8 functions is `test_golden_fomc_2026_case()`, which evaluates a **10-point chronological milestone sequence** representing the full end-to-end lifecycle of the September 16, 2026 FOMC event:
+In `tests/test_v421_event_sentinel.py`, there are exactly **8 distinct test functions** executed by `pytest`. One of those 8 functions is `test_golden_fomc_september_16_2026()`, which evaluates a **10-point chronological milestone sequence** representing the full end-to-end lifecycle of the September 16, 2026 FOMC event:
 
-| Milestone | Chronological Stage | Assertion Group in `test_golden_fomc_2026_case` | Validation Criteria |
+| Milestone | Chronological Stage | Assertion Group in `test_golden_fomc_september_16_2026` | Validation Criteria |
 | :--- | :--- | :--- | :--- |
 | **Point 1** | $T-24\text{h}$ | Calendar Lifecycle Watch | Calendar event registered; stage transitions from IDLE to WATCH. |
-| **Point 2** | $T-1\text{h}$ | Stage Monitor & Consensus | Consensus target range registered ($3.50\% \to 3.75\%$, $+25\text{ bps}$). |
+| **Point 2** | $T-1\text{h}$ | Stage Monitor & Consensus | Consensus target range registered ($3.75\% \to 4.00\%$, $+25\text{ bps}$). |
 | **Point 3** | $T-5\text{m}$ | Pre-Event Baseline | Multi-asset quote snapshot latched (DXY, US10Y, S&P futures, Gold, VIX, USDINR). |
-| **Point 4** | $T+0$ | Policy Release Ingestion | Event ingested; rate hike $+25\text{ bps}$ to $3.75\%-4.00\%$; surprise $+25\text{ bps}$ over forecast. |
-| **Point 5** | $T+1\text{m}$ | Cross-Market Reaction | Multi-asset reaction score computed ($>65.0$ high reaction threshold). |
-| **Point 6** | $T+5\text{m}$ | Thesis Invalidation Check | Conflict detected against active BULLISH NIFTY thesis (`CONFLICTS`). |
-| **Point 7** | $T+15\text{m}$ | 3-Tier Verdict Dispatch | Verdict engine emits `TRIGGER_RE_EVALUATION` (not routine `STORE_ONLY` or delta `UPDATE_THESIS`). |
-| **Point 8** | $T+15\text{m}$ | Active Thesis Invalidation | Active thesis status flipped to `INVALIDATED` with audit pointer to `event_id`. |
-| **Point 9** | $T+15\text{m}$ | Arena Deliberation Trigger | Full 5-agent institutional cycle triggered to construct new post-event thesis. |
-| **Point 10** | $T+30\text{m}$ | Complete Audit Lineage | Lineage chain validated: $\text{sched\_id} \to \text{sent\_id} \to \text{event\_id} \to \text{thesis\_id/rev} \to \text{dec\_id} \to \text{order\_id}$. |
+| **Point 4** | $T+0$ | Policy Release Ingestion | Event ingested; rate hike $+25\text{ bps}$ to $4.00\%$; surprise $+25\text{ bps}$ over forecast. |
+| **Point 5** | $T+1\text{m}$ | Cross-Market Reaction | Multi-asset reaction score computed ($>50.0$ high reaction threshold). |
+| **Point 6** | $T+5\text{m}$ | India Transmission Calculated | Transmission score calculated with HIGH relevance to Indian equities. |
+| **Point 7** | $T+15\text{m}$ | 3-Tier Verdict Dispatch | Verdict engine emits `TRIGGER_RE_EVALUATION` / `UPDATE_THESIS`. |
+| **Point 8** | $T+15\text{m}$ | Active Thesis Invalidation | Active thesis evaluated; conflict detected against prior bias. |
+| **Point 9** | $T+15\text{m}$ | Arena Deliberation Trigger | Full scan pass executes and generates new revision. |
+| **Point 10** | $T+30\text{m}$ | Complete Audit Lineage | Lineage chain validated: $\text{sched\_id} \to \text{sent\_id} \to \text{thesis\_id/rev} \to \text{dec\_id} \to \text{order\_id}$. |
 
 ### C. Full Inventory of the 8 Sentinel Test Functions
 1. `test_event_classifier_19_categories()`: Exhaustive validation of regex, signed rate change bps (-50 for cut, +25 for hike), and extraction across all 19 categories.
-2. `test_event_deduplicator_semantics()`: SHA-256 exact matching + normalized token Jaccard similarity.
-3. `test_market_shock_detector_independent_path()`: News-free velocity drop ($>2.5\%$ in 10m) and VIX spike ($>35\%$) firing directly into `TradeGuard` / `KillSwitch`.
-4. `test_three_tier_trigger_verdict_engine()`: Proper routing between `STORE_ONLY` ($0$ LLM calls), `UPDATE_THESIS` (deterministic delta adjustment), and `TRIGGER_RE_EVALUATION`.
-5. `test_golden_fomc_2026_case()`: The 10-point chronological milestone test detailed above.
-6. `test_event_coverage_metrics_computation()`: Decoupled validation of the 3 coverage denominators.
-7. `test_cloud_persistence_and_lineage_preservation()`: Supabase authoritative fallback, JSON decoding, and lineage integrity.
-8. `test_zero_credential_leak_in_sentinel_exports()`: Zero raw API key leak in any exported payload or DB row.
+2. `test_event_deduplicator()`: SHA-256 exact matching + normalized token Jaccard similarity.
+3. `test_news_independent_market_shock()`: News-free velocity drop ($>2.5\%$ in 10m) and VIX spike ($>35\%$) firing directly into `TradeGuard` / `KillSwitch`.
+4. `test_three_tier_verdict_routing()`: Proper routing between `STORE_ONLY` ($0$ LLM calls), `UPDATE_THESIS` (deterministic delta adjustment), and `TRIGGER_RE_EVALUATION`.
+5. `test_golden_fomc_september_16_2026()`: The 10-point chronological milestone test detailed above.
+6. `test_event_coverage_metrics_decoupled_denominators()`: Decoupled validation of the 3 coverage denominators.
+7. `test_cloud_invocation_lineage_and_persistence()`: Supabase authoritative fallback, JSON decoding, and lineage integrity.
+8. `test_zero_credential_leak()`: Zero raw API key leak in any exported payload or DB row.
+
+### D. TradeGuard Hard Invariant: Freshness Guard & Zero Silent Rebasing
+To prevent stale prediction baselines from causing immediate exit liquidations, `InstrumentSelector` and `TradeGuard` Gate 3 enforce:
+$$\text{base\_price\_timestamp} \le \text{decision\_timestamp} \quad \text{AND} \quad \text{decision\_timestamp} - \text{base\_price\_timestamp} \le \text{MAX\_PRICE\_AGE}$$
+- `test_stale_base_price_rejected`: Verifies `STALE_BASE_PRICE` emits `NO_TRADE` with zero capital committed.
+- `test_fresh_base_price_accepted`: Verifies clean calculation when price is within freshness window ($30\text{s}$).
+- `test_target_never_rebased_silently`: Verifies the system never mutates targets silently against live prices to bypass exits.
+- `test_trade_guard_blocks_stale_base_price`: Verifies `TradeGuard` Gate 3 atomic pre-execution block.
 
 ---
 

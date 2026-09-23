@@ -445,3 +445,158 @@ def test_cause_undetermined_when_thresholds_not_met():
     assert diag.root_cause_code == "CAUSE_UNDETERMINED"
     assert diag.root_cause_name == "CAUSE_UNDETERMINED"
     assert "CAUSE_UNDETERMINED" in diag.deterministic_summary
+
+
+# -----------------------------------------------------------------------------
+# 9. TradeGuard Hard Invariant: Stale Base Price & Zero Silent Rebasing Tests
+# -----------------------------------------------------------------------------
+
+def test_stale_base_price_rejected():
+    """
+    TEST_STALE_BASE_PRICE_REJECTED:
+    Given:
+      prediction.base_price = 8769.0
+      base_price_timestamp = 09:00:00
+      decision_timestamp = 09:30:00
+      MAX_PRICE_AGE = 5 minutes (300s)
+    When:
+      InstrumentSelector receives thesis
+    Then:
+      NO_TRADE
+      reason contains STALE_BASE_PRICE
+      no order intent
+      entry_price = 0.0
+    """
+    selector = InstrumentSelector()
+    thesis = MarketThesis(
+        agent_id="ALPHA",
+        symbol="APOLLOHOSP.NS",
+        direction="BULLISH",
+        expected_move_pct=1.50,
+        horizon="1D",
+        confidence=80.0,
+        catalysts=["Solid Q2 hospital occupancy expansion"],
+        invalidating_conditions=["Policy cap on margins"],
+        reasoning="Occupancy rate expansion driving strong EBITDA.",
+    )
+    stock_data = {
+        "base_price": 8769.0,
+        "base_price_timestamp": "2026-09-23T09:00:00+00:00",
+        "max_price_age_seconds": 300.0,
+        "sector": "Healthcare",
+        "beta": 0.85,
+    }
+    decision_time = datetime(2026, 9, 23, 9, 30, 0, tzinfo=timezone.utc)
+
+    proposal = selector.select_instrument(
+        thesis=thesis,
+        stock_data=stock_data,
+        portfolio_equity=2000000.0,
+        current_open_positions=[],
+        snapshot_id="SNAP-TEST-STALE",
+        decision_timestamp=decision_time,
+    )
+
+    assert proposal.action == TradeAction.NO_TRADE
+    assert proposal.order_action == TradeAction.NO_TRADE
+    assert "STALE_BASE_PRICE" in proposal.decision_reason
+    assert proposal.entry_price == 0.0
+    assert proposal.target == 0.0
+    assert proposal.stop_loss == 0.0
+
+
+def test_fresh_base_price_accepted():
+    """
+    TEST_FRESH_BASE_PRICE_ACCEPTED:
+    Given:
+      base_price = 8769.0
+      base_price_timestamp = 09:29:30 (age = 30 seconds)
+      decision_timestamp = 09:30:00
+      MAX_PRICE_AGE = 5 minutes
+    Then:
+      Normal instrument selection passes (BUY) with exact math from fresh price.
+    """
+    selector = InstrumentSelector()
+    thesis = MarketThesis(
+        agent_id="ALPHA",
+        symbol="APOLLOHOSP.NS",
+        direction="BULLISH",
+        expected_move_pct=1.50,
+        horizon="1D",
+        confidence=80.0,
+        catalysts=["Solid Q2 hospital occupancy expansion"],
+        invalidating_conditions=["Policy cap on margins"],
+        reasoning="Occupancy rate expansion driving strong EBITDA.",
+    )
+    stock_data = {
+        "base_price": 8769.0,
+        "base_price_timestamp": "2026-09-23T09:29:30+00:00",
+        "max_price_age_seconds": 300.0,
+        "sector": "Healthcare",
+        "beta": 0.85,
+    }
+    decision_time = datetime(2026, 9, 23, 9, 30, 0, tzinfo=timezone.utc)
+
+    proposal = selector.select_instrument(
+        thesis=thesis,
+        stock_data=stock_data,
+        portfolio_equity=2000000.0,
+        current_open_positions=[],
+        snapshot_id="SNAP-TEST-FRESH",
+        decision_timestamp=decision_time,
+    )
+
+    assert proposal.action == TradeAction.BUY
+    assert proposal.entry_price == 8769.0
+    expected_target = round(8769.0 * (1.0 + 1.50 / 100.0), 2)
+    assert proposal.target == expected_target
+    assert proposal.direction == TradeDirection.BUY
+
+
+def test_target_never_rebased_silently():
+    """
+    TEST_TARGET_NEVER_REBASED_SILENTLY:
+    Given stale prediction with old base = 8769.0 and live market price = 8927.0:
+    The system must NOT silently mutate target = 8856.69 into 9016.27 just to prevent immediate exit.
+    It must reject the stale baseline as NO_TRADE with STALE_BASE_PRICE.
+    """
+    selector = InstrumentSelector()
+    thesis = MarketThesis(
+        agent_id="ALPHA",
+        symbol="APOLLOHOSP.NS",
+        direction="BULLISH",
+        expected_move_pct=1.00,
+        horizon="1D",
+        confidence=75.0,
+        catalysts=["Expansion update"],
+        invalidating_conditions=["Regulatory clamp"],
+        reasoning="Expansion update supports 1.0% drift.",
+    )
+    # Stale prediction baseline: old base 8769 (timestamp from 20 minutes ago)
+    # Live market price is already 8927
+    stale_stock_data = {
+        "base_price": 8769.0,
+        "base_price_timestamp": "2026-09-23T09:10:00+00:00",
+        "live_price": 8927.0,
+        "max_price_age_seconds": 300.0,
+        "sector": "Healthcare",
+        "beta": 0.85,
+    }
+    decision_time = datetime(2026, 9, 23, 9, 30, 0, tzinfo=timezone.utc)
+
+    proposal = selector.select_instrument(
+        thesis=thesis,
+        stock_data=stale_stock_data,
+        portfolio_equity=2000000.0,
+        current_open_positions=[],
+        snapshot_id="SNAP-TEST-NO-REBASE",
+        decision_timestamp=decision_time,
+    )
+
+    # Invariant: Must NOT rebase to 8927 * 1.01 = 9016.27!
+    # Must reject stale prediction baseline directly
+    assert proposal.action == TradeAction.NO_TRADE
+    assert "STALE_BASE_PRICE" in proposal.decision_reason
+    assert proposal.target != 9016.27
+    assert proposal.target == 0.0
+

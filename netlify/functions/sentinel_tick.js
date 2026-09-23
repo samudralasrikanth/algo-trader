@@ -38,8 +38,11 @@ function getSupabaseClient() {
   if (!url || !key || url.includes("your-project-ref") || key.includes("your-service-role-key")) {
     return null;
   }
+  // Production Invariant: Scheduled functions require stateless PostgREST REST endpoints,
+  // not persistent Realtime WebSockets. Realtime is explicitly disabled for serverless execution.
   return createClient(url, key, {
-    auth: { persistSession: false },
+    auth: { persistSession: false, autoRefreshToken: false },
+    realtime: { timeout: 0 },
   });
 }
 
