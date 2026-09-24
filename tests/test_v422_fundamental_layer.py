@@ -761,7 +761,8 @@ def test_fundamental_shadow_vs_live_separation():
 
     assert trade.action.value != "NO_TRADE"
     assert trade.execution_edge == raw_trading_edge
-    assert trade.fundamental_adj > 0.0
+    assert trade.fundamental_adj is not None and trade.fundamental_adj > 0.0
+    assert trade.shadow_adjusted_edge is not None and trade.execution_edge is not None
     assert trade.shadow_adjusted_edge > trade.execution_edge
     assert abs(trade.shadow_adjusted_edge - (raw_trading_edge + trade.fundamental_adj)) < 1e-4
 

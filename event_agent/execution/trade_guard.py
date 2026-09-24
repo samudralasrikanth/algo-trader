@@ -446,7 +446,9 @@ class TradeGuard:
             passed.append("GATE_34_KILL_SWITCH_CLEAR")
         else:
             failed.append("GATE_34_KILL_SWITCH_CLEAR")
-            return self._fail("TRADE_BLOCKED_KILL_SWITCH", f"Blocked by {act.level.value} Kill Switch: {act.reason}", passed, failed, env)
+            level_str = act.level.value if act and hasattr(act, "level") else "SYSTEM"
+            reason_str = act.reason if act and hasattr(act, "reason") else "Active kill switch engagement"
+            return self._fail("TRADE_BLOCKED_KILL_SWITCH", f"Blocked by {level_str} Kill Switch: {reason_str}", passed, failed, env)
 
         # ---------------------------------------------------------------------
         # GATE 35: AI_DECISION_AVAILABILITY (INFERENCE_SUCCESS INVARIANT)

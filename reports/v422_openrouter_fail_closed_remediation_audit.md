@@ -164,18 +164,18 @@ Verified in: `test_existing_position_exits_continue_during_ai_outage`.
 ## 6. Comprehensive Test Suite Audit
 
 ```
-Tests Collected: 229
-Passed:          228
+Tests Collected: 230
+Passed:          229
 Skipped:         1 (Live OpenRouter HTTP 402 Pending Credit Top-Up)
 Failed:          0
-Duration:        34.10s
+Status:          229/230 applicable tests passed + 1 pending external dependency
 ```
 
 ### Full Test Breakdown by Module
 
 | Test Module | Tests | Result | Focus |
 | :--- | :---: | :---: | :--- |
-| `tests/test_v422_openrouter_failure_remediation.py` | 9 | 🟢 9 PASS | Fail-closed OpenRouter, Gate 35, cohort integrity, availability |
+| `tests/test_v422_openrouter_failure_remediation.py` | 10 | 🟢 10 PASS | Fail-closed OpenRouter, Gate 35, cohort integrity, availability, provenance immutability |
 | `tests/test_v422_fundamental_layer.py` | 18 | 🟢 18 PASS | Market Lens fundamentals, causal timestamps, shadow edge |
 | `tests/test_v421_event_sentinel.py` | 8 | 🟢 8 PASS | Real-time event classifier, 10-point FOMC golden sequence |
 | `tests/test_v42_institutional_architecture.py` | 17 | 🟢 16 PASS, 1 SKIP | OpenRouter key security, exit priorities, 8-ID lineage |
@@ -192,30 +192,72 @@ Duration:        34.10s
 | `tests/test_p0_scheduler_runtime.py` | 23 | 🟢 23 PASS | Continuous scheduler engine, watchdog processes |
 | `tests/test_daily_trade_report.py` | 17 | 🟢 17 PASS | EOD trade reconciliation, performance attribution |
 | `tests/test_content_strategy_and_thumbnail.py` | 16 | 🟢 16 PASS | Automated video/thumbnail generation & metadata |
-| **TOTAL** | **229** | **🟢 228 PASS, 1 SKIP** | **Institutional Suite Coverage Complete** |
+| **TOTAL** | **230** | **🟢 229 PASS, 1 SKIP** | **Institutional Suite Coverage Complete** |
 
 ---
 
-## 7. Six-Month Prospective Experiment Discipline
+## 7. Canonical Prospective Experiment Definition & Invariants
+
+### Canonical Experiment Parameters
+To prevent ambiguous terminology between calendar days and trading sessions, the experiment is canonically defined as:
+- **Experiment Duration**: 180 calendar days
+- **Expected Market Sessions**: ~125 NSE trading sessions
+- **Primary Cohort Unit**: Trading session (NSE market open through EOD settlement)
+- **Clock Anchor Point**: The first eligible autonomous production trading session satisfying the acceptance criteria is anchored as **Day 1**.
 
 ### Frozen Institutional Baseline
-The following components are strictly locked:
+The architecture is strictly frozen. No new features or model adjustments may be introduced into the cohort:
 - **Model / Provider**: OpenRouter (`openai/gpt-4o-mini`)
-- **System Prompts & Schemas**: `MarketThesis` schema v4.2.2
+- **System Prompts & Schemas**: `MarketThesis` schema v4.2.2 with cryptographic provenance seal
 - **Fundamental Formula**: 4-Pillar Quality/Valuation scoring formula
 - **Edge Bounds**: $\pm 0.10\%$ shadow fundamental edge bound
-- **Safety Authority**: 35-Gate TradeGuard rules and kill switch levels
+- **Safety Authority**: 35-Gate TradeGuard rules and independent kill switch levels
 - **Universe**: Nifty 50 constituents, data contracts v4.2.2
 
-### Exact Steps to Anchor the 6-Month Clock
-1. **Replenish OpenRouter Credits**: Add balance to the account tied to `OPENROUTER_API_KEY`.
-2. **Execute Live Verification**:
+### Strengthened Day-1 Acceptance Criteria
+A successful OpenRouter response alone is insufficient to anchor the experiment. The first Day-1 session must execute through the complete autonomous pipeline with zero manual intervention:
+
+```
+CLOUD_RUNTIME_INVOCATION (Netlify / GitHub Actions Cron)
+        ↓
+Fresh live market quotes (quote_age_seconds < 30s)
+        ↓
+PIT snapshot (Frozen with SHA-256 provenance hash)
+        ↓
+OpenRouter INFERENCE_SUCCESS (Real HTTP response, zero key leaks)
+        ↓
+5-Agent decisions generated & cryptographically sealed
+        ↓
+TradeGuard 35-Gate evaluation (All gates PASS)
+        ↓
+Upstox paper execution OR legitimate NO_TRADE proposal
+        ↓
+EOD reconciliation against authoritative exchange close
+        ↓
+9D forensic trade diagnosis record
+        ↓
+Supabase authoritative cloud ledger persistence
+        ↓
+Web terminal dashboard reflects identical run
+        ↓
+ALL 8-ID IDENTIFIERS MATCH ACROSS THE CHAIN
+        ↓
+ANCHOR DAY 1 OF PROSPECTIVE COHORT
+```
+
+### Narrow 6-Step Action Plan to Anchor Clock
+1. **Restore OpenRouter Credits**: Add balance to the account tied to `OPENROUTER_API_KEY`.
+2. **Execute Real Inference Test**:
    ```bash
    python3 -m pytest tests/test_v42_institutional_architecture.py -k test_openrouter_real_inference_and_telemetry
    ```
-   Must yield **229/229 PASSED (0 skipped)**.
-3. **Execute One Clean Autonomous Cloud Cycle**:
-   - `ai_status == INFERENCE_SUCCESS` for every AI-dependent decision.
-   - Zero heuristic fallback trades.
-   - Authoritative ledger snapshot frozen.
-4. **Anchor Day 1**: Lock hash and begin the 180-day prospective clock.
+   *Expected: 1 passed, 0 skipped.*
+3. **Execute Complete Suite**:
+   ```bash
+   python3 -m pytest tests/ -q
+   ```
+   *Expected: 230 passed, 0 skipped.*
+4. **Autonomous Cloud Cycle**: Await next scheduled cron (18:30 IST / 13:00 UTC). Strictly prohibit `--test-fixture`, `force_execute=True`, manual CLI invocations, or `workflow_dispatch`.
+5. **Verify Complete Lineage**:
+   $$\text{scheduled\_invocation\_id} \to \text{job\_run\_id} \to \text{PIT snapshot} \to \text{ai\_request\_id} \to \text{decision\_id} \to \text{order\_intent\_id} \to \text{broker\_order\_id} \to \text{fill\_id} \to \text{position\_id} \to \text{pnl\_id} \to \text{forensic\_id} \to \text{Supabase}$$
+6. **Anchor Cohort**: Lock Day-1 hash and begin the 180-calendar-day (~125 trading sessions) prospective evaluation.

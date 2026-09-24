@@ -10,6 +10,8 @@ Enforces:
 """
 
 from dataclasses import dataclass, field
+import hashlib
+import json
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -50,6 +52,40 @@ class MarketThesis:
     ai_status: str = "INFERENCE_SUCCESS" # "INFERENCE_SUCCESS", "CREDIT_EXHAUSTED", "RATE_LIMITED", "UNAVAILABLE", "INFERENCE_FAILED", "AUTHENTICATED"
     fallback_reason: Optional[str] = None
     evaluation_status: str = "EVALUABLE" # "EVALUABLE", "EXCLUDED_FROM_ACCURACY"
+    _is_sealed: bool = False
+
+    def seal(self) -> "MarketThesis":
+        """Seals the thesis provenance, locking provenance fields from future mutation."""
+        object.__setattr__(self, "_is_sealed", True)
+        return self
+
+    def compute_provenance_hash(self) -> str:
+        """Computes deterministic SHA-256 seal of the decision's provenance."""
+        payload = {
+            "agent_id": self.agent_id,
+            "symbol": self.symbol,
+            "decision_model": self.decision_model,
+            "model_provider": self.model_provider,
+            "model_version": self.model_version,
+            "decision_mode": self.decision_mode,
+            "ai_status": self.ai_status,
+            "ai_request_id": self.ai_request_id,
+        }
+        return hashlib.sha256(json.dumps(payload, sort_keys=True).encode("utf-8")).hexdigest()
+
+    def __setattr__(self, name: str, value: Any):
+        if getattr(self, "_is_sealed", False):
+            immutable_fields = {
+                "decision_model",
+                "model_provider",
+                "model_version",
+                "decision_mode",
+                "ai_status",
+                "ai_request_id",
+            }
+            if name in immutable_fields and getattr(self, name, None) != value:
+                raise AttributeError(f"MutationError: Provenance field '{name}' is sealed and immutable.")
+        object.__setattr__(self, name, value)
 
     @property
     def is_conflicted(self) -> bool:
@@ -85,6 +121,7 @@ class MarketThesis:
             "ai_status": self.ai_status,
             "fallback_reason": self.fallback_reason,
             "evaluation_status": self.evaluation_status,
+            "provenance_hash": self.compute_provenance_hash(),
         }
 
 
@@ -217,4 +254,5 @@ class MarketThesisValidator:
                 f"{'; '.join(errors)}"
             )
 
+        thesis.seal()
         return thesis

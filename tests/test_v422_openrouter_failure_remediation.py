@@ -90,7 +90,7 @@ def test_openrouter_decision_thesis_402_returns_ai_unavailable(monkeypatch):
             url="https://openrouter.ai/api/v1/chat/completions",
             code=402,
             msg="Payment Required - Credits Exhausted",
-            hdrs={"Authorization": "Bearer sk-or-v1-testkey12345678901234567890"},
+            hdrs=None,
             fp=None,
         )
 
@@ -226,7 +226,7 @@ def test_base_agent_refuses_silent_heuristic_fallback(monkeypatch):
     assert thesis.decision_mode == "AI_UNAVAILABLE"
     assert thesis.ai_status == "CREDIT_EXHAUSTED"
     assert thesis.evaluation_status == "EXCLUDED_FROM_ACCURACY"
-    assert "HTTP 402" in thesis.fallback_reason
+    assert thesis.fallback_reason is not None and "HTTP 402" in thesis.fallback_reason
 
 
 # =============================================================================
@@ -511,3 +511,74 @@ def test_existing_position_exits_continue_during_ai_outage():
     }
     sig_normal = EquityFuturesExitEngine.evaluate(pos_normal, current_price=103.0)
     assert sig_normal is None, "Normal position within bounds must continue monitoring"
+
+
+# =============================================================================
+# 8. Provenance Immutability & Tampering Protection
+# =============================================================================
+def test_market_thesis_provenance_cannot_be_mutated():
+    """
+    Verify that critical provenance fields:
+    - decision_model
+    - model_provider
+    - model_version
+    - decision_mode
+    - ai_status
+    - ai_request_id
+    cannot be altered once a thesis is validated and sealed.
+    """
+    thesis = MarketThesis(
+        agent_id="ALPHA",
+        symbol="TCS.NS",
+        direction="BULLISH",
+        expected_move_pct=1.5,
+        horizon="1D",
+        confidence=80.0,
+        catalysts=["Earnings beat"],
+        invalidating_conditions=["Severe market selloff"],
+        reasoning="Strong institutional accumulation",
+        decision_model="OPENROUTER:openai/gpt-4o-mini",
+        model_provider="openrouter",
+        model_version="openai/gpt-4o-mini",
+        decision_mode="AI_INFERENCE",
+        ai_status="INFERENCE_SUCCESS",
+        ai_request_id="gen-req-institutional-9988",
+        evaluation_status="EVALUABLE",
+    )
+
+    validator = MarketThesisValidator()
+    validated_thesis = validator.validate(thesis)
+
+    # 1. Assert initial provenance values and valid cryptographic seal
+    assert validated_thesis.decision_model == "OPENROUTER:openai/gpt-4o-mini"
+    assert validated_thesis.model_provider == "openrouter"
+    assert validated_thesis.model_version == "openai/gpt-4o-mini"
+    assert validated_thesis.decision_mode == "AI_INFERENCE"
+    assert validated_thesis.ai_status == "INFERENCE_SUCCESS"
+    assert validated_thesis.ai_request_id == "gen-req-institutional-9988"
+
+    initial_hash = validated_thesis.compute_provenance_hash()
+    assert len(initial_hash) == 64
+    assert validated_thesis.to_dict()["provenance_hash"] == initial_hash
+
+    # 2. Attempt mutation of each provenance field - all must raise AttributeError
+    with pytest.raises(AttributeError, match="Provenance field 'decision_model' is sealed and immutable"):
+        validated_thesis.decision_model = "HEURISTIC_BASELINE:v1"
+
+    with pytest.raises(AttributeError, match="Provenance field 'model_provider' is sealed and immutable"):
+        validated_thesis.model_provider = "heuristic"
+
+    with pytest.raises(AttributeError, match="Provenance field 'model_version' is sealed and immutable"):
+        validated_thesis.model_version = "offline_rule"
+
+    with pytest.raises(AttributeError, match="Provenance field 'decision_mode' is sealed and immutable"):
+        validated_thesis.decision_mode = "LOCAL_DETERMINISTIC"
+
+    with pytest.raises(AttributeError, match="Provenance field 'ai_status' is sealed and immutable"):
+        validated_thesis.ai_status = "AUTHENTICATED"
+
+    with pytest.raises(AttributeError, match="Provenance field 'ai_request_id' is sealed and immutable"):
+        validated_thesis.ai_request_id = "fake-req-tampered"
+
+    # 3. Provenance hash remains pristine and identical
+    assert validated_thesis.compute_provenance_hash() == initial_hash
