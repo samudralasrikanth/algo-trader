@@ -22,10 +22,10 @@ OPENROUTER FAIL-CLOSED       🟢 REMEDIATED & CERTIFIED (Zero heuristic model c
 GATE 35 INFERENCE SUCCESS    🟢 CERTIFIED (AUTHENTICATED != permission to trade)
 AI AVAILABILITY METRICS      🟢 CERTIFIED (Operational availability decoupled from accuracy)
 COHORT INTEGRITY PROTECTION  🟢 CERTIFIED (test_ai_failure_cannot_enter_prospective_cohort)
-AUTOMATED TEST SUITE         🟢 229 Tests: 228 Passed, 1 Skipped (Live 402 Pending Credits)
-
+AUTOMATED TEST SUITE         🟢 229 / 230 Tests Passed (1 Skipped Pending Live Credits)
 SIX-MONTH PROSPECTIVE CLOCK: 🔴 UNANCHORED (Correct Institutional Posture)
-MANDATORY ANCHOR CONDITION:  OpenRouter credits replenished → 229/229 PASS → 1 clean autonomous cloud cycle
+OVERALL POSTURE:             V4.2.2 Architecture Frozen — 229/230 tests passing, 1 external-dependency test pending — Prospective Clock Unanchored.
+MANDATORY ANCHOR CONDITION:  OpenRouter credits replenished → 230/230 PASS → 1 clean autonomous cloud cycle
 ========================================================================================
 ```
 
@@ -240,7 +240,10 @@ Supabase authoritative cloud ledger persistence
         ↓
 Web terminal dashboard reflects identical run
         ↓
-ALL 8-ID IDENTIFIERS MATCH ACROSS THE CHAIN
+COMPLETE IDENTIFIER LINEAGE VERIFIED:
+  ├── TRADE BRANCH    : decision → order_intent → broker_order → fill → position → P&L
+  └── NO-TRADE BRANCH : decision → NO_TRADE → reconciliation/ledger
+  (Invariant: Zero placeholder IDs; NO_TRADE branch terminates cleanly without fake order IDs)
         ↓
 ANCHOR DAY 1 OF PROSPECTIVE COHORT
 ```
