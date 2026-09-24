@@ -230,6 +230,55 @@ def export_web_dataset():
     except Exception as ai_err:
         print(f"[!] Warning: OpenRouter telemetry check failed: {ai_err}")
 
+    # V4.2.2 NSE Market Lens Fundamental Intelligence & Point-In-Time Snapshot Lineage
+    try:
+        from event_agent.fundamentals.market_lens_provider import MarketLensProvider
+        from event_agent.fundamentals.fundamental_score import FundamentalScoreEngine
+        from event_agent.engine.pit_snapshot import PointInTimeSnapshot
+        from event_agent.arena.consensus_engine import DEFAULT_STOCK_PRICES
+
+        lens_provider = MarketLensProvider()
+        now_dt = datetime.now(timezone.utc)
+        universe_snaps = lens_provider.get_universe_snapshot(as_of_dt=now_dt)
+        breadth = FundamentalScoreEngine.compute_market_breadth_and_regime(universe_snaps)
+
+        # Build representative PointInTimeSnapshot for RELIANCE.NS
+        rep_sym = "RELIANCE.NS"
+        rep_snap = universe_snaps.get(rep_sym) or lens_provider.get_snapshot(rep_sym, as_of_dt=now_dt)
+        rep_pit = PointInTimeSnapshot(
+            symbol=rep_sym,
+            market_price=float(DEFAULT_STOCK_PRICES.get(rep_sym, 2980.0)),
+            market_price_as_of=now_dt,
+            prediction_timestamp=now_dt,
+            fundamental_snapshot=rep_snap,
+            fundamental_as_of=rep_snap.as_of if rep_snap else None,
+            macro_snapshot={"label": arena_result.get("fundamental_regime", "HEALTHY")},
+        )
+
+        payload["fundamental_intelligence"] = {
+            "version": "V4.2.2",
+            "provider_name": "NSE Market Lens Evidence Provider",
+            "active_source": rep_snap.source if rep_snap else "FUNDAMENTALS_UNAVAILABLE",
+            "trade_eligible": rep_snap.trade_eligible if rep_snap else False,
+            "data_mode": rep_snap.data_mode if rep_snap else "REFERENCE_ONLY",
+            "data_as_of": rep_snap.as_of.isoformat() if rep_snap and hasattr(rep_snap.as_of, "isoformat") else None,
+            "financial_period": rep_snap.financial_period if rep_snap else "Q1 FY27",
+            "snapshot_id": rep_pit.snapshot_id,
+            "provenance_hash": rep_pit.provenance_hash,
+            "fundamental_regime": breadth.get("fundamental_regime", "HEALTHY"),
+            "breadth": breadth,
+            "sample_symbol": rep_sym,
+            "sample_snapshot": rep_snap.to_dict() if rep_snap else None,
+            "status_explanation": (
+                "REFERENCE_DATASET active (Trade-Ineligible / Reference Only). "
+                "Zero scraping policy active. Awaiting commercial authenticated NSE Market Lens API provisioning for production trading eligibility."
+                if rep_snap and rep_snap.source == "REFERENCE_DATASET" else
+                "FUNDAMENTALS_UNAVAILABLE: No fabricated metrics used. NEXUS pipeline operational without fundamental dependency."
+            ),
+        }
+    except Exception as fund_err:
+        print(f"[!] Warning: Fundamental intelligence export failed: {fund_err}")
+
     # V4.2.1 Event Sentinel & Continuous Intelligence Telemetry
     try:
         from event_agent.storage.ledger import (

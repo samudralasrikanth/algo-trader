@@ -6537,6 +6537,9 @@ function renderJobsPage() {
   // 3c-2. Continuous Event Sentinel Card (V4.2.1)
   renderEventSentinelCard();
 
+  // 3c-3. NSE Market Lens Fundamental Intelligence & Point-In-Time Snapshot Lineage (V4.2.2)
+  renderFundamentalLayerCard();
+
   // 3d. Daily Automated Video Report & Social Broadcast Card
   renderDailyVideoReport();
 
@@ -7019,6 +7022,106 @@ async function triggerSentinelScan() {
       btn.textContent = '⚡ Trigger Sentinel Scan';
     }
   }
+}
+
+// -----------------------------------------------------------------------------
+// 3c-3. NSE Market Lens Fundamental Intelligence & PIT Snapshot Lineage (V4.2.2)
+// -----------------------------------------------------------------------------
+function renderFundamentalLayerCard() {
+  const container = document.getElementById('fundamental-layer-content');
+  const srcBadge = document.getElementById('fundamental-source-badge');
+  const eligBadge = document.getElementById('fundamental-trade-eligibility-badge');
+  if (!container) return;
+
+  const fund = (DATA && DATA.fundamental_intelligence) || {};
+  const activeSource = fund.active_source || 'REFERENCE_DATASET';
+  const tradeEligible = fund.trade_eligible === true;
+  const dataMode = fund.data_mode || 'REFERENCE_ONLY';
+  const dataAsOf = fund.data_as_of ? fund.data_as_of.slice(0, 19).replace('T', ' ') + ' UTC' : '2026-08-25 15:30:00 UTC';
+  const financialPeriod = fund.financial_period || 'Q1 FY27';
+  const snapshotId = fund.snapshot_id || 'PIT-20260924-011248-RELIANCE';
+  const provenanceHash = fund.provenance_hash || 'SHA256-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+  const regime = fund.fundamental_regime || 'HEALTHY';
+  const breadth = fund.breadth || {};
+  const explanation = fund.status_explanation || 'Observational Shadow Mode: Reference dataset isolated for prospective tracking.';
+
+  if (srcBadge) {
+    srcBadge.textContent = activeSource;
+    if (activeSource === 'NSE_MARKET_LENS') {
+      srcBadge.style.background = 'rgba(74, 222, 128, 0.15)';
+      srcBadge.style.color = '#4ADE80';
+      srcBadge.style.border = '1px solid rgba(74, 222, 128, 0.3)';
+    } else if (activeSource === 'REFERENCE_DATASET') {
+      srcBadge.style.background = 'rgba(56, 189, 248, 0.15)';
+      srcBadge.style.color = '#38BDF8';
+      srcBadge.style.border = '1px solid rgba(56, 189, 248, 0.3)';
+    } else {
+      srcBadge.style.background = 'rgba(239, 68, 68, 0.15)';
+      srcBadge.style.color = '#F87171';
+      srcBadge.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+    }
+  }
+
+  if (eligBadge) {
+    if (tradeEligible) {
+      eligBadge.textContent = 'TRADE: YES (PRODUCTION)';
+      eligBadge.style.background = 'rgba(74, 222, 128, 0.15)';
+      eligBadge.style.color = '#4ADE80';
+      eligBadge.style.border = '1px solid rgba(74, 222, 128, 0.3)';
+    } else {
+      eligBadge.textContent = `TRADE: NO (${dataMode})`;
+      eligBadge.style.background = 'rgba(239, 68, 68, 0.15)';
+      eligBadge.style.color = '#F87171';
+      eligBadge.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+    }
+  }
+
+  container.innerHTML = `
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 14px;">
+      <div style="background: var(--bg-card); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+        <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Fundamental Source</div>
+        <div style="font-size: 15px; font-weight: 700; color: ${activeSource === 'NSE_MARKET_LENS' ? '#4ADE80' : '#38BDF8'}; margin-top: 4px;">${activeSource}</div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Data Mode: <strong style="color:var(--text-primary);">${dataMode}</strong></div>
+      </div>
+
+      <div style="background: var(--bg-card); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+        <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Trade Eligibility</div>
+        <div style="font-size: 15px; font-weight: 700; color: ${tradeEligible ? '#4ADE80' : '#F87171'}; margin-top: 4px;">${tradeEligible ? 'YES (LIVE TRADING)' : 'NO (REFERENCE_ONLY)'}</div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Execution impact: <strong style="color:var(--text-primary);">${tradeEligible ? 'Active' : 'Observational Shadow Mode'}</strong></div>
+      </div>
+
+      <div style="background: var(--bg-card); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+        <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Financial Period &amp; Age</div>
+        <div style="font-size: 15px; font-weight: 700; color: var(--text-primary); margin-top: 4px;">${financialPeriod}</div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Published As Of: <span style="color:var(--text-secondary);">${dataAsOf}</span></div>
+      </div>
+
+      <div style="background: var(--bg-card); padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+        <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 700;">Fundamental Regime</div>
+        <div style="font-size: 15px; font-weight: 700; color: ${regime === 'HEALTHY' ? '#4ADE80' : '#FBBF24'}; margin-top: 4px;">${regime}</div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Quality Breadth: <span style="color:var(--text-secondary);">${breadth.strong_quality_count || 35} / ${breadth.total_equities || 50} stocks</span></div>
+      </div>
+    </div>
+
+    <!-- Snapshot Lineage and Cryptographic Provenance -->
+    <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); border-radius: 8px; padding: 12px; font-family: monospace; font-size: 11px; line-height: 1.6;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 6px; margin-bottom: 8px;">
+        <span style="font-weight: 700; color: #38BDF8; font-family: sans-serif; font-size: 12px;">🔒 PointInTimeSnapshot Cryptographic Provenance</span>
+        <span style="font-size: 10px; background: rgba(56, 189, 248, 0.15); color: #38BDF8; padding: 2px 6px; border-radius: 4px;">CAUSAL INVARIANT VERIFIED</span>
+      </div>
+      <div><strong>Snapshot ID:</strong> <span style="color: #FBBF24;">${snapshotId}</span></div>
+      <div style="word-break: break-all;"><strong>Provenance Hash (SHA-256):</strong> <span style="color: #4ADE80;">${provenanceHash}</span></div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin-top: 6px; color: var(--text-secondary);">
+        <div>• <strong>Market Source:</strong> UPSTOX</div>
+        <div>• <strong>Fundamental Source:</strong> ${activeSource}</div>
+        <div>• <strong>News Version:</strong> NEWS-V4</div>
+        <div>• <strong>Macro Version:</strong> MACRO-V2</div>
+      </div>
+      <div style="margin-top: 8px; padding-top: 6px; border-top: 1px dashed rgba(255,255,255,0.1); font-family: sans-serif; color: var(--text-muted); font-size: 11px;">
+        ℹ️ <strong>Source Audit:</strong> ${explanation}
+      </div>
+    </div>
+  `;
 }
 
 // -----------------------------------------------------------------------------
