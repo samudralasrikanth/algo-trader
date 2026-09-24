@@ -160,7 +160,10 @@ def run_historical_simulation(
             )
             
             # Pick a relevant news headline from historical catalog for sentiment anchor
-            cat = HISTORICAL_HEADLINE_CATALOG.get(sym, [])
+            cat = HISTORICAL_HEADLINE_CATALOG.get(sym) or [
+                (f"{stock_meta.get('name', sym)} displays steady volume and sector alignment", 0.15, "GENERAL_BULLISH_NEWS"),
+                (f"{stock_meta.get('name', sym)} consolidates near technical moving average support", 0.0, "NEUTRAL_UPDATE"),
+            ]
             idx = (current_sim_date.day + len(sym)) % len(cat)
             headline, pol, ev_type = cat[idx]
             

@@ -7039,8 +7039,8 @@ function renderFundamentalLayerCard() {
   const dataMode = fund.data_mode || 'REFERENCE_ONLY';
   const dataAsOf = fund.data_as_of ? fund.data_as_of.slice(0, 19).replace('T', ' ') + ' UTC' : '2026-08-25 15:30:00 UTC';
   const financialPeriod = fund.financial_period || 'Q1 FY27';
-  const snapshotId = fund.snapshot_id || 'PIT-20260924-011248-RELIANCE';
-  const provenanceHash = fund.provenance_hash || 'SHA256-e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+  const snapshotId = fund.snapshot_id || '—';
+  const provenanceHash = fund.provenance_hash || '—';
   const regime = fund.fundamental_regime || 'HEALTHY';
   const breadth = fund.breadth || {};
   const explanation = fund.status_explanation || 'Observational Shadow Mode: Reference dataset isolated for prospective tracking.';
