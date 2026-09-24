@@ -81,6 +81,21 @@ class InstrumentSelector:
         beta = float(stock_data.get("beta", 1.0))
         direction_str = thesis.direction.upper()
 
+        # Gate 0.0: Hard TradeGuard Invariant — AI Decision Availability
+        # If thesis was generated under AI failure (CREDIT_EXHAUSTED, UNAVAILABLE, etc.),
+        # new entries MUST NOT be proposed. Blocks model substitution and preserves cohort integrity.
+        if (
+            thesis.decision_mode == "AI_UNAVAILABLE"
+            or str(thesis.ai_status).upper() != "INFERENCE_SUCCESS"
+            or direction_str in ("NO_TRADE", "UNAVAILABLE")
+        ):
+            return self._build_no_trade(
+                thesis,
+                f"AI_DECISION_UNAVAILABLE: New AI-dependent entries blocked (Status: {thesis.ai_status}, Reason: {thesis.fallback_reason or 'No inference'}).",
+                snapshot_id,
+                sequence,
+            )
+
         # Gate 0: Valid base price
         if base_price <= 0:
             return self._build_no_trade(

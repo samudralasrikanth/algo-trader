@@ -797,7 +797,7 @@ def save_prediction(pred: Dict[str, Any]) -> int:
             range_7d.get("low", 0),
             range_7d.get("high", 0),
             reasoning_json,
-            "PENDING"
+            pred.get("evaluation_status") or pred.get("status") or "PENDING"
         ))
         
         pred_id = cursor.lastrowid
@@ -978,6 +978,11 @@ def reconcile_predictions(eval_reference_date: Optional[date] = None) -> Dict[st
                     actual_change_pct = round(((actual_price - base_price) / base_price) * 100, 2)
                     actual_direction = "BULLISH" if actual_change_pct > 0.4 else ("BEARISH" if actual_change_pct < -0.4 else "NEUTRAL")
                     pred_direction = pred["direction"]
+                    pred_status = pred["status"] if "status" in pred.keys() else "PENDING"
+                    
+                    # Institutional cohort integrity: Exclude NO_TRADE, AI_UNAVAILABLE, or explicit non-evaluable predictions
+                    if pred_direction in ("NO_TRADE", "NOT_EVALUABLE") or pred_status in ("EXCLUDED_FROM_ACCURACY", "NOT_EVALUABLE", "AI_UNAVAILABLE"):
+                        continue
                     
                     # Directional Accuracy Logic:
                     # 1. Bullish predicted -> actual positive (>0.2%)
@@ -1142,6 +1147,26 @@ def get_performance_scorecard() -> Dict[str, Any]:
             "by_month": by_month,
             "equity_curve": equity_curve,
             "recent_evaluations": evals[-20:]
+        }
+
+
+def get_ai_availability_metrics() -> Dict[str, Any]:
+    """
+    Returns runtime AI decision availability metrics from OpenRouterMetricsTracker.
+    Separates system operational availability from predictive accuracy.
+    """
+    try:
+        from event_agent.engine.llm_provider import OpenRouterMetricsTracker
+        return OpenRouterMetricsTracker.get_metrics()
+    except Exception:
+        return {
+            "AI_DECISION_ATTEMPTS": 0,
+            "AI_SUCCESSFUL_DECISIONS": 0,
+            "AI_UNAVAILABLE_DECISIONS": 0,
+            "AI_CREDIT_EXHAUSTED": 0,
+            "AI_RATE_LIMITED": 0,
+            "AI_INFERENCE_FAILED": 0,
+            "AI_AVAILABILITY_PCT": 100.0,
         }
 
 

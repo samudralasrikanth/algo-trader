@@ -20,7 +20,10 @@ import urllib.request
 import hashlib
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
+from enum import Enum
 from pathlib import Path
+import re
+import threading
 from typing import Any, Dict, List, Optional
 
 try:
@@ -213,6 +216,68 @@ class OpenAIProvider(LLMProvider):
             return res
 
 
+class OpenRouterStatus(str, Enum):
+    AUTHENTICATED = "AUTHENTICATED"
+    INFERENCE_SUCCESS = "INFERENCE_SUCCESS"
+    INFERENCE_FAILED = "INFERENCE_FAILED"
+    RATE_LIMITED = "RATE_LIMITED"
+    CREDIT_EXHAUSTED = "CREDIT_EXHAUSTED"
+    UNAVAILABLE = "UNAVAILABLE"
+
+
+def sanitize_secret_error(error_str: Any) -> str:
+    """Sanitizes raw provider errors to ensure no API keys or tokens are leaked into telemetry or logs."""
+    if not error_str:
+        return ""
+    s = str(error_str)
+    s = re.sub(r"sk-[a-zA-Z0-9_\-]{16,}", "[REDACTED_API_KEY]", s)
+    s = re.sub(r"Bearer\s+[a-zA-Z0-9_\-\.]{16,}", "Bearer [REDACTED_TOKEN]", s, flags=re.IGNORECASE)
+    return s
+
+
+class OpenRouterMetricsTracker:
+    """Tracks operational availability vs model quality metrics for institutional audits."""
+    _lock = threading.Lock()
+    _metrics = {
+        "AI_DECISION_ATTEMPTS": 0,
+        "AI_SUCCESSFUL_DECISIONS": 0,
+        "AI_UNAVAILABLE_DECISIONS": 0,
+        "AI_CREDIT_EXHAUSTED": 0,
+        "AI_RATE_LIMITED": 0,
+        "AI_INFERENCE_FAILED": 0,
+    }
+
+    @classmethod
+    def record_decision(cls, status: str):
+        with cls._lock:
+            cls._metrics["AI_DECISION_ATTEMPTS"] += 1
+            st = str(status).upper()
+            if st in ("INFERENCE_SUCCESS", "SUCCESS"):
+                cls._metrics["AI_SUCCESSFUL_DECISIONS"] += 1
+            else:
+                cls._metrics["AI_UNAVAILABLE_DECISIONS"] += 1
+                if st == "CREDIT_EXHAUSTED":
+                    cls._metrics["AI_CREDIT_EXHAUSTED"] += 1
+                elif st == "RATE_LIMITED":
+                    cls._metrics["AI_RATE_LIMITED"] += 1
+                else:
+                    cls._metrics["AI_INFERENCE_FAILED"] += 1
+
+    @classmethod
+    def get_metrics(cls) -> Dict[str, Any]:
+        with cls._lock:
+            m = dict(cls._metrics)
+            attempts = m["AI_DECISION_ATTEMPTS"]
+            m["AI_AVAILABILITY_PCT"] = round((m["AI_SUCCESSFUL_DECISIONS"] / attempts * 100.0), 2) if attempts > 0 else 100.0
+            return m
+
+    @classmethod
+    def reset(cls):
+        with cls._lock:
+            for k in cls._metrics:
+                cls._metrics[k] = 0
+
+
 class OpenRouterProvider(LLMProvider):
     """
     OpenRouter-backed structured event reasoner.
@@ -346,19 +411,27 @@ class OpenRouterProvider(LLMProvider):
         """
         now_utc = datetime.now(timezone.utc).isoformat()
         if not self.api_key:
+            OpenRouterMetricsTracker.record_decision(OpenRouterStatus.UNAVAILABLE.value)
             return {
-                "status": "UNCONFIGURED",
+                "status": OpenRouterStatus.UNAVAILABLE.value,
+                "ai_status": OpenRouterStatus.UNAVAILABLE.value,
                 "error": "OPENROUTER_API_KEY environment variable not configured",
-                "direction": None,
+                "direction": "NO_TRADE",
                 "expected_move_pct": 0.0,
                 "horizon": "1D",
                 "confidence": 0.0,
                 "catalysts": [],
-                "invalidating_conditions": [],
+                "invalidating_conditions": ["OPENROUTER_API_KEY unconfigured"],
                 "reasoning": "AI intelligence unavailable: OPENROUTER_API_KEY not configured.",
                 "ai_request_id": None,
                 "model": self.model,
                 "actual_provider": "none",
+                "decision_mode": "AI_UNAVAILABLE",
+                "decision_model": f"OPENROUTER:{self.model}",
+                "model_provider": "openrouter",
+                "model_version": self.model,
+                "fallback_reason": "OPENROUTER_API_KEY unconfigured",
+                "evaluation_status": "EXCLUDED_FROM_ACCURACY",
             }
 
         ctx = market_context or {}
@@ -439,17 +512,39 @@ class OpenRouterProvider(LLMProvider):
                 except Exception as db_err:
                     logger.debug(f"Telemetry logging error: {db_err}")
 
-                parsed["status"] = "SUCCESS"
+                OpenRouterMetricsTracker.record_decision(OpenRouterStatus.INFERENCE_SUCCESS.value)
+                parsed["status"] = OpenRouterStatus.INFERENCE_SUCCESS.value
+                parsed["ai_status"] = OpenRouterStatus.INFERENCE_SUCCESS.value
                 parsed["ai_request_id"] = req_id
                 parsed["model"] = act_model
                 parsed["actual_provider"] = "openrouter"
                 parsed["latency_ms"] = latency_ms
                 parsed["tokens"] = tot_tok
+                parsed["decision_mode"] = "AI_INFERENCE"
+                parsed["decision_model"] = f"OPENROUTER:{act_model}"
+                parsed["model_provider"] = "openrouter"
+                parsed["model_version"] = act_model
+                parsed["fallback_reason"] = None
+                parsed["evaluation_status"] = "EVALUABLE"
                 return parsed
 
         except Exception as exc:
             latency_ms = int((time.perf_counter() - start_t) * 1000)
-            logger.warning(f"OpenRouter thesis inference failed ({exc}) for {agent_id} on {symbol}")
+            raw_err = str(exc)
+            sanitized_err = sanitize_secret_error(raw_err)
+            status_code = getattr(exc, "code", 500) if hasattr(exc, "code") else 500
+
+            if status_code == 402 or "402" in raw_err or "Payment Required" in raw_err:
+                ai_status = OpenRouterStatus.CREDIT_EXHAUSTED.value
+            elif status_code == 429 or "429" in raw_err:
+                ai_status = OpenRouterStatus.RATE_LIMITED.value
+            elif status_code == 503 or "timed out" in raw_err.lower() or "connection refused" in raw_err.lower():
+                ai_status = OpenRouterStatus.UNAVAILABLE.value
+            else:
+                ai_status = OpenRouterStatus.INFERENCE_FAILED.value
+
+            OpenRouterMetricsTracker.record_decision(ai_status)
+            logger.warning(f"OpenRouter thesis inference failed ({ai_status}: {sanitized_err}) for {agent_id} on {symbol}")
             try:
                 from event_agent.storage.ledger import record_ai_telemetry
                 record_ai_telemetry({
@@ -467,26 +562,33 @@ class OpenRouterProvider(LLMProvider):
                     "total_tokens": 0,
                     "cost_usd": 0.0,
                     "latency_ms": latency_ms,
-                    "http_status": 500,
-                    "status": "FAILED",
-                    "error_message": str(exc),
+                    "http_status": status_code,
+                    "status": ai_status,
+                    "error_message": sanitized_err,
                 })
             except Exception:
                 pass
 
             return {
-                "status": "FAILED",
-                "error": str(exc),
-                "direction": None,
+                "status": ai_status,
+                "ai_status": ai_status,
+                "error": sanitized_err,
+                "direction": "NO_TRADE",
                 "expected_move_pct": 0.0,
                 "horizon": "1D",
                 "confidence": 0.0,
                 "catalysts": [],
-                "invalidating_conditions": [],
-                "reasoning": f"Inference failed: {exc}",
+                "invalidating_conditions": ["AI intelligence failure / credit exhausted"],
+                "reasoning": f"AI intelligence unavailable ({ai_status}): {sanitized_err}",
                 "ai_request_id": None,
                 "model": self.model,
                 "actual_provider": "openrouter",
+                "decision_mode": "AI_UNAVAILABLE",
+                "decision_model": f"OPENROUTER:{self.model}",
+                "model_provider": "openrouter",
+                "model_version": self.model,
+                "fallback_reason": sanitized_err,
+                "evaluation_status": "EXCLUDED_FROM_ACCURACY",
             }
 
     def format_post_trade_diagnosis(self, audit_evidence: Dict[str, Any]) -> str:

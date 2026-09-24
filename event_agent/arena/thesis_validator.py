@@ -18,7 +18,7 @@ from event_agent.fundamentals.fundamental_snapshot import FundamentalContext
 logger = logging.getLogger(__name__)
 
 CANONICAL_HORIZONS = {"1D", "3D", "7D"}
-CANONICAL_DIRECTIONS = {"BULLISH", "BEARISH"}
+CANONICAL_DIRECTIONS = {"BULLISH", "BEARISH", "NO_TRADE", "NEUTRAL"}
 
 
 @dataclass
@@ -26,7 +26,7 @@ class MarketThesis:
     """Standardized thesis produced by an autonomous agent."""
     agent_id: str
     symbol: str
-    direction: str                     # "BULLISH" or "BEARISH"
+    direction: str                     # "BULLISH", "BEARISH", "NO_TRADE", "NEUTRAL"
     expected_move_pct: float           # e.g. +1.2%
     horizon: str                       # "1D", "3D", "7D"
     confidence: float                  # 0.0 to 100.0
@@ -41,6 +41,15 @@ class MarketThesis:
     is_valid: bool = True
     validation_errors: List[str] = field(default_factory=list)
     fundamental_context: Optional[FundamentalContext] = None
+
+    # First-Class Model Provenance & Availability Fields
+    decision_model: str = ""
+    model_provider: str = ""
+    model_version: str = ""
+    decision_mode: str = "AI_INFERENCE" # "AI_INFERENCE", "AI_UNAVAILABLE", "LOCAL_DETERMINISTIC"
+    ai_status: str = "INFERENCE_SUCCESS" # "INFERENCE_SUCCESS", "CREDIT_EXHAUSTED", "RATE_LIMITED", "UNAVAILABLE", "INFERENCE_FAILED", "AUTHENTICATED"
+    fallback_reason: Optional[str] = None
+    evaluation_status: str = "EVALUABLE" # "EVALUABLE", "EXCLUDED_FROM_ACCURACY"
 
     @property
     def is_conflicted(self) -> bool:
@@ -69,6 +78,13 @@ class MarketThesis:
             "is_valid": self.is_valid,
             "validation_errors": self.validation_errors,
             "fundamental_context": self.fundamental_context.to_dict() if self.fundamental_context else None,
+            "decision_model": self.decision_model,
+            "model_provider": self.model_provider,
+            "model_version": self.model_version,
+            "decision_mode": self.decision_mode,
+            "ai_status": self.ai_status,
+            "fallback_reason": self.fallback_reason,
+            "evaluation_status": self.evaluation_status,
         }
 
 
@@ -88,6 +104,15 @@ class MarketThesisValidator:
         """
         errors: List[str] = []
         conflicts: List[str] = []
+
+        # Gate 0: AI Decision Availability Invariant (Fail-closed on AI failure)
+        if thesis.decision_mode == "AI_UNAVAILABLE" or thesis.ai_status != "INFERENCE_SUCCESS":
+            errors.append(f"AI decision unavailable (status: {thesis.ai_status}, reason: {thesis.fallback_reason or 'No inference'}). New AI-dependent entries blocked.")
+            thesis.direction = "NO_TRADE"
+            thesis.is_valid = False
+            thesis.evaluation_status = "EXCLUDED_FROM_ACCURACY"
+            thesis.validation_errors = errors
+            return thesis
 
         # 1. Direction check
         clean_dir = str(thesis.direction or "").strip().upper()

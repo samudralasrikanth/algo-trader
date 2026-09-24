@@ -449,6 +449,25 @@ class TradeGuard:
             return self._fail("TRADE_BLOCKED_KILL_SWITCH", f"Blocked by {act.level.value} Kill Switch: {act.reason}", passed, failed, env)
 
         # ---------------------------------------------------------------------
+        # GATE 35: AI_DECISION_AVAILABILITY (INFERENCE_SUCCESS INVARIANT)
+        # ---------------------------------------------------------------------
+        # Institutional Rule: An AI-dependent trade proposal requires genuine INFERENCE_SUCCESS.
+        # AUTHENTICATED is NOT sufficient. CREDIT_EXHAUSTED, RATE_LIMITED,
+        # INFERENCE_FAILED, and UNAVAILABLE strictly block new AI entries.
+        decision_mode = str(signal.get("decision_mode") or order_intent.get("decision_mode") or "").upper()
+        ai_status = str(signal.get("ai_status") or order_intent.get("ai_status") or "").upper()
+
+        if decision_mode == "AI_UNAVAILABLE" or (decision_mode == "AI_INFERENCE" and ai_status != "INFERENCE_SUCCESS") or (ai_status and ai_status != "INFERENCE_SUCCESS"):
+            failed.append("GATE_35_AI_DECISION_AVAILABILITY")
+            reason = signal.get("fallback_reason") or order_intent.get("fallback_reason") or f"OpenRouter status is {ai_status or decision_mode}"
+            return self._fail(
+                "TRADE_BLOCKED_AI_UNAVAILABLE",
+                f"AI decision unavailable (Status: {ai_status or decision_mode}, Reason: {reason}). New AI-dependent entries blocked to prevent model contamination.",
+                passed, failed, env,
+            )
+        passed.append("GATE_35_AI_DECISION_AVAILABILITY")
+
+        # ---------------------------------------------------------------------
         # MANDATORY INVARIANT: LIVE ENVIRONMENT AUTHORIZATION GATE
         # ---------------------------------------------------------------------
         if env.is_live:

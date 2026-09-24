@@ -80,10 +80,11 @@ def test_openrouter_real_inference_and_telemetry():
         market_context=market_context,
     )
 
-    if result["status"] == "FAILED" and ("402" in str(result.get("error", "")) or "Payment Required" in str(result.get("error", "")) or "429" in str(result.get("error", ""))):
-        pytest.skip(f"OpenRouter live API credits/quota unavailable: {result.get('error')}")
+    err_msg = str(result.get("fallback_reason") or result.get("error") or "")
+    if (result["status"] in ("FAILED", "CREDIT_EXHAUSTED", "RATE_LIMITED", "UNAVAILABLE") or result.get("ai_status") in ("CREDIT_EXHAUSTED", "RATE_LIMITED")) and ("402" in err_msg or "Payment Required" in err_msg or "429" in err_msg):
+        pytest.skip(f"OpenRouter live API credits/quota unavailable: {err_msg}")
 
-    assert result["status"] == "SUCCESS", f"Live OpenRouter call failed: {result.get('error')}"
+    assert result["status"] in ("SUCCESS", "INFERENCE_SUCCESS"), f"Live OpenRouter call failed: {err_msg}"
     assert result["ai_request_id"] is not None
     assert len(result["ai_request_id"]) > 5
     assert result["latency_ms"] > 0

@@ -94,18 +94,59 @@ class BaseAgent(ABC):
             market_context=regime,
         )
 
-        # 2. Build initial MarketThesis
-        direction = ai_resp.get("direction") or ("BULLISH" if float(stock_data.get("predicted_1d_pct", 0.0)) >= 0 else "BEARISH")
-        expected_move = float(ai_resp.get("expected_move_pct") or stock_data.get("predicted_1d_pct", 0.0))
-        horizon = ai_resp.get("horizon") or "1D"
-        confidence = float(ai_resp.get("confidence") or stock_data.get("conviction", 60.0))
-        catalysts = ai_resp.get("catalysts") or stock_data.get("catalysts", []) or ["Fundamental event driver"]
+        ai_status = ai_resp.get("ai_status") or ai_resp.get("status") or "UNAVAILABLE"
+        if ai_status not in ("INFERENCE_SUCCESS", "SUCCESS"):
+            # FAIL-CLOSED INVARIANT:
+            # Under AI failure (credit exhausted, unavailable, rate limited, error),
+            # DO NOT fabricate an AI decision from stock_data!
+            # Emit explicit NO_TRADE thesis tagged with error and excluded from accuracy.
+            prov_model = getattr(self.llm_provider, "model", "unknown")
+            error_reason = ai_resp.get("fallback_reason") or ai_resp.get("error") or "Inference failed"
+            thesis = MarketThesis(
+                agent_id=self.agent_id,
+                symbol=symbol,
+                direction="NO_TRADE",
+                expected_move_pct=0.0,
+                horizon="1D",
+                confidence=0.0,
+                catalysts=[],
+                invalidating_conditions=["AI inference failure / credit exhausted"],
+                reasoning=f"AI decision unavailable ({ai_status}): {error_reason}. New entries blocked.",
+                ai_request_id=None,
+                model=prov_model,
+                actual_provider="openrouter",
+                decision_model=ai_resp.get("decision_model") or f"OPENROUTER:{prov_model}",
+                model_provider="openrouter",
+                model_version=prov_model,
+                decision_mode="AI_UNAVAILABLE",
+                ai_status=ai_status,
+                fallback_reason=error_reason,
+                evaluation_status="EXCLUDED_FROM_ACCURACY",
+                is_valid=False,
+                validation_errors=[f"AI_UNAVAILABLE: {ai_status} ({error_reason})"],
+            )
+            return self.thesis_validator.validate(thesis, structured_evidence=macro_evidence)
+
+        # 2. Build initial MarketThesis from genuine AI output
+        direction = ai_resp.get("direction", "NEUTRAL")
+        expected_move = float(ai_resp.get("expected_move_pct", 0.0))
+        horizon = ai_resp.get("horizon", "1D")
+        confidence = float(ai_resp.get("confidence", 50.0))
+        catalysts = ai_resp.get("catalysts") or ["Fundamental event driver"]
         invalidating_conditions = ai_resp.get("invalidating_conditions") or [
             "Unexpected policy rate hike",
             "Severe intraday gap-down against thesis",
             "Broad market risk-off selloff"
         ]
-        reasoning = ai_resp.get("reasoning") or f"Catalyst thesis for {symbol} under {self.strategy_version}"
+        reasoning = ai_resp.get("reasoning") or f"AI thesis for {symbol} under {self.strategy_version}"
+        prov_model = getattr(self.llm_provider, "model", "openai/gpt-4o-mini")
+        decision_model = ai_resp.get("decision_model") or f"OPENROUTER:{prov_model}"
+        model_provider = ai_resp.get("model_provider") or "openrouter"
+        model_version = ai_resp.get("model_version") or prov_model
+        decision_mode = ai_resp.get("decision_mode") or "AI_INFERENCE"
+        ai_status = "INFERENCE_SUCCESS"
+        fallback_reason = None
+        evaluation_status = "EVALUABLE"
 
         # 3. Extract and construct deterministic FundamentalContext
         from event_agent.fundamentals.fundamental_snapshot import FundamentalContext, FundamentalRole
@@ -176,9 +217,16 @@ class BaseAgent(ABC):
             invalidating_conditions=invalidating_conditions,
             reasoning=reasoning,
             ai_request_id=ai_resp.get("ai_request_id"),
-            model=ai_resp.get("model"),
-            actual_provider=ai_resp.get("actual_provider"),
+            model=prov_model,
+            actual_provider="openrouter",
             fundamental_context=fundamental_context,
+            decision_model=decision_model,
+            model_provider=model_provider,
+            model_version=model_version,
+            decision_mode=decision_mode,
+            ai_status=ai_status,
+            fallback_reason=fallback_reason,
+            evaluation_status=evaluation_status,
         )
 
         # 4. Deterministic Validation & Data Inconsistency Check

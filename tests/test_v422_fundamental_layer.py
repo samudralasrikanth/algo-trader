@@ -290,6 +290,20 @@ def test_weak_fundamentals_bullish_event():
 def test_contrarian_oversold_strong_fundamentals():
     """Verify that Contrarian confirms dip-buy on an oversold high-quality company."""
     agent = AgentContrarian()
+    # Deterministic AI response for testing fundamental confirmation logic
+    agent.llm_provider.generate_decision_thesis = lambda *args, **kwargs: {
+        "status": "SUCCESS",
+        "ai_status": "INFERENCE_SUCCESS",
+        "direction": "BULLISH",
+        "expected_move_pct": 1.20,
+        "horizon": "1D",
+        "confidence": 65.0,
+        "catalysts": ["Oversold quality dip"],
+        "invalidating_conditions": ["Further breakdown"],
+        "reasoning": "Contrarian bounce setup on high-quality stock",
+        "decision_mode": "AI_INFERENCE",
+        "evaluation_status": "EVALUABLE",
+    }
     now_dt = datetime.now(timezone.utc)
 
     strong_fund = FundamentalSnapshot(
@@ -343,6 +357,20 @@ def test_contrarian_oversold_strong_fundamentals():
 def test_momentum_contradictory_fundamentals():
     """Verify that contradictory fundamentals do not kill a valid momentum breakout."""
     agent = AgentMomentum()
+    # Deterministic AI response for testing fundamental contradiction preservation
+    agent.llm_provider.generate_decision_thesis = lambda *args, **kwargs: {
+        "status": "SUCCESS",
+        "ai_status": "INFERENCE_SUCCESS",
+        "direction": "BULLISH",
+        "expected_move_pct": 1.50,
+        "horizon": "1D",
+        "confidence": 65.0,
+        "catalysts": ["Momentum breakout"],
+        "invalidating_conditions": ["Break below 20 EMA"],
+        "reasoning": "Tactical trend breakout",
+        "decision_mode": "AI_INFERENCE",
+        "evaluation_status": "EVALUABLE",
+    }
     now_dt = datetime.now(timezone.utc)
 
     speculative_fund = FundamentalSnapshot(
