@@ -351,6 +351,9 @@ class ArenaOrchestrator:
         result_dict = {
             "market_date": market_date,
             "snapshot_id": snapshot_id,
+            "execution_mode": "TEST / SIMULATION" if force_execute else "SCHEDULED_AUTOMATED",
+            "audit_clock_eligible": not force_execute,
+            "force_execute": force_execute,
             "fundamental_breadth": market_snapshot.get("fundamental_breadth"),
             "fundamental_regime": market_snapshot.get("fundamental_regime"),
             "market_clock": clock_status,

@@ -228,9 +228,10 @@ def test_strong_fundamentals_bearish_event():
     )
 
     validated = MarketThesisValidator.validate(thesis)
-    # Contradiction should be noted as a thesis conflict
+    # Contradiction should be noted as a thesis conflict (FUNDAMENTAL_CONFLICT), but thesis remains valid
     assert validated.thesis_conflict
-    assert any("Fundamental contradiction" in r for r in validated.conflict_reasons)
+    assert validated.is_valid
+    assert any("FUNDAMENTAL_CONFLICT" in r or "Fundamental contradiction" in r for r in validated.conflict_reasons)
 
 
 # ---------------------------------------------------------------------------
@@ -614,3 +615,129 @@ def test_fundamental_cannot_force_trade():
 
     assert trade.action.value == "NO_TRADE"
     assert "below net edge hurdle" in trade.decision_reason
+
+
+# ---------------------------------------------------------------------------
+# Test 16: Future fundamental publication rejection
+# ---------------------------------------------------------------------------
+def test_future_fundamental_publication_rejection():
+    """Verify that fundamental_as_of > prediction_timestamp is strictly rejected as a causal violation."""
+    p_ts = datetime(2026, 9, 23, 10, 0, 0, tzinfo=timezone.utc)
+    future_f_ts = datetime(2026, 9, 23, 10, 30, 0, tzinfo=timezone.utc)
+    now_mp_ts = datetime(2026, 9, 23, 9, 58, 0, tzinfo=timezone.utc)
+
+    f_snap = FundamentalSnapshot(
+        symbol="RELIANCE.NS",
+        as_of=future_f_ts,
+        source="NSE_OFFICIAL_EXPORT",
+        quality_score=80.0,
+    )
+
+    pit = PointInTimeSnapshot(
+        symbol="RELIANCE.NS",
+        market_price=2950.0,
+        market_price_as_of=now_mp_ts,
+        prediction_timestamp=p_ts,
+        fundamental_snapshot=f_snap,
+        fundamental_as_of=future_f_ts,
+    )
+
+    is_valid, errors = pit.validate_causality()
+    assert not is_valid
+    assert any("FUNDAMENTAL_FUTURE" in err for err in errors)
+
+
+# ---------------------------------------------------------------------------
+# Test 17: Sector normalization
+# ---------------------------------------------------------------------------
+def test_sector_normalization():
+    """Verify that the same raw metric (e.g. D/E=3.5) yields different normalized interpretations across sectors."""
+    from event_agent.fundamentals.fundamental_normalizer import FundamentalNormalizer
+
+    raw_leverage = {"debt_to_equity": 3.5, "interest_coverage": 3.0}
+
+    # For Financial Services / Bank, D/E of 3.5 is normal operating liability structure -> healthy score
+    bank_leverage_score = FundamentalNormalizer.normalize_leverage(
+        raw_leverage, sector="Financial Services"
+    )
+
+    # For Information Technology, D/E of 3.5 is abnormal / deeply distressed -> stressed score
+    it_leverage_score = FundamentalNormalizer.normalize_leverage(
+        raw_leverage, sector="Information Technology"
+    )
+
+    assert bank_leverage_score >= 60.0, f"Expected bank score >= 60, got {bank_leverage_score}"
+    assert it_leverage_score < 20.0, f"Expected IT score < 20, got {it_leverage_score}"
+    assert bank_leverage_score > it_leverage_score + 40.0
+
+
+# ---------------------------------------------------------------------------
+# Test 18: Fundamental shadow-vs-live separation
+# ---------------------------------------------------------------------------
+def test_fundamental_shadow_vs_live_separation():
+    """Verify that execution edge is strictly unmodified while shadow edge captures fundamental adjustment."""
+    selector = InstrumentSelector()
+    now_dt = datetime.now(timezone.utc)
+    base_price = 2000.0
+
+    # Strong fundamentals giving positive boost
+    strong_fund = FundamentalSnapshot(
+        symbol="TCS.NS",
+        as_of=now_dt - timedelta(days=20),
+        source="REFERENCE_DATASET",
+        data_mode="REFERENCE_ONLY",
+        trade_eligible=False,
+        financial_period="Q1 FY27",
+        quality_score=90.0,
+        fundamental_regime=FundamentalRegime.HEALTHY.value,
+    )
+
+    raw_trading_edge = 0.62  # +0.62%
+
+    thesis = MarketThesis(
+        agent_id="ALPHA",
+        symbol="TCS.NS",
+        direction="BULLISH",
+        expected_move_pct=raw_trading_edge,
+        horizon="1D",
+        confidence=80.0,
+        catalysts=["Major digital cloud contract win"],
+        invalidating_conditions=["Contract delay or regulatory probe"],
+        reasoning="Contract catalyst with high-conviction alpha.",
+        fundamental_context=FundamentalContext(
+            quality_score=90.0,
+            confirmation=True,
+            contradiction=False,
+            source="REFERENCE_DATASET",
+            data_mode="REFERENCE_ONLY",
+            trade_eligible=False,
+        ),
+    )
+
+    stock_data = {
+        "symbol": "TCS.NS",
+        "base_price": base_price,
+        "base_price_timestamp": now_dt.isoformat(),
+        "sector": "Information Technology",
+        "beta": 0.85,
+        "fundamental_snapshot": strong_fund,
+    }
+
+    trade = selector.select_instrument(
+        thesis=thesis,
+        stock_data=stock_data,
+        portfolio_equity=2000000.0,
+        current_open_positions=[],
+        decision_timestamp=now_dt,
+    )
+
+    assert trade.action.value != "NO_TRADE"
+    assert trade.execution_edge == raw_trading_edge
+    assert trade.fundamental_adj > 0.0
+    assert trade.shadow_adjusted_edge > trade.execution_edge
+    assert abs(trade.shadow_adjusted_edge - (raw_trading_edge + trade.fundamental_adj)) < 1e-4
+
+    # Target price MUST be calculated strictly against execution_edge (0.62%), NOT shadow edge
+    expected_target = round(base_price * (1.0 + raw_trading_edge / 100.0), 2)
+    assert trade.target == expected_target
+

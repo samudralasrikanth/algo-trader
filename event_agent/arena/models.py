@@ -190,6 +190,9 @@ class ProposedTrade:
     position_side: PositionSide = PositionSide.LONG
     order_action: TradeAction = TradeAction.BUY
     order_intent: OrderIntent = OrderIntent.OPEN
+    execution_edge: Optional[float] = None
+    shadow_adjusted_edge: Optional[float] = None
+    fundamental_adj: float = 0.0
     timestamp: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
     def __post_init__(self):
@@ -236,6 +239,9 @@ class ProposedTrade:
             "evidence": self.evidence,
             "horizon": self.horizon,
             "expected_return": self.expected_return or self.expected_move_pct,
+            "execution_edge": round(self.execution_edge, 4) if self.execution_edge is not None else None,
+            "shadow_adjusted_edge": round(self.shadow_adjusted_edge, 4) if self.shadow_adjusted_edge is not None else None,
+            "fundamental_adj": round(self.fundamental_adj, 4),
             "timestamp": self.timestamp,
         }
 

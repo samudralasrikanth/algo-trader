@@ -28,6 +28,9 @@ class FundamentalScoreEngine:
         leverage: Dict[str, float],
         ownership: Dict[str, float],
         sector: str = "Default",
+        data_mode: str = "PAPER",
+        financial_period: str = "",
+        trade_eligible: bool = True,
     ) -> FundamentalSnapshot:
         """
         Calculates all deterministic scores and returns a populated FundamentalSnapshot.
@@ -38,6 +41,9 @@ class FundamentalScoreEngine:
                 symbol=symbol,
                 as_of=as_of,
                 source="FUNDAMENTALS_UNAVAILABLE",
+                data_mode=data_mode,
+                financial_period=financial_period,
+                trade_eligible=False,
                 valuation={},
                 profitability={},
                 growth={},
@@ -65,25 +71,34 @@ class FundamentalScoreEngine:
             growth=growth,
         )
 
-        # Balance sheet score: combines debt-to-equity and interest coverage
+        # Balance sheet score: sector-normalized leverage and interest coverage
+        bm = FundamentalNormalizer.get_sector_benchmarks(sector)
+        max_de = bm["max_acceptable_de"]
         de = leverage.get("debt_to_equity", 0.5)
         ic = leverage.get("interest_coverage", 5.0)
-        bs_de = max(0.0, 50.0 * (1.0 - min(1.0, de / 2.0)))
-        bs_ic = min(50.0, max(0.0, (ic / 8.0) * 50.0))
+        
+        # Sector-aware balance sheet leverage score
+        bs_de = max(0.0, 50.0 * (1.0 - min(1.0, de / max_de)))
+        ic_bench = 3.0 if "financial" in sector.lower() or "bank" in sector.lower() else 8.0
+        bs_ic = min(50.0, max(0.0, (ic / ic_bench) * 50.0))
         bs_score = round(bs_de + bs_ic, 2)
 
-        # Stock-level fundamental regime
+        # Stock-level fundamental regime (sector-aware)
         stock_regime = cls.classify_stock_regime(
             quality_score=q_score,
             valuation_score=v_score,
             growth_score=g_score,
             debt_to_equity=de,
+            sector=sector,
         )
 
         return FundamentalSnapshot(
             symbol=symbol,
             as_of=as_of,
             source=source,
+            data_mode=data_mode,
+            financial_period=financial_period,
+            trade_eligible=trade_eligible,
             valuation=valuation,
             profitability=profitability,
             growth=growth,
@@ -104,17 +119,24 @@ class FundamentalScoreEngine:
         valuation_score: float,
         growth_score: float,
         debt_to_equity: float,
+        sector: str = "Default",
     ) -> FundamentalRegime:
         """
-        Categorizes a single company's fundamental health.
+        Categorizes a single company's fundamental health using sector-normalized thresholds.
         """
-        if debt_to_equity > 2.5 or (quality_score < 30.0 and growth_score < 30.0):
+        bm = FundamentalNormalizer.get_sector_benchmarks(sector)
+        max_de = bm["max_acceptable_de"]
+
+        # High leverage threshold is sector aware (e.g. >1.5x allowable)
+        is_high_leverage = debt_to_equity > (max_de * 1.5)
+
+        if is_high_leverage or (quality_score < 30.0 and growth_score < 30.0):
             return FundamentalRegime.STRESSED
         if growth_score < 35.0 and quality_score < 45.0:
             return FundamentalRegime.WEAKENING
         if valuation_score < 30.0 and quality_score >= 65.0:
             return FundamentalRegime.STRETCHED
-        if quality_score >= 65.0 and growth_score >= 55.0 and debt_to_equity <= 1.2:
+        if quality_score >= 65.0 and growth_score >= 55.0 and debt_to_equity <= max_de:
             return FundamentalRegime.HEALTHY
         return FundamentalRegime.MIXED
 

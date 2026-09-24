@@ -169,11 +169,11 @@ class MarketThesisValidator:
                 if adv_dec_ratio >= 2.0:
                     conflicts.append(f"Strong domestic breadth: Advance-Decline ratio is {adv_dec_ratio:.2f}.")
 
-        # 7. Fundamental Evidence Contradiction Check (Context modifier for Momentum, conflict for others)
+        # 7. Fundamental Evidence Contradiction Check (Context modifier: produces FUNDAMENTAL_CONFLICT, NOT INVALID_THESIS)
         if thesis.fundamental_context and thesis.fundamental_context.contradiction:
-            fc_reason = thesis.fundamental_context.reasoning or "Fundamental profile strongly contradicts short-term directional thesis."
+            fc_reason = thesis.fundamental_context.reasoning or "Fundamental profile contradicts short-term directional thesis."
             if thesis.agent_id.upper() != "MOMENTUM":
-                conflicts.append(f"Fundamental contradiction: {fc_reason}")
+                conflicts.append(f"FUNDAMENTAL_CONFLICT: {fc_reason}")
 
         thesis.is_valid = (len(errors) == 0)
         thesis.validation_errors = errors

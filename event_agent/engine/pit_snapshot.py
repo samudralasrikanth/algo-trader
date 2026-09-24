@@ -43,19 +43,38 @@ class PointInTimeSnapshot:
     news_as_of: Optional[datetime] = None
     macro_snapshot: Dict[str, Any] = field(default_factory=dict)
     macro_as_of: Optional[datetime] = None
+    data_mode: str = "PAPER"                     # LIVE, PAPER, REFERENCE_ONLY
+    market_source: str = "UPSTOX"
+    fundamental_source: str = "NSE_MARKET_LENS"
+    news_source_version: str = "NEWS-V4"
+    macro_source_version: str = "MACRO-V2"
+    financial_period: str = ""
+    trade_eligible: bool = True
     snapshot_id: str = ""
     provenance_hash: str = ""
 
     def __post_init__(self):
+        if self.fundamental_snapshot is not None:
+            self.fundamental_source = self.fundamental_snapshot.source
+            if self.fundamental_snapshot.financial_period:
+                self.financial_period = self.fundamental_snapshot.financial_period
+            if not self.fundamental_snapshot.trade_eligible:
+                self.trade_eligible = False
+            if self.fundamental_snapshot.data_mode == "REFERENCE_ONLY":
+                self.data_mode = "REFERENCE_ONLY"
+        elif self.fundamental_source == "REFERENCE_DATASET":
+            self.trade_eligible = False
+            self.data_mode = "REFERENCE_ONLY"
+
         if not self.snapshot_id:
             clean_sym = self.symbol.replace(".NS", "").replace("^", "")
             ts_str = self.prediction_timestamp.strftime("%Y%m%d-%H%M%S")
-            self.snapshot_id = f"SNAP-{ts_str}-{clean_sym}"
+            self.snapshot_id = f"PIT-{ts_str}-{clean_sym}"
         if not self.provenance_hash:
             self.provenance_hash = self.compute_provenance_hash()
 
     def compute_provenance_hash(self) -> str:
-        """Computes deterministic SHA-256 hash over all point-in-time inputs."""
+        """Computes deterministic SHA-256 hash over all point-in-time inputs and source versions."""
         p_iso = self.prediction_timestamp.isoformat()
         mp_iso = self.market_price_as_of.isoformat()
         f_iso = self.fundamental_as_of.isoformat() if self.fundamental_as_of else None
@@ -67,6 +86,13 @@ class PointInTimeSnapshot:
         payload = {
             "snapshot_id": self.snapshot_id,
             "symbol": self.symbol,
+            "data_mode": self.data_mode,
+            "market_source": self.market_source,
+            "fundamental_source": self.fundamental_source,
+            "news_source_version": self.news_source_version,
+            "macro_source_version": self.macro_source_version,
+            "financial_period": self.financial_period,
+            "trade_eligible": self.trade_eligible,
             "market_price": round(self.market_price, 4),
             "market_price_as_of": mp_iso,
             "prediction_timestamp": p_iso,
@@ -126,6 +152,13 @@ class PointInTimeSnapshot:
         return {
             "snapshot_id": self.snapshot_id,
             "symbol": self.symbol,
+            "data_mode": self.data_mode,
+            "market_source": self.market_source,
+            "fundamental_source": self.fundamental_source,
+            "news_source_version": self.news_source_version,
+            "macro_source_version": self.macro_source_version,
+            "financial_period": self.financial_period,
+            "trade_eligible": self.trade_eligible,
             "market_price": round(self.market_price, 2),
             "market_price_as_of": self.market_price_as_of.isoformat(),
             "prediction_timestamp": self.prediction_timestamp.isoformat(),

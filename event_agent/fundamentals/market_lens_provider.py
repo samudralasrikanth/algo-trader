@@ -150,20 +150,23 @@ class MarketLensProvider:
                     snap = FundamentalScoreEngine.score_snapshot(
                         symbol=symbol,
                         as_of=as_of_parsed,
-                        source="NSE_MARKET_LENS_EXPORT",
+                        source="NSE_OFFICIAL_EXPORT",
                         valuation=raw.get("valuation", {}),
                         profitability=raw.get("profitability", {}),
                         growth=raw.get("growth", {}),
                         leverage=raw.get("leverage", {}),
                         ownership=raw.get("ownership", {}),
                         sector=raw.get("sector", "Default"),
+                        data_mode="PAPER",
+                        financial_period=raw.get("financial_period", "Q1 FY27"),
+                        trade_eligible=True,
                     )
                     self.cache.put(symbol, snap)
                     return snap
             except Exception as exc:
                 logger.warning(f"Error reading export file {self.export_file_path}: {exc}")
 
-        # 4. Reference universe lookup
+        # 4. Reference universe lookup (REFERENCE_DATASET: explicit non-trading reference)
         if symbol in NIFTY50_REFERENCE_FUNDAMENTALS:
             raw = NIFTY50_REFERENCE_FUNDAMENTALS[symbol]
             # Default point-in-time timestamp: 30 days prior to simulate quarterly publication
@@ -171,13 +174,16 @@ class MarketLensProvider:
             snap = FundamentalScoreEngine.score_snapshot(
                 symbol=symbol,
                 as_of=as_of_ref,
-                source="NSE_MARKET_LENS_AUTHORITATIVE",
+                source="REFERENCE_DATASET",
                 valuation=raw["valuation"],
                 profitability=raw["profitability"],
                 growth=raw["growth"],
                 leverage=raw["leverage"],
                 ownership=raw["ownership"],
                 sector=raw["sector"],
+                data_mode="REFERENCE_ONLY",
+                financial_period=raw.get("financial_period", "Q1 FY27"),
+                trade_eligible=False,
             )
             # Validate
             is_valid, errors, validated = FundamentalValidator.validate_snapshot(
@@ -213,6 +219,9 @@ class MarketLensProvider:
             symbol=symbol,
             as_of=as_of,
             source="FUNDAMENTALS_UNAVAILABLE",
+            data_mode="PAPER",
+            financial_period="",
+            trade_eligible=False,
             valuation={},
             profitability={},
             growth={},

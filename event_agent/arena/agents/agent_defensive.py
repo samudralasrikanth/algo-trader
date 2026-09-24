@@ -9,6 +9,7 @@ Focus: Low beta, FMCG/Pharma dividend stability, conservative sizing, Put hedgin
 
 import os
 from typing import Any, Dict, List
+from event_agent.fundamentals.fundamental_normalizer import FundamentalNormalizer
 from ..models import (
     AgentProfile,
     HedgeDecision,
@@ -69,7 +70,7 @@ class AgentDefensive(BaseAgent):
                 continue
 
             beta = float(data.get("beta", 1.0))
-            sector = data.get("sector", "")
+            sector = data.get("sector", "Default")
             conviction = float(data.get("conviction", 50.0))
             pred_pct = float(data.get("predicted_1d_pct", 0.0))
             base_price = float(data.get("base_price", 0.0))
@@ -81,20 +82,35 @@ class AgentDefensive(BaseAgent):
             min_conviction = float(os.getenv("MIN_AGENT_CONVICTION", "48.0"))
             is_low_beta = beta < 0.95 or any(ds.lower() in sector.lower() for ds in defensive_sectors)
 
-            # Defensive applies fundamental quality and solvency filter
+            # Defensive applies sector-aware fundamental quality, leverage, and solvency filter
             fund_snap = data.get("fundamental_snapshot") or data.get("fundamentals")
             q_score = None
+            norm_leverage = None
+            norm_profitability = None
+
             if fund_snap is not None:
                 q_score = getattr(fund_snap, "quality_score", None) or (fund_snap.get("quality_score") if isinstance(fund_snap, dict) else None)
                 f_regime = getattr(fund_snap, "fundamental_regime", None) or (fund_snap.get("fundamental_regime") if isinstance(fund_snap, dict) else None)
-                # Reject fundamentally stressed companies immediately
+                lev_dict = getattr(fund_snap, "leverage", {}) or (fund_snap.get("leverage", {}) if isinstance(fund_snap, dict) else {})
+                prof_dict = getattr(fund_snap, "profitability", {}) or (fund_snap.get("profitability", {}) if isinstance(fund_snap, dict) else {})
+
+                # Sector-normalized metrics consumption
+                if lev_dict:
+                    norm_leverage = FundamentalNormalizer.normalize_leverage(lev_dict, sector=sector)
+                if prof_dict:
+                    norm_profitability = FundamentalNormalizer.normalize_profitability(prof_dict, sector=sector)
+
+                # Reject fundamentally stressed companies or companies with stressed sector-normalized leverage
                 if f_regime == "STRESSED" or (q_score is not None and q_score < 35.0):
+                    continue
+                if norm_leverage is not None and norm_leverage < 20.0:
                     continue
 
             if is_low_beta and conviction >= min_conviction and pred_pct > 0.15:
-                # Defensive weights candidates by quality / beta
+                # Defensive weights candidates by sector-normalized quality and leverage / beta
                 quality_mult = (q_score / 50.0) if q_score is not None else 1.0
-                rank_score = (conviction / max(0.5, beta)) * quality_mult
+                leverage_mult = (norm_leverage / 50.0) if norm_leverage is not None else 1.0
+                rank_score = (conviction / max(0.5, beta)) * quality_mult * min(1.3, max(0.7, leverage_mult))
                 candidates.append((symbol, data, rank_score))
 
         candidates.sort(key=lambda x: x[2], reverse=True)

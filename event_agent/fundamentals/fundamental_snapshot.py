@@ -54,6 +54,9 @@ class FundamentalSnapshot:
     symbol: str
     as_of: datetime
     source: str = "FUNDAMENTALS_UNAVAILABLE"
+    data_mode: str = "PAPER"           # LIVE, PAPER, REFERENCE_ONLY
+    financial_period: str = ""         # e.g. "Q1 FY27", "Q4 FY26"
+    trade_eligible: bool = True        # False if source == "REFERENCE_DATASET" or data_mode == "REFERENCE_ONLY"
     valuation: Dict[str, float] = field(default_factory=dict)
     profitability: Dict[str, float] = field(default_factory=dict)
     growth: Dict[str, float] = field(default_factory=dict)
@@ -68,6 +71,10 @@ class FundamentalSnapshot:
     provenance_hash: str = ""
 
     def __post_init__(self):
+        # Enforce non-trading safety for reference datasets
+        if self.source == "REFERENCE_DATASET" or self.data_mode == "REFERENCE_ONLY":
+            self.trade_eligible = False
+            self.data_mode = "REFERENCE_ONLY"
         if not self.provenance_hash:
             self.provenance_hash = self.compute_provenance_hash()
 
@@ -94,6 +101,9 @@ class FundamentalSnapshot:
             "symbol": self.symbol,
             "as_of": as_of_iso,
             "source": self.source,
+            "data_mode": self.data_mode,
+            "financial_period": self.financial_period,
+            "trade_eligible": self.trade_eligible,
             "valuation": {k: _fmt(v) for k, v in sorted(self.valuation.items())},
             "profitability": {k: _fmt(v) for k, v in sorted(self.profitability.items())},
             "growth": {k: _fmt(v) for k, v in sorted(self.growth.items())},
@@ -114,6 +124,9 @@ class FundamentalSnapshot:
             "symbol": self.symbol,
             "as_of": as_of_iso,
             "source": self.source,
+            "data_mode": self.data_mode,
+            "financial_period": self.financial_period,
+            "trade_eligible": self.trade_eligible,
             "valuation": self.valuation,
             "profitability": self.profitability,
             "growth": self.growth,
@@ -136,6 +149,7 @@ class FundamentalContext:
     """
     Standardized fundamental evidence attached directly to a MarketThesis.
     Guarantees the AI and downstream selectors only see deterministic scores.
+    Maintains clean separation between execution_edge and shadow_adjusted_edge.
     """
     quality_score: Optional[float] = None
     valuation_score: Optional[float] = None
@@ -146,8 +160,14 @@ class FundamentalContext:
     contradiction: bool = False
     data_as_of: Optional[str] = None
     source: str = "FUNDAMENTALS_UNAVAILABLE"
+    data_mode: str = "PAPER"
+    trade_eligible: bool = True
     role: str = FundamentalRole.NO_SIGNAL.value
     reasoning: str = ""
+    # Observational shadow-mode edge fields
+    fundamental_adj: float = 0.0
+    execution_edge: Optional[float] = None
+    shadow_adjusted_edge: Optional[float] = None
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -160,6 +180,11 @@ class FundamentalContext:
             "contradiction": self.contradiction,
             "data_as_of": self.data_as_of,
             "source": self.source,
+            "data_mode": self.data_mode,
+            "trade_eligible": self.trade_eligible,
             "role": self.role,
             "reasoning": self.reasoning,
+            "fundamental_adj": self.fundamental_adj,
+            "execution_edge": self.execution_edge,
+            "shadow_adjusted_edge": self.shadow_adjusted_edge,
         }

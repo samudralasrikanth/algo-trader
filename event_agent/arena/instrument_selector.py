@@ -157,8 +157,10 @@ class InstrumentSelector:
                 sequence,
             )
 
-        # Bounded Fundamental Confirmation Adjustment: [-0.10%, +0.10%]
-        # Adjusted Expected Edge = Trading Edge + Fundamental Adjustment
+        # Observational Fundamental Shadow Edge Calculation: [-0.10%, +0.10%]
+        # Execution Edge = Trading Edge (Unmodified execution path)
+        # Shadow Edge    = Trading Edge + Fundamental Adjustment (Observational shadow mode)
+        execution_edge = raw_gross_move
         fundamental_adj = 0.0
         fc = thesis.fundamental_context
         if fc is not None and fc.quality_score is not None:
@@ -171,14 +173,12 @@ class InstrumentSelector:
                 if fundamental_adj == 0.0:
                     fundamental_adj = -0.05
 
-        gross_move = max(0.0, raw_gross_move + fundamental_adj)
-        if gross_move < self.MIN_NET_EDGE_PCT:
-            return self._build_no_trade(
-                thesis,
-                f"Adjusted expected move {gross_move:.2f}% (raw {raw_gross_move:.2f}%, fundamental adj {fundamental_adj:+.2f}%) below net edge hurdle {self.MIN_NET_EDGE_PCT:.2f}%.",
-                snapshot_id,
-                sequence,
-            )
+        shadow_adjusted_edge = round(max(0.0, execution_edge + fundamental_adj), 4)
+
+        if fc is not None:
+            fc.execution_edge = execution_edge
+            fc.fundamental_adj = fundamental_adj
+            fc.shadow_adjusted_edge = shadow_adjusted_edge
 
         # Gate 3: Thesis Conflict handling (if macro or fundamentals oppose AI, require higher confidence)
         if thesis.is_conflicted:
@@ -212,13 +212,13 @@ class InstrumentSelector:
         trade_dir = TradeDirection.BUY if is_bullish else TradeDirection.SELL
         order_intent = OrderIntent.OPEN
 
-        # Compute price targets and stops
+        # Compute price targets and stops strictly using execution_edge (unmodified by shadow edge)
         if is_bullish:
-            target = base_price * (1.0 + gross_move / 100.0)
-            stop = base_price * (1.0 - (gross_move / 100.0) / self.MIN_RISK_REWARD)
+            target = base_price * (1.0 + execution_edge / 100.0)
+            stop = base_price * (1.0 - (execution_edge / 100.0) / self.MIN_RISK_REWARD)
         else:
-            target = base_price * (1.0 - gross_move / 100.0)
-            stop = base_price * (1.0 + (gross_move / 100.0) / self.MIN_RISK_REWARD)
+            target = base_price * (1.0 - execution_edge / 100.0)
+            stop = base_price * (1.0 + (execution_edge / 100.0) / self.MIN_RISK_REWARD)
 
         # Gate 6: Asset Class / Instrument Selection
         inst_type = InstrumentType.EQUITY
@@ -229,7 +229,7 @@ class InstrumentSelector:
         # Check options eligibility
         can_trade_opts = self.option_provider.can_trade_options(self.execution_env)
         agent_id = thesis.agent_id.upper()
-        high_conviction_event = thesis.confidence >= 75.0 and gross_move >= 1.0
+        high_conviction_event = thesis.confidence >= 75.0 and execution_edge >= 1.0
 
         if high_conviction_event or agent_id in ("DEFENSIVE", "ALPHA"):
             if can_trade_opts:
@@ -259,7 +259,7 @@ class InstrumentSelector:
                     reason_extra = " [MODELLED options prohibited in LIVE execution. Routing to Cash/Futures.]"
 
         # If not options, check if Futures should be used for trend gearing
-        if inst_type == InstrumentType.EQUITY and agent_id in ("MOMENTUM", "MACRO") and gross_move >= 1.2:
+        if inst_type == InstrumentType.EQUITY and agent_id in ("MOMENTUM", "MACRO") and execution_edge >= 1.2:
             inst_type = InstrumentType.FUTURE
             contract_name = f"{symbol}-FUT-NEAR"
             reason_extra = " [Futures contract selected for trend gearing.]"
@@ -273,7 +273,10 @@ class InstrumentSelector:
         )
 
         planned_risk = portfolio_equity * 0.005  # 0.5% risk limit per trade
-        decision_reason = f"Validated {thesis.direction} thesis: {thesis.reasoning}{reason_extra}"
+        decision_reason = (
+            f"Validated {thesis.direction} thesis: {thesis.reasoning}{reason_extra} "
+            f"[Execution Edge: {execution_edge:.2f}%, Shadow Edge: {shadow_adjusted_edge:.2f}%, Δfund: {fundamental_adj:+.2f}%]"
+        )
 
         return ProposedTrade(
             agent_id=thesis.agent_id,
@@ -300,6 +303,9 @@ class InstrumentSelector:
             position_side=pos_side,
             order_action=trade_action,
             order_intent=order_intent,
+            execution_edge=execution_edge,
+            shadow_adjusted_edge=shadow_adjusted_edge,
+            fundamental_adj=fundamental_adj,
         )
 
     def _build_no_trade(
