@@ -52,7 +52,49 @@ class MarketThesis:
     ai_status: str = "INFERENCE_SUCCESS" # "INFERENCE_SUCCESS", "CREDIT_EXHAUSTED", "RATE_LIMITED", "UNAVAILABLE", "INFERENCE_FAILED", "AUTHENTICATED"
     fallback_reason: Optional[str] = None
     evaluation_status: str = "EVALUABLE" # "EVALUABLE", "EXCLUDED_FROM_ACCURACY"
+
+    # Reporting Integrity Classification
+    diagnostic_type: str = "AI_DECISION" # "AI_DECISION" vs "DETERMINISTIC_DIAGNOSTIC"
+    agent_ai_status: str = "AVAILABLE"   # "AVAILABLE" vs "UNAVAILABLE"
+    ai_thesis: str = "GENERATED"         # "GENERATED" vs "NOT_GENERATED"
+    deterministic_screen: str = "PASSED" # "PASSED" vs "NO_TRADE"
     _is_sealed: bool = False
+
+    def __post_init__(self):
+        if self.decision_mode == "AI_UNAVAILABLE" or str(self.ai_status).upper() != "INFERENCE_SUCCESS":
+            self.diagnostic_type = "DETERMINISTIC_DIAGNOSTIC"
+            self.agent_ai_status = "UNAVAILABLE"
+            self.ai_thesis = "NOT_GENERATED"
+            self.deterministic_screen = "NO_TRADE"
+            self.direction = "NO_TRADE"
+            self.evaluation_status = "EXCLUDED_FROM_ACCURACY"
+
+    def format_reporting_representation(self) -> str:
+        """
+        Institutional reporting representation:
+        Clearly distinguishes AI_DECISION vs DETERMINISTIC_DIAGNOSTIC.
+        """
+        if self.decision_mode == "AI_UNAVAILABLE" or str(self.ai_status).upper() != "INFERENCE_SUCCESS":
+            return (
+                "AGENT AI STATUS: UNAVAILABLE\n"
+                "AI THESIS: NOT GENERATED\n"
+                "DETERMINISTIC SCREEN: NO_TRADE"
+            )
+        return (
+            "AGENT AI STATUS: AVAILABLE\n"
+            f"AI THESIS: GENERATED ({self.direction} conviction={self.confidence:.1f}%)\n"
+            "DETERMINISTIC SCREEN: PASSED"
+        )
+
+    def render_decision(self, target_format: str = "AUTO") -> str:
+        """
+        Renders the decision for user-facing or audit reports.
+        Strict Invariant: AI_UNAVAILABLE cannot be rendered as AI_AGENT_DECISION.
+        """
+        if target_format in ("AI_AGENT_DECISION", "AI_DECISION"):
+            if self.decision_mode == "AI_UNAVAILABLE" or str(self.ai_status).upper() != "INFERENCE_SUCCESS" or self.agent_ai_status == "UNAVAILABLE":
+                raise ValueError("Reporting Integrity Invariant: AI_UNAVAILABLE cannot be rendered as AI_AGENT_DECISION.")
+        return self.format_reporting_representation()
 
     def seal(self) -> "MarketThesis":
         """Seals the thesis provenance, locking provenance fields from future mutation."""
@@ -121,6 +163,11 @@ class MarketThesis:
             "ai_status": self.ai_status,
             "fallback_reason": self.fallback_reason,
             "evaluation_status": self.evaluation_status,
+            "diagnostic_type": self.diagnostic_type,
+            "agent_ai_status": self.agent_ai_status,
+            "ai_thesis": self.ai_thesis,
+            "deterministic_screen": self.deterministic_screen,
+            "reporting_representation": self.format_reporting_representation(),
             "provenance_hash": self.compute_provenance_hash(),
         }
 
@@ -143,12 +190,17 @@ class MarketThesisValidator:
         conflicts: List[str] = []
 
         # Gate 0: AI Decision Availability Invariant (Fail-closed on AI failure)
-        if thesis.decision_mode == "AI_UNAVAILABLE" or thesis.ai_status != "INFERENCE_SUCCESS":
+        if thesis.decision_mode == "AI_UNAVAILABLE" or str(thesis.ai_status).upper() != "INFERENCE_SUCCESS":
             errors.append(f"AI decision unavailable (status: {thesis.ai_status}, reason: {thesis.fallback_reason or 'No inference'}). New AI-dependent entries blocked.")
             thesis.direction = "NO_TRADE"
             thesis.is_valid = False
             thesis.evaluation_status = "EXCLUDED_FROM_ACCURACY"
             thesis.validation_errors = errors
+            thesis.diagnostic_type = "DETERMINISTIC_DIAGNOSTIC"
+            thesis.agent_ai_status = "UNAVAILABLE"
+            thesis.ai_thesis = "NOT_GENERATED"
+            thesis.deterministic_screen = "NO_TRADE"
+            thesis.seal()
             return thesis
 
         # 1. Direction check

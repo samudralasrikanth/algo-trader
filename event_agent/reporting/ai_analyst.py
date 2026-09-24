@@ -47,7 +47,8 @@ class DailyAIAnalysisResult:
     ai_request_id: Optional[str]
     ai_latency_ms: int
     ai_tokens: Dict[str, int]
-    ai_status: str              # 'SUCCESS' | 'FAILED' | 'SKIPPED'
+    ai_status: str              # 'SUCCESS' | 'FAILED' | 'SKIPPED' | 'UNAVAILABLE'
+    diagnostic_type: str = "AI_DECISION" # 'AI_DECISION' vs 'DETERMINISTIC_DIAGNOSTIC'
     error_message: Optional[str] = None
     created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
@@ -247,37 +248,33 @@ Produce a JSON object with these exact keys:
     ) -> DailyAIAnalysisResult:
         net_pnl_str = f"INR {report.net_pnl:,.2f}"
         script = (
-            f"[PAPER TRADING REPORT] What did NEXUS discover today? "
-            f"During the trading session on {report.report_date}, our 5 autonomous multi-agent systems "
-            f"scanned the entire Nifty 50 constituent universe. Across the session, net settled P&L came in at "
-            f"{net_pnl_str} with {report.total_trades} executed trades and 100 percent capital preservation. "
-            f"The 5-agent consensus matrix maintained a disciplined capital defense, avoiding low-probability setups "
-            f"in choppy market conditions. All 34 TradeGuard risk gates remained fully armed and secure. "
-            f"For tomorrow's session, our quantitative models are monitoring key sector setups in banking, energy, and IT. "
-            f"Trade smarter, live better. Reconciled paper trading report, strictly not financial advice."
+            f"[PAPER TRADING REPORT] AGENT AI STATUS: UNAVAILABLE. AI THESIS: NOT GENERATED. "
+            f"DETERMINISTIC SCREEN: NO_TRADE. "
+            f"During the trading session on {report.report_date}, AI decision inference was unavailable ({error_msg or 'Service Outage'}). "
+            f"Under institutional fail-closed protocols, no AI-generated agent decisions were emitted, and new prospective entries were blocked. "
+            f"Active risk gates and exit monitors operated deterministically. "
+            f"Net settled P&L came in at {net_pnl_str} with {report.total_trades} executed trades and full capital preservation. "
+            f"Reconciled paper trading report, strictly not financial advice."
         )
         return DailyAIAnalysisResult(
-            executive_summary=(
-                f"NEXUS autonomous trading session completed for {report.report_date}. "
-                f"Net settled P&L: {net_pnl_str} across {report.total_trades} executed trades. "
-                f"Multi-agent consensus enforced systematic capital preservation with zero drawdown."
-            ),
-            performance_analysis=f"Portfolio closed at {net_pnl_str} net return with 100% capital preservation.",
-            strategy_analysis="Disciplined capital protection protocol active; high-conviction threshold strictly maintained.",
-            agent_analysis="5 autonomous agents (Momentum, Mean Reversion, Value, Sentiment, Macro) maintained risk parity.",
+            executive_summary="AGENT AI STATUS: UNAVAILABLE | AI THESIS: NOT GENERATED | DETERMINISTIC SCREEN: NO_TRADE",
+            performance_analysis=f"DETERMINISTIC_DIAGNOSTIC: Portfolio closed at {net_pnl_str} net return with capital preservation.",
+            strategy_analysis="DETERMINISTIC_DIAGNOSTIC: Fail-closed risk barrier active; zero new prospective exposure permitted.",
+            agent_analysis="AGENT AI STATUS: UNAVAILABLE | AI THESIS: NOT GENERATED across all 5 agents.",
             risk_analysis="34 TradeGuard risk gates verified with zero circuit limit or slippage breaches.",
-            prediction_accuracy="Directional tracking matched systematic risk filters across all 50 constituents.",
-            best_trade_analysis="Capital defense invariant successfully prevented exposure during indeterminate regime.",
-            worst_trade_analysis="Zero drawdown incurred; risk containment operated as designed.",
-            lessons_learned="Patience and selective execution during low-edge market regimes protects cumulative alpha.",
-            tomorrow_watchlist="Monitoring Nifty 50 sector leaders for confirmed 5-agent consensus breakout signals.",
+            prediction_accuracy="EXCLUDED_FROM_ACCURACY (AI unavailable outage day).",
+            best_trade_analysis="Deterministic exit engine managed existing positions.",
+            worst_trade_analysis="Zero new risk incurred under fail-closed barrier.",
+            lessons_learned="Fail-closed operational posture successfully prevents model substitution contamination.",
+            tomorrow_watchlist="Awaiting restored AI inference capacity before resuming prospective signal evaluation.",
             narration_script=script,
-            ai_provider="nexus_deterministic_analyst",
+            ai_provider="openrouter",
             ai_model=self.model,
             ai_request_id=f"FALLBACK-{report.report_date}",
             ai_latency_ms=latency_ms,
             ai_tokens={"input_tokens": 0, "output_tokens": 0, "total_tokens": 0},
-            ai_status="SUCCESS",
+            ai_status="UNAVAILABLE",
+            diagnostic_type="DETERMINISTIC_DIAGNOSTIC",
             error_message=error_msg,
         )
 
@@ -288,22 +285,23 @@ Produce a JSON object with these exact keys:
         latency_ms: int = 0,
     ) -> DailyAIAnalysisResult:
         return DailyAIAnalysisResult(
-            executive_summary="DATA UNAVAILABLE: AI analysis could not be completed.",
+            executive_summary="AGENT AI STATUS: UNAVAILABLE | AI THESIS: NOT GENERATED | DETERMINISTIC SCREEN: NO_TRADE | DATA UNAVAILABLE",
             performance_analysis="DATA UNAVAILABLE",
             strategy_analysis="DATA UNAVAILABLE",
             agent_analysis="DATA UNAVAILABLE",
             risk_analysis="DATA UNAVAILABLE",
-            prediction_accuracy="DATA UNAVAILABLE",
+            prediction_accuracy="EXCLUDED_FROM_ACCURACY",
             best_trade_analysis="DATA UNAVAILABLE",
             worst_trade_analysis="DATA UNAVAILABLE",
             lessons_learned="DATA UNAVAILABLE",
             tomorrow_watchlist="DATA UNAVAILABLE",
-            narration_script="DATA UNAVAILABLE: Narration script generation failed.",
+            narration_script="AGENT AI STATUS: UNAVAILABLE\nAI THESIS: NOT GENERATED\nDETERMINISTIC SCREEN: NO_TRADE\nDATA UNAVAILABLE",
             ai_provider="openrouter",
             ai_model=self.model,
             ai_request_id=None,
             ai_latency_ms=latency_ms,
             ai_tokens={"input_tokens": 0, "output_tokens": 0, "total_tokens": 0},
             ai_status=status,
+            diagnostic_type="DETERMINISTIC_DIAGNOSTIC",
             error_message=error_msg,
         )

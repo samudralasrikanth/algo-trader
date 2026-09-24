@@ -239,6 +239,11 @@ class InstrumentSelector:
         inst_type = InstrumentType.EQUITY
         selected_strategy: Optional[MultiLegStrategy] = None
         contract_name: Optional[str] = None
+        selected_opt_strike: Optional[float] = None
+        selected_opt_type: OptionType = OptionType.NONE
+        selected_opt_expiry: Optional[str] = None
+        selected_opt_prem: float = 0.0
+        selected_lot_size: int = 1
         reason_extra = ""
 
         # Check options eligibility
@@ -258,14 +263,25 @@ class InstrumentSelector:
                     is_call = is_bullish
                     opt_info = StrikeSelector.select_strike(chain=chain, is_call=is_call)
                     if opt_info:
-                        inst_type = InstrumentType.OPTION
-                        contract_name = opt_info["contract_symbol"]
-                        strat_rec = StrikeSelector.recommend_strategy_structure(
-                            iv_rank=45.0,
-                            expected_move_pct=thesis.expected_move_pct,
-                            confidence=thesis.confidence,
-                        )
-                        reason_extra = f" [{mode.value} Option Selected: Strike {opt_info['strike']} {opt_info['option_type'].value}, Delta {opt_info['delta']:.2f}, Structure: {strat_rec.value}]"
+                        opt_strike = float(opt_info["strike"])
+                        opt_type = opt_info["option_type"]
+                        opt_prem = float(opt_info.get("premium", 0.0))
+                        opt_exp = str(getattr(chain, "expiry", "7D"))
+                        # Invariant: Underlying equity price cannot be used as option premium
+                        if opt_prem > 0.0 and abs(opt_prem - base_price) > (0.1 * base_price):
+                            inst_type = InstrumentType.OPTION
+                            contract_name = opt_info["contract_symbol"]
+                            selected_opt_strike = opt_strike
+                            selected_opt_type = opt_type
+                            selected_opt_expiry = opt_exp
+                            selected_opt_prem = opt_prem
+                            selected_lot_size = getattr(chain, "lot_size", 50)
+                            strat_rec = StrikeSelector.recommend_strategy_structure(
+                                iv_rank=45.0,
+                                expected_move_pct=thesis.expected_move_pct,
+                                confidence=thesis.confidence,
+                            )
+                            reason_extra = f" [{mode.value} Option Selected: Strike {opt_strike} {opt_type.value}, Premium: ₹{opt_prem:.2f}, Delta {opt_info['delta']:.2f}, Structure: {strat_rec.value}]"
             else:
                 # Options forbidden by mode
                 if self.option_provider.current_mode == OptionDataMode.UNAVAILABLE:
@@ -280,12 +296,26 @@ class InstrumentSelector:
             reason_extra = " [Futures contract selected for trend gearing.]"
 
         # Construct finalized Instrument
-        instrument = Instrument(
-            underlying=symbol,
-            instrument_type=inst_type,
-            contract_name=contract_name,
-            is_simulated_price=(inst_type != InstrumentType.EQUITY),
-        )
+        if inst_type == InstrumentType.OPTION:
+            instrument = Instrument(
+                underlying=symbol,
+                instrument_type=inst_type,
+                expiry=selected_opt_expiry,
+                strike=selected_opt_strike,
+                option_type=selected_opt_type,
+                contract_name=contract_name,
+                lot_size=selected_lot_size,
+                option_premium=selected_opt_prem,
+                is_simulated_price=True,
+                pricing_model=mode.value if hasattr(mode, "value") else "BLACK_SCHOLES_VIX_PROXY",
+            )
+        else:
+            instrument = Instrument(
+                underlying=symbol,
+                instrument_type=inst_type,
+                contract_name=contract_name,
+                is_simulated_price=(inst_type != InstrumentType.EQUITY),
+            )
 
         planned_risk = portfolio_equity * 0.005  # 0.5% risk limit per trade
         decision_reason = (

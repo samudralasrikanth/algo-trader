@@ -84,6 +84,17 @@ class OrderLineage:
     exit_id: Optional[str] = None
     pnl_id: Optional[str] = None
 
+    def __post_init__(self):
+        sig = str(self.signal_id or "").upper()
+        dec = str(self.decision_id or "").upper()
+        oint = str(self.order_intent_id or "").upper()
+        if "QUANT" in sig and "SCREEN" in sig:
+            raise ValueError("Invariant Violation: QUANT_SCREEN cannot create order_intent_id.")
+        if "QUANT" in dec and "SCREEN" in dec:
+            raise ValueError("Invariant Violation: QUANT_SCREEN cannot create order_intent_id.")
+        if "QUANT" in oint and "SCREEN" in oint:
+            raise ValueError("Invariant Violation: QUANT_SCREEN cannot create order_intent_id.")
+
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
 

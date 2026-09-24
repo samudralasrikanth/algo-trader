@@ -137,6 +137,13 @@ class IdempotencyManager:
             (is_new, idempotency_key, existing_record_if_duplicate)
         Raises DuplicateOrderError if already reserved.
         """
+        sig = str(signal_id or "").upper()
+        oint = str(order_intent_id or "").upper()
+        if "QUANT" in sig and "SCREEN" in sig:
+            raise ValueError("Invariant Violation: QUANT_SCREEN cannot create order_intent_id.")
+        if "QUANT" in oint and "SCREEN" in oint:
+            raise ValueError("Invariant Violation: QUANT_SCREEN cannot create order_intent_id.")
+
         key = self.generate_key(signal_id, symbol, side, execution_window)
         win = execution_window or datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
@@ -214,3 +221,7 @@ class IdempotencyManager:
 
     def is_reserved(self, idempotency_key: str) -> bool:
         return idempotency_key in self._memory_cache
+
+
+# Alias for backwards compatibility and engine terminology
+IdempotencyEngine = IdempotencyManager

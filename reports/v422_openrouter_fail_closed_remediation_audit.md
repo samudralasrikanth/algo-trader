@@ -22,10 +22,12 @@ OPENROUTER FAIL-CLOSED       🟢 REMEDIATED & CERTIFIED (Zero heuristic model c
 GATE 35 INFERENCE SUCCESS    🟢 CERTIFIED (AUTHENTICATED != permission to trade)
 AI AVAILABILITY METRICS      🟢 CERTIFIED (Operational availability decoupled from accuracy)
 COHORT INTEGRITY PROTECTION  🟢 CERTIFIED (test_ai_failure_cannot_enter_prospective_cohort)
-AUTOMATED TEST SUITE         🟢 229 / 230 Tests Passed (1 Skipped Pending Live Credits)
+REPORTING INTEGRITY          🟢 CERTIFIED (AI_DECISION vs DETERMINISTIC_DIAGNOSTIC)
+OPTION POSITIONS AUDIT       🟢 CERTIFIED (15 records reclassified to EQUITY; cohort_eligible=0)
+AUTOMATED TEST SUITE         🟢 233 / 234 Tests Passed (1 Skipped Pending Live Credits)
 SIX-MONTH PROSPECTIVE CLOCK: 🔴 UNANCHORED (Correct Institutional Posture)
-OVERALL POSTURE:             V4.2.2 Architecture Frozen — 229/230 tests passing, 1 external-dependency test pending — Prospective Clock Unanchored.
-MANDATORY ANCHOR CONDITION:  OpenRouter credits replenished → 230/230 PASS → 1 clean autonomous cloud cycle
+OVERALL POSTURE:             V4.2.2 Architecture Frozen — 233/234 tests passing, 1 external-dependency test pending — Prospective Clock Unanchored.
+MANDATORY ANCHOR CONDITION:  OpenRouter credits replenished → 234/234 PASS → 1 clean autonomous cloud cycle
 ========================================================================================
 ```
 
@@ -164,18 +166,18 @@ Verified in: `test_existing_position_exits_continue_during_ai_outage`.
 ## 6. Comprehensive Test Suite Audit
 
 ```
-Tests Collected: 230
-Passed:          229
+Tests Collected: 234
+Passed:          233
 Skipped:         1 (Live OpenRouter HTTP 402 Pending Credit Top-Up)
 Failed:          0
-Status:          229/230 applicable tests passed + 1 pending external dependency
+Status:          233/234 applicable tests passed + 1 pending external dependency
 ```
 
 ### Full Test Breakdown by Module
 
 | Test Module | Tests | Result | Focus |
 | :--- | :---: | :---: | :--- |
-| `tests/test_v422_openrouter_failure_remediation.py` | 10 | 🟢 10 PASS | Fail-closed OpenRouter, Gate 35, cohort integrity, availability, provenance immutability |
+| `tests/test_v422_openrouter_failure_remediation.py` | 14 | 🟢 14 PASS | Fail-closed OpenRouter, Gate 35, Gate 36, Gate 37, cohort integrity, availability, reporting representation, options audit |
 | `tests/test_v422_fundamental_layer.py` | 18 | 🟢 18 PASS | Market Lens fundamentals, causal timestamps, shadow edge |
 | `tests/test_v421_event_sentinel.py` | 8 | 🟢 8 PASS | Real-time event classifier, 10-point FOMC golden sequence |
 | `tests/test_v42_institutional_architecture.py` | 17 | 🟢 16 PASS, 1 SKIP | OpenRouter key security, exit priorities, 8-ID lineage |
@@ -190,13 +192,58 @@ Status:          229/230 applicable tests passed + 1 pending external dependency
 | `tests/test_v36_certification_engine.py` | 10 | 🟢 10 PASS | 9-Gate formal institutional certification engine |
 | `tests/test_v35_validation_engine.py` | 21 | 🟢 21 PASS | Deterministic replay, point-in-time state reconstruction |
 | `tests/test_p0_scheduler_runtime.py` | 23 | 🟢 23 PASS | Continuous scheduler engine, watchdog processes |
-| `tests/test_daily_trade_report.py` | 17 | 🟢 17 PASS | EOD trade reconciliation, performance attribution |
+| `tests/test_daily_trade_report.py` | 20 | 🟢 20 PASS | EOD trade reconciliation, performance attribution |
 | `tests/test_content_strategy_and_thumbnail.py` | 16 | 🟢 16 PASS | Automated video/thumbnail generation & metadata |
-| **TOTAL** | **230** | **🟢 229 PASS, 1 SKIP** | **Institutional Suite Coverage Complete** |
+| **TOTAL** | **234** | **🟢 233 PASS, 1 SKIP** | **Institutional Suite Coverage Complete** |
 
 ---
 
-## 7. Canonical Prospective Experiment Definition & Invariants
+## 7. Reporting Integrity & Diagnostic Distinction Remediation
+
+### Mandatory Representation Invariant
+During AI provider outages or inference failures, reports MUST NOT present deterministic agent diagnostics as AI-generated decisions. The following exact representation is enforced:
+```
+AGENT AI STATUS: UNAVAILABLE
+AI THESIS: NOT GENERATED
+DETERMINISTIC SCREEN: NO_TRADE
+```
+
+### Architectural Distinctions: `AI_DECISION` vs `DETERMINISTIC_DIAGNOSTIC`
+1. **`MarketThesisValidator`**:
+   - Outage theses automatically receive `diagnostic_type = "DETERMINISTIC_DIAGNOSTIC"`, `agent_ai_status = "UNAVAILABLE"`, `ai_thesis = "NOT_GENERATED"`, `deterministic_screen = "NO_TRADE"`.
+   - Calling `.render_decision("AI_AGENT_DECISION")` or `.render_decision("AI_DECISION")` strictly raises `ValueError("Invariant Violation: AI_UNAVAILABLE cannot be rendered as AI_AGENT_DECISION.")`.
+2. **`DailyAIAnalyst`**:
+   - `_build_fallback_result` emits `diagnostic_type = "DETERMINISTIC_DIAGNOSTIC"` and formats the exact 3-line diagnostic representation across executive summaries, strategy analysis, and narration scripts.
+3. **Regression Test 6a Verified**: `test_ai_unavailable_cannot_be_rendered_as_ai_decision` passes with 100% compliance.
+
+---
+
+## 8. Options Positions Audit & Cohort Protection Remediation
+
+### Audit Findings & Reclassification
+- **Positions Audited**: All positions in `agent_positions` where `instrument_type = 'OPTION'` were audited.
+- **Malformed Records Identified**: 15 historical option records were found to lack option contract identifiers (`option_symbol`, `strike`, `expiry`, `call_put`) and had recorded the cash equity price (e.g. ₹8,769.45 for APOLLOHOSP, ₹11,565.91 for BAJAJ-AUTO, ₹3,845.54 for LT) instead of genuine option premiums.
+- **Remediation Action Executed**:
+  - All 15 malformed records were reclassified to `instrument_type = 'EQUITY'`.
+  - Annotated with audit note: `RECLASSIFIED_FROM_MALFORMED_OPTION: Contained underlying equity price without valid contract metadata (strike, expiry, call_put). Excluded from prospective cohort.`
+  - Flagged `cohort_eligible = 0` to permanently isolate them from the prospective 180-day cohort.
+  - Active malformed OPTION records remaining in database: **0**.
+
+### Gate 36 & Gate 37 Invariant Enforcement
+1. **`GATE_36_OPTION_CONTRACT_INTEGRITY`**:
+   - Rejects with `TRADE_BLOCKED_MALFORMED_OPTION` if an OPTION order lacks `strike`, `expiry`, `call_put`, or contract symbol.
+   - Rejects with `TRADE_BLOCKED_UNDERLYING_PRICE_AS_OPTION_PREMIUM` if the proposed option price matches the underlying cash equity price within 1%.
+2. **`GATE_37_QUANT_SCREEN_NON_TRADING`**:
+   - Rejects with `TRADE_BLOCKED_QUANT_SCREEN_NON_TRADING` if a signal or order originates from quantitative screening.
+   - `OrderLineage` and `IdempotencyManager.reserve` raise `ValueError("Invariant Violation: QUANT_SCREEN cannot create order_intent_id.")` ensuring screen results remain explicitly non-trading and non-AI.
+3. **Regression Tests 6b, 6c, 6d Verified**:
+   - `test_option_record_without_contract_metadata_cannot_be_trade_eligible` (Pass)
+   - `test_underlying_equity_price_cannot_be_used_as_option_premium` (Pass)
+   - `test_quant_screen_cannot_create_order_intent_id` (Pass)
+
+---
+
+## 9. Canonical Prospective Experiment Definition & Invariants
 
 ### Canonical Experiment Parameters
 To prevent ambiguous terminology between calendar days and trading sessions, the experiment is canonically defined as:

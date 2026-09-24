@@ -13,7 +13,7 @@ import hashlib
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from .asset_models import (
     AssetClass,
     StrategyType,
@@ -94,8 +94,11 @@ class Instrument:
     option_type: OptionType = OptionType.NONE
     contract_name: Optional[str] = None
     lot_size: int = 1
+    option_premium: Optional[float] = None
     is_simulated_price: bool = False
     pricing_model: str = "MARKET"
+
+    is_valid_contract: bool = True
 
     def __post_init__(self):
         if not self.contract_name:
@@ -106,9 +109,44 @@ class Instrument:
                 self.is_simulated_price = True
                 self.pricing_model = "COST_OF_CARRY"
             elif self.instrument_type == InstrumentType.OPTION:
-                self.contract_name = f"{self.underlying}-OPT-{self.strike}-{self.option_type.value}-{self.expiry or 'NEAR'}"
+                if self.strike and self.option_type != OptionType.NONE:
+                    self.contract_name = f"{self.underlying}-OPT-{self.strike}-{self.option_type.value}-{self.expiry or 'NEAR'}"
+                else:
+                    self.contract_name = f"{self.underlying}-OPT-MALFORMED"
                 self.is_simulated_price = True
                 self.pricing_model = "BLACK_SCHOLES_VIX_PROXY"
+
+        if self.instrument_type == InstrumentType.OPTION:
+            is_valid, _ = self.validate_option_contract()
+            self.is_valid_contract = is_valid
+
+    def validate_option_contract(self) -> Tuple[bool, List[str]]:
+        """
+        Validates that an OPTION instrument possesses all mandatory contract metadata:
+        underlying_symbol, strike, expiry, call_put (option_type), and contract_name.
+        """
+        errors = []
+        if not self.underlying:
+            errors.append("underlying_symbol is missing")
+        if self.strike is None or self.strike <= 0:
+            errors.append("strike is missing or <= 0")
+        if not self.expiry or str(self.expiry).strip() in ("", "None"):
+            errors.append("expiry is missing")
+        if not self.option_type or self.option_type in (OptionType.NONE, "NONE"):
+            errors.append("option_type (call_put) is missing")
+        if not self.contract_name or "MALFORMED" in self.contract_name:
+            errors.append("option_symbol / contract identifier is missing")
+        return len(errors) == 0, errors
+
+    @property
+    def is_trade_eligible(self) -> bool:
+        """
+        Checks whether the instrument is trade-eligible.
+        Malformed OPTION records without contract metadata are strictly NOT trade-eligible.
+        """
+        if self.instrument_type == InstrumentType.OPTION:
+            return self.is_valid_contract
+        return True
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -119,8 +157,11 @@ class Instrument:
             "option_type": self.option_type.value,
             "contract_name": self.contract_name,
             "lot_size": self.lot_size,
+            "option_premium": self.option_premium,
             "is_simulated_price": self.is_simulated_price,
             "pricing_model": self.pricing_model,
+            "is_valid_contract": self.is_valid_contract,
+            "is_trade_eligible": self.is_trade_eligible,
         }
 
 
@@ -212,8 +253,17 @@ class ProposedTrade:
         sym_clean = self.symbol.replace(".NS", "").replace("^", "")
         return f"TRD-{market_date}-{self.agent_id}-{sym_clean}-{self.instrument.instrument_type.value}-{self.sequence}-{h}"
 
+    @property
+    def is_trade_eligible(self) -> bool:
+        if self.action in (TradeAction.NO_TRADE, TradeAction.HOLD):
+            return False
+        if not self.instrument.is_trade_eligible:
+            return False
+        return True
+
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        d = {
+            "is_trade_eligible": self.is_trade_eligible,
             "agent_id": self.agent_id,
             "strategy_version": self.strategy_version,
             "symbol": self.symbol,
@@ -244,6 +294,7 @@ class ProposedTrade:
             "fundamental_adj": round(self.fundamental_adj, 4),
             "timestamp": self.timestamp,
         }
+        return d
 
 
 @dataclass

@@ -151,6 +151,7 @@ class ArenaOrchestrator:
                     checks_passed=["NO_RISK_ACTION"],
                 )
                 trade_evaluations.append((proposal, eval_obj))
+                is_ai_unavail = "AI_DECISION_UNAVAILABLE" in proposal.decision_reason or "UNAVAILABLE" in proposal.decision_reason
                 decisions_log.append({
                     "market_date": market_date,
                     "snapshot_id": snapshot_id,
@@ -163,6 +164,15 @@ class ArenaOrchestrator:
                     "risk_approved": 1,
                     "rejections": [],
                     "reason": proposal.decision_reason,
+                    "diagnostic_type": "DETERMINISTIC_DIAGNOSTIC",
+                    "agent_ai_status": "UNAVAILABLE" if is_ai_unavail else "AVAILABLE",
+                    "ai_thesis": "NOT_GENERATED" if is_ai_unavail else "NO_TRADE",
+                    "deterministic_screen": "NO_TRADE",
+                    "reporting_status": (
+                        "AGENT AI STATUS: UNAVAILABLE\nAI THESIS: NOT GENERATED\nDETERMINISTIC SCREEN: NO_TRADE"
+                        if is_ai_unavail
+                        else "AGENT AI STATUS: AVAILABLE\nAI THESIS: NO_TRADE\nDETERMINISTIC SCREEN: NO_TRADE"
+                    ),
                 })
                 continue
 
@@ -204,6 +214,11 @@ class ArenaOrchestrator:
                 "risk_approved": 1 if evaluation.is_approved else 0,
                 "rejections": rejections,
                 "reason": proposal.decision_reason,
+                "diagnostic_type": "AI_DECISION",
+                "agent_ai_status": "AVAILABLE",
+                "ai_thesis": "GENERATED",
+                "deterministic_screen": "PASSED",
+                "reporting_status": "AGENT AI STATUS: AVAILABLE\nAI THESIS: GENERATED\nDETERMINISTIC SCREEN: PASSED",
             })
 
             if evaluation.is_approved and evaluation.adjusted_quantity > 0:

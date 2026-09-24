@@ -189,7 +189,16 @@ class TradeGuard:
         # ---------------------------------------------------------------------
         clean_sym = symbol.replace(".NS", "")
         clean_universe = [s.replace(".NS", "") for s in NIFTY50_UNIVERSE]
-        if clean_sym in clean_universe or "NIFTY" in symbol or "BANKNIFTY" in symbol:
+        underlying = str(order_intent.get("underlying") or signal.get("underlying") or signal.get("symbol") or "").replace(".NS", "").upper().strip()
+
+        is_in_universe = (
+            clean_sym in clean_universe
+            or underlying in clean_universe
+            or any(clean_sym.startswith(u) for u in clean_universe)
+            or "NIFTY" in symbol
+            or "BANKNIFTY" in symbol
+        )
+        if is_in_universe:
             passed.append("GATE_05_INSTRUMENT_VALID")
         else:
             failed.append("GATE_05_INSTRUMENT_VALID")
@@ -468,6 +477,87 @@ class TradeGuard:
                 passed, failed, env,
             )
         passed.append("GATE_35_AI_DECISION_AVAILABILITY")
+
+        # ---------------------------------------------------------------------
+        # GATE 36: OPTION_CONTRACT_INTEGRITY (METADATA & PREMIUM INVARIANT)
+        # ---------------------------------------------------------------------
+        inst_type = str(
+            order_intent.get("instrument_type")
+            or signal.get("instrument_type")
+            or (signal.get("instrument", {}).get("instrument_type") if isinstance(signal.get("instrument"), dict) else "")
+            or ""
+        ).upper()
+        if inst_type == "OPTION" or "-OPT-" in symbol or "OPT" in str(order_intent.get("symbol", "")).upper():
+            opt_sym = (
+                order_intent.get("option_symbol")
+                or signal.get("option_symbol")
+                or order_intent.get("contract_name")
+                or signal.get("contract_name")
+                or (signal.get("instrument", {}).get("contract_name") if isinstance(signal.get("instrument"), dict) else None)
+            )
+            strike = (
+                order_intent.get("strike")
+                or signal.get("strike")
+                or order_intent.get("option_strike")
+                or signal.get("option_strike")
+                or (signal.get("instrument", {}).get("strike") if isinstance(signal.get("instrument"), dict) else None)
+            )
+            expiry = (
+                order_intent.get("expiry")
+                or signal.get("expiry")
+                or order_intent.get("contract_expiry")
+                or signal.get("contract_expiry")
+                or (signal.get("instrument", {}).get("expiry") if isinstance(signal.get("instrument"), dict) else None)
+            )
+            call_put = (
+                order_intent.get("option_type")
+                or signal.get("option_type")
+                or order_intent.get("call_put")
+                or signal.get("call_put")
+                or (signal.get("instrument", {}).get("option_type") if isinstance(signal.get("instrument"), dict) else None)
+            )
+
+            missing_meta = []
+            if not opt_sym or "MALFORMED" in str(opt_sym):
+                missing_meta.append("option_symbol")
+            if not strike or float(strike) <= 0:
+                missing_meta.append("strike")
+            if not expiry or str(expiry).strip() in ("", "None"):
+                missing_meta.append("expiry")
+            if not call_put or str(call_put).upper() in ("NONE", "UNKNOWN", ""):
+                missing_meta.append("call_put")
+
+            if missing_meta:
+                failed.append("GATE_36_OPTION_CONTRACT_INTEGRITY")
+                return self._fail(
+                    "TRADE_BLOCKED_MALFORMED_OPTION",
+                    f"OPTION record without contract metadata ({', '.join(missing_meta)}) cannot be trade-eligible.",
+                    passed, failed, env,
+                )
+
+            # Invariant: Underlying equity price cannot be used as option premium
+            underlying_price = float(market_data.get("price") or market_data.get("base_price") or signal.get("base_price") or 0.0)
+            if underlying_price > 0 and price > 0 and abs(price - underlying_price) < (0.01 * underlying_price):
+                failed.append("GATE_36_OPTION_CONTRACT_INTEGRITY")
+                return self._fail(
+                    "TRADE_BLOCKED_UNDERLYING_PRICE_AS_OPTION_PREMIUM",
+                    f"Underlying equity price (₹{underlying_price:.2f}) cannot be used as option premium for OPTION contract.",
+                    passed, failed, env,
+                )
+            passed.append("GATE_36_OPTION_CONTRACT_INTEGRITY")
+
+        # ---------------------------------------------------------------------
+        # GATE 37: QUANT_SCREEN_NON_TRADING_INVARIANT
+        # ---------------------------------------------------------------------
+        sig_source = str(signal.get("source") or order_intent.get("source") or signal.get("category") or order_intent.get("category") or "").upper()
+        if "QUANT" in sig_source and ("SCREEN" in sig_source or "NON_TRADING" in sig_source):
+            failed.append("GATE_37_QUANT_SCREEN_NON_TRADING")
+            return self._fail(
+                "TRADE_BLOCKED_QUANT_SCREEN_NON_TRADING",
+                "QUANTITATIVE SCREEN / NON-TRADING / NOT AI DECISION cannot create order_intent_id or execute trades.",
+                passed, failed, env,
+            )
+        passed.append("GATE_37_QUANT_SCREEN_NON_TRADING")
 
         # ---------------------------------------------------------------------
         # MANDATORY INVARIANT: LIVE ENVIRONMENT AUTHORIZATION GATE

@@ -111,7 +111,7 @@ class BaseAgent(ABC):
                 confidence=0.0,
                 catalysts=[],
                 invalidating_conditions=["AI inference failure / credit exhausted"],
-                reasoning=f"AI decision unavailable ({ai_status}): {error_reason}. New entries blocked.",
+                reasoning=f"AGENT AI STATUS: UNAVAILABLE | AI THESIS: NOT GENERATED | DETERMINISTIC SCREEN: NO_TRADE ({error_reason})",
                 ai_request_id=None,
                 model=prov_model,
                 actual_provider="openrouter",
@@ -124,6 +124,10 @@ class BaseAgent(ABC):
                 evaluation_status="EXCLUDED_FROM_ACCURACY",
                 is_valid=False,
                 validation_errors=[f"AI_UNAVAILABLE: {ai_status} ({error_reason})"],
+                diagnostic_type="DETERMINISTIC_DIAGNOSTIC",
+                agent_ai_status="UNAVAILABLE",
+                ai_thesis="NOT_GENERATED",
+                deterministic_screen="NO_TRADE",
             )
             return self.thesis_validator.validate(thesis, structured_evidence=macro_evidence)
 

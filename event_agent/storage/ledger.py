@@ -555,17 +555,38 @@ def init_db() -> None:
             except Exception:
                 pass
 
-        # Add two-way trading and exit audit columns dynamically to agent_positions
+        # Add two-way trading, options integrity, and exit audit columns dynamically to agent_positions
         for col, col_type in [
             ("exit_price", "REAL"),
             ("realized_pnl", "REAL"),
             ("exit_reason", "TEXT"),
             ("brokerage_costs", "REAL"),
             ("position_side", "TEXT DEFAULT 'LONG'"),
-            ("order_intent", "TEXT DEFAULT 'OPEN'")
+            ("order_intent", "TEXT DEFAULT 'OPEN'"),
+            ("underlying_symbol", "TEXT"),
+            ("option_symbol", "TEXT"),
+            ("option_data_mode", "TEXT"),
+            ("multiplier", "INTEGER DEFAULT 1"),
+            ("greeks_json", "TEXT"),
+            ("option_premium", "REAL"),
+            ("cohort_eligible", "INTEGER DEFAULT 1"),
+            ("reclassification_note", "TEXT"),
         ]:
             try:
                 cursor.execute(f"ALTER TABLE agent_positions ADD COLUMN {col} {col_type}")
+            except Exception:
+                pass
+
+        # Dynamic reporting integrity columns for agent_decisions
+        for col, col_type in [
+            ("diagnostic_type", "TEXT DEFAULT 'AI_DECISION'"),
+            ("agent_ai_status", "TEXT DEFAULT 'AVAILABLE'"),
+            ("ai_thesis", "TEXT DEFAULT 'GENERATED'"),
+            ("deterministic_screen", "TEXT DEFAULT 'PASSED'"),
+            ("reporting_status", "TEXT"),
+        ]:
+            try:
+                cursor.execute(f"ALTER TABLE agent_decisions ADD COLUMN {col} {col_type}")
             except Exception:
                 pass
 
@@ -746,7 +767,87 @@ def init_db() -> None:
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_snap_pred_id ON prediction_snapshots(prediction_id)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_snap_hash ON prediction_snapshots(snapshot_hash)")
         
+        # Strict Remediation: Audit and clean any malformed OPTION records
+        audit_and_remediate_option_positions(conn)
         conn.commit()
+
+
+def audit_and_remediate_option_positions(conn: Optional[sqlite3.Connection] = None) -> Dict[str, Any]:
+    """
+    Audits all positions in agent_positions where instrument_type = 'OPTION'.
+    Institutional Remediation Rule (NEXUS V4.2.2):
+    Every OPTION position must contain:
+    - underlying_symbol
+    - option_symbol / contract identifier
+    - expiry
+    - strike
+    - call_put
+    - entry premium
+    - current premium
+    - option_data_mode
+    - multiplier
+    - Greeks where applicable
+
+    If the record only contains an underlying equity price and no actual option contract,
+    instrument_type MUST NOT be OPTION.
+    Malformed OPTION records are reclassified to EQUITY and strictly excluded from the
+    prospective six-month cohort (cohort_eligible = 0).
+    """
+    should_close = False
+    if conn is None:
+        conn = get_connection()
+        should_close = True
+
+    try:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT id, position_id, symbol, instrument_type, entry_price, current_price,
+                   contract_expiry, option_strike, option_type, short_name
+            FROM agent_positions
+            WHERE instrument_type = 'OPTION'
+        """)
+        rows = cursor.fetchall()
+        total_option_records = len(rows)
+        reclassified_count = 0
+
+        for r in rows:
+            row_id, pos_id, sym, inst_type, ep, cp, exp, strike, opt_type, short_name = (
+                r[0], r[1], r[2], r[3], r[4], r[5], r[6], r[7], r[8], r[9]
+            )
+            # Evaluate contract validity
+            has_strike = strike is not None and float(strike) > 0
+            has_expiry = exp is not None and str(exp).strip() not in ("", "None")
+            has_opt_type = opt_type is not None and str(opt_type).strip().upper() not in ("", "NONE", "UNKNOWN")
+
+            # If missing contract metadata, it is an underlying equity price record
+            if not (has_strike and has_expiry and has_opt_type):
+                note = (
+                    f"RECLASSIFIED_FROM_MALFORMED_OPTION: Contained underlying equity price (₹{float(ep or 0.0):.2f}) "
+                    "without valid contract metadata (strike, expiry, call_put). Excluded from prospective cohort."
+                )
+                s_name = (short_name or sym)
+                if "[RECLASSIFIED_EQUITY_AUDIT]" not in s_name:
+                    s_name = f"{s_name} [RECLASSIFIED_EQUITY_AUDIT]"
+                cursor.execute("""
+                    UPDATE agent_positions
+                    SET instrument_type = 'EQUITY',
+                        cohort_eligible = 0,
+                        reclassification_note = ?,
+                        short_name = ?
+                    WHERE id = ?
+                """, (note, s_name, row_id))
+                reclassified_count += 1
+
+        conn.commit()
+        return {
+            "total_audited": total_option_records,
+            "reclassified_to_equity": reclassified_count,
+            "valid_options_retained": total_option_records - reclassified_count,
+            "cohort_protection_status": "ENFORCED",
+        }
+    finally:
+        if should_close:
+            conn.close()
 
 
 def save_prediction(pred: Dict[str, Any]) -> int:
@@ -1581,28 +1682,56 @@ def save_agent_position(pos: Dict[str, Any]) -> None:
         pnl_pct = float(pos.get("unrealized_pnl_pct") or pos.get("pnl_pct", 0.0))
         opened = pos.get("opened_at") or pos.get("entry_time", datetime.now().isoformat())
 
+        strike = pos.get("option_strike") or (inst.get("strike") if isinstance(inst, dict) else None)
+        expiry = pos.get("contract_expiry") or (inst.get("expiry") if isinstance(inst, dict) else None)
+        opt_type = pos.get("option_type") or (inst.get("option_type") if isinstance(inst, dict) else None)
+        opt_sym = pos.get("option_symbol") or (inst.get("contract_name") if isinstance(inst, dict) else None)
+        opt_data_mode = pos.get("option_data_mode") or (inst.get("pricing_model") if isinstance(inst, dict) else None)
+        multiplier = int(pos.get("multiplier") or (inst.get("lot_size", 1) if isinstance(inst, dict) else 1))
+        greeks = pos.get("greeks") or pos.get("greeks_json")
+        greeks_str = json.dumps(greeks) if isinstance(greeks, dict) else (str(greeks) if greeks else None)
+        cohort_eligible = int(pos.get("cohort_eligible", 1))
+        reclass_note = pos.get("reclassification_note")
+        s_name = pos.get("short_name", pos["symbol"])
+
+        # Invariant Check: If instrument_type == OPTION, full contract metadata MUST be present
+        if str(inst_type).upper() == "OPTION":
+            has_strike = strike is not None and float(strike) > 0
+            has_expiry = expiry is not None and str(expiry).strip() not in ("", "None")
+            has_opt_type = opt_type is not None and str(opt_type).strip().upper() not in ("", "NONE", "UNKNOWN")
+            if not (has_strike and has_expiry and has_opt_type):
+                # Malformed OPTION record cannot be stored as OPTION and cannot enter prospective cohort
+                inst_type = "EQUITY"
+                cohort_eligible = 0
+                reclass_note = "RECLASSIFIED_EQUITY: Missing option contract metadata (strike, expiry, call_put)."
+                if "[RECLASSIFIED_EQUITY_AUDIT]" not in s_name:
+                    s_name = f"{s_name} [RECLASSIFIED_EQUITY_AUDIT]"
+
         cursor.execute("""
         INSERT OR REPLACE INTO agent_positions (
             position_id, agent_id, strategy_version, symbol, short_name, sector,
             instrument_type, direction, quantity, entry_price, current_price,
             cost_basis, market_value, stop_loss, target, unrealized_pnl,
             unrealized_pnl_pct, is_hedged, hedge_details_json, contract_expiry,
-            option_strike, option_type, status, opened_at, closed_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            option_strike, option_type, status, opened_at, closed_at,
+            underlying_symbol, option_symbol, option_data_mode, multiplier,
+            greeks_json, cohort_eligible, reclassification_note
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             pos_id, pos["agent_id"], pos.get("strategy_version", "1.0"),
-            pos["symbol"], pos.get("short_name", pos["symbol"]), pos.get("sector", "Diversified"),
+            pos["symbol"], s_name, pos.get("sector", "Diversified"),
             inst_type, pos.get("direction", "BUY"),
             qty, float(pos.get("entry_price", 0.0)),
             cur_price, cost_basis, mkt_val,
             float(pos.get("stop_loss", 0.0)), float(pos.get("target", 0.0)),
             float(pos.get("unrealized_pnl", 0.0)), pnl_pct,
             int(pos.get("is_hedged", 0)), json.dumps(pos.get("hedge_details", {})),
-            pos.get("contract_expiry") or (inst.get("expiry") if isinstance(inst, dict) else None),
-            pos.get("option_strike") or (inst.get("strike") if isinstance(inst, dict) else None),
-            pos.get("option_type") or (inst.get("option_type") if isinstance(inst, dict) else None),
+            expiry, strike, str(opt_type) if opt_type else None,
             pos.get("status", "OPEN"), opened,
-            pos.get("closed_at")
+            pos.get("closed_at"),
+            pos.get("underlying_symbol", pos["symbol"]),
+            opt_sym, opt_data_mode, multiplier,
+            greeks_str, cohort_eligible, reclass_note
         ))
         conn.commit()
 
@@ -1786,8 +1915,9 @@ def save_agent_decision(decision: Dict[str, Any]) -> bool:
                 decision_id, market_date, snapshot_id, agent_id, strategy_version,
                 symbol, action, instrument_type, confidence, proposed_quantity,
                 proposed_price, stop_loss, target, planned_risk, risk_approved,
-                rejection_reasons_json, decision_reason, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                rejection_reasons_json, decision_reason, created_at,
+                diagnostic_type, agent_ai_status, ai_thesis, deterministic_screen, reporting_status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 decision_id, decision["market_date"], decision.get("snapshot_id", ""),
                 decision["agent_id"], decision.get("strategy_version", "1.0"),
@@ -1796,7 +1926,12 @@ def save_agent_decision(decision: Dict[str, Any]) -> bool:
                 float(decision.get("proposed_price", 0.0)), float(decision.get("stop_loss", 0.0)),
                 float(decision.get("target", 0.0)), float(decision.get("planned_risk", 0.0)),
                 int(decision.get("risk_approved", 1)), json.dumps(decision.get("rejections", [])),
-                decision.get("reason", ""), decision.get("created_at", datetime.now().isoformat())
+                decision.get("reason", ""), decision.get("created_at", datetime.now().isoformat()),
+                decision.get("diagnostic_type", "AI_DECISION"),
+                decision.get("agent_ai_status", "AVAILABLE"),
+                decision.get("ai_thesis", "GENERATED"),
+                decision.get("deterministic_screen", "PASSED"),
+                decision.get("reporting_status", "")
             ))
             conn.commit()
             return True

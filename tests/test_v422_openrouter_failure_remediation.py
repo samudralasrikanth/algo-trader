@@ -582,3 +582,321 @@ def test_market_thesis_provenance_cannot_be_mutated():
 
     # 3. Provenance hash remains pristine and identical
     assert validated_thesis.compute_provenance_hash() == initial_hash
+
+
+# =============================================================================
+# 9. Final Reporting Integrity & Option Invariants (V4.2.2 Hardening)
+# =============================================================================
+def test_ai_unavailable_cannot_be_rendered_as_ai_decision():
+    """
+    Regression Test 6a:
+    AI-unavailable reports MUST NOT present deterministic agent diagnostics
+    as AI-generated agent decisions.
+    
+    Required representation:
+    AGENT AI STATUS: UNAVAILABLE
+    AI THESIS: NOT GENERATED
+    DETERMINISTIC SCREEN: NO_TRADE
+    
+    Clearly distinguish:
+    AI_DECISION vs DETERMINISTIC_DIAGNOSTIC.
+    """
+    thesis = MarketThesis(
+        agent_id="ALPHA",
+        symbol="RELIANCE.NS",
+        direction="NO_TRADE",
+        expected_move_pct=0.0,
+        horizon="1D",
+        confidence=0.0,
+        catalysts=[],
+        invalidating_conditions=["AI inference failure / credit exhausted"],
+        reasoning="OpenRouter 402 Credit Exhausted",
+        decision_model="OPENROUTER:openai/gpt-4o-mini",
+        model_provider="openrouter",
+        model_version="openai/gpt-4o-mini",
+        decision_mode="AI_UNAVAILABLE",
+        ai_status="CREDIT_EXHAUSTED",
+        fallback_reason="HTTP 402 Payment Required",
+    )
+
+    validator = MarketThesisValidator()
+    validated = validator.validate(thesis)
+
+    # 1. Enforce deterministic diagnostic representation
+    assert validated.diagnostic_type == "DETERMINISTIC_DIAGNOSTIC"
+    assert validated.agent_ai_status == "UNAVAILABLE"
+    assert validated.ai_thesis == "NOT_GENERATED"
+    assert validated.deterministic_screen == "NO_TRADE"
+    assert validated.evaluation_status == "EXCLUDED_FROM_ACCURACY"
+
+    rep = validated.format_reporting_representation()
+    assert "AGENT AI STATUS: UNAVAILABLE" in rep
+    assert "AI THESIS: NOT GENERATED" in rep
+    assert "DETERMINISTIC SCREEN: NO_TRADE" in rep
+
+    # 2. Strict invariant: Attempting to render as AI_AGENT_DECISION must raise ValueError
+    with pytest.raises(ValueError, match="AI_UNAVAILABLE cannot be rendered as AI_AGENT_DECISION"):
+        validated.render_decision("AI_AGENT_DECISION")
+
+    with pytest.raises(ValueError, match="AI_UNAVAILABLE cannot be rendered as AI_AGENT_DECISION"):
+        validated.render_decision("AI_DECISION")
+
+    # 3. AI Analyst fallback must also emit DETERMINISTIC_DIAGNOSTIC, not fake AI success
+    from event_agent.reporting.ai_analyst import DailyAIAnalyst
+    from event_agent.reporting.trade_reconciliation import TradeReconciliationEngine
+    analyst = DailyAIAnalyst(api_key="sk-test-key")
+    rec = TradeReconciliationEngine.reconcile_date("2026-09-24", custom_trades_fixture=[])
+    fallback_res = analyst._build_fallback_result(rec, error_msg="HTTP 402 Credit Exhausted")
+    assert fallback_res.diagnostic_type == "DETERMINISTIC_DIAGNOSTIC"
+    assert fallback_res.ai_status == "UNAVAILABLE"
+    assert "AGENT AI STATUS: UNAVAILABLE" in fallback_res.executive_summary
+    assert "AI THESIS: NOT GENERATED" in fallback_res.executive_summary
+    assert "DETERMINISTIC SCREEN: NO_TRADE" in fallback_res.executive_summary
+
+
+def test_option_record_without_contract_metadata_cannot_be_trade_eligible():
+    """
+    Regression Test 6b:
+    OPTION record without contract metadata cannot be trade-eligible.
+    Every OPTION position must contain:
+    - underlying_symbol
+    - option_symbol/contract identifier
+    - expiry
+    - strike
+    - call_put
+    - entry premium
+    - current premium
+    - option_data_mode
+    - multiplier
+    """
+    from event_agent.arena.models import Instrument, ProposedTrade, OptionType
+
+    # 1. Instrument-level validation
+    malformed_opt = Instrument(
+        underlying="NESTLEIND.NS",
+        instrument_type=InstrumentType.OPTION,
+        strike=None,
+        expiry=None,
+        option_type=OptionType.NONE,
+    )
+    assert malformed_opt.is_valid_contract is False
+    assert malformed_opt.is_trade_eligible is False
+
+    is_valid, errors = malformed_opt.validate_option_contract()
+    assert is_valid is False
+    assert any("strike" in e for e in errors)
+    assert any("expiry" in e for e in errors)
+    assert any("call_put" in e for e in errors)
+
+    # 2. ProposedTrade-level validation
+    proposal = ProposedTrade.create_simple(
+        agent_id="ALPHA",
+        symbol="NESTLEIND.NS",
+        action="BUY",
+        quantity=50,
+        entry_price=1387.44, # Notice: Equity price, not option premium!
+        stop_loss=1350.0,
+        target=1420.0,
+        instrument_type=InstrumentType.OPTION,
+    )
+    # The simple helper didn't provide contract metadata
+    assert proposal.instrument.is_trade_eligible is False
+    assert proposal.is_trade_eligible is False
+
+    # 3. TradeGuard Gate 36 verification
+    guard = TradeGuard()
+    signal = {
+        "symbol": "NESTLEIND.NS",
+        "instrument_type": "OPTION",
+        "direction": "BUY",
+        "price": 1387.44,
+        "base_price": 1387.44,
+        "strategy": "ALPHA",
+        "ai_status": "INFERENCE_SUCCESS",
+        "decision_mode": "AI_INFERENCE",
+    }
+    order_intent = {
+        "symbol": "NESTLEIND.NS",
+        "instrument_type": "OPTION",
+        "price": 1387.44,
+        "quantity": 50,
+        "action": "BUY",
+        "order_intent_id": "INT-OPT-TEST-001",
+        "ai_status": "INFERENCE_SUCCESS",
+        "decision_mode": "AI_INFERENCE",
+    }
+    res = guard.evaluate(
+        signal=signal,
+        order_intent=order_intent,
+        portfolio={"current_capital": 2000000.0, "starting_capital": 2000000.0, "open_positions": []},
+        market_data={"price": 1387.44, "base_price": 1387.44},
+        active_positions=[],
+    )
+    assert res.verdict == TradeGuardVerdict.NO_TRADE
+    assert res.is_approved is False
+    assert res.rejection_code == "TRADE_BLOCKED_MALFORMED_OPTION"
+    assert "cannot be trade-eligible" in res.rejection_message
+
+    # 4. Storage ledger cohort protection verification
+    from event_agent.storage.ledger import save_agent_position, get_agent_positions, get_connection
+    malformed_pos = {
+        "position_id": "POS-MALFORMED-OPT-REGRESSION",
+        "agent_id": "ALPHA",
+        "symbol": "NESTLEIND.NS",
+        "instrument_type": "OPTION",
+        "entry_price": 1387.44,
+        "current_price": 1387.44,
+        "quantity": 50,
+        # Missing strike, expiry, option_type
+    }
+    try:
+        save_agent_position(malformed_pos)
+        saved = [p for p in get_agent_positions() if p["position_id"] == "POS-MALFORMED-OPT-REGRESSION"]
+        assert len(saved) == 1
+        # Must NOT be stored as OPTION, must be reclassified to EQUITY and excluded from cohort
+        assert saved[0]["instrument_type"] == "EQUITY"
+        assert saved[0]["cohort_eligible"] == 0
+        assert "RECLASSIFIED_EQUITY" in saved[0]["reclassification_note"]
+    finally:
+        with get_connection() as conn:
+            conn.execute("DELETE FROM agent_positions WHERE position_id = 'POS-MALFORMED-OPT-REGRESSION'")
+
+
+def test_underlying_equity_price_cannot_be_used_as_option_premium():
+    """
+    Regression Test 6c:
+    Underlying equity price cannot be used as option premium.
+    If the record only contains an underlying equity price and no
+    actual option contract, instrument_type MUST NOT be OPTION.
+    """
+    from event_agent.arena.models import Instrument, ProposedTrade, OptionType
+
+    guard = TradeGuard()
+    # Contract metadata is present, but price is equal to underlying cash price
+    underlying_price = 11400.0 # Bajaj Auto cash price
+    signal = {
+        "symbol": "BAJAJ-AUTO.NS",
+        "instrument_type": "OPTION",
+        "option_symbol": "BAJAJ-AUTO-11500-CE-7D",
+        "contract_name": "BAJAJ-AUTO-11500-CE-7D",
+        "strike": 11500.0,
+        "expiry": "2026-10-01",
+        "option_type": "CE",
+        "call_put": "CE",
+        "price": 11400.0, # FRAUDULENT: Using cash equity price as option premium!
+        "base_price": underlying_price,
+        "direction": "BUY",
+        "strategy": "ALPHA",
+        "ai_status": "INFERENCE_SUCCESS",
+        "decision_mode": "AI_INFERENCE",
+    }
+    order_intent = {
+        "symbol": "BAJAJ-AUTO-11500-CE-7D",
+        "instrument_type": "OPTION",
+        "option_symbol": "BAJAJ-AUTO-11500-CE-7D",
+        "strike": 11500.0,
+        "expiry": "2026-10-01",
+        "option_type": "CE",
+        "price": 11400.0, # Underlying cash price used as premium
+        "quantity": 10,
+        "action": "BUY",
+        "order_intent_id": "INT-OPT-TEST-002",
+        "ai_status": "INFERENCE_SUCCESS",
+        "decision_mode": "AI_INFERENCE",
+    }
+    res = guard.evaluate(
+        signal=signal,
+        order_intent=order_intent,
+        portfolio={"current_capital": 2000000.0, "starting_capital": 2000000.0, "open_positions": []},
+        market_data={"price": underlying_price, "base_price": underlying_price},
+        active_positions=[],
+    )
+    assert res.verdict == TradeGuardVerdict.NO_TRADE
+    assert res.is_approved is False
+    assert res.rejection_code == "TRADE_BLOCKED_UNDERLYING_PRICE_AS_OPTION_PREMIUM"
+    assert "Underlying equity price" in res.rejection_message
+
+    # Now verify with genuine option premium (e.g. ₹185.50)
+    order_intent["price"] = 185.50
+    signal["price"] = 185.50
+    res_valid = guard.evaluate(
+        signal=signal,
+        order_intent=order_intent,
+        portfolio={"current_capital": 2000000.0, "starting_capital": 2000000.0, "open_positions": []},
+        market_data={"price": underlying_price, "base_price": underlying_price},
+        active_positions=[],
+    )
+    assert "GATE_36_OPTION_CONTRACT_INTEGRITY" in res_valid.passed_gates
+    assert res_valid.is_approved is True
+
+
+def test_quant_screen_cannot_create_order_intent_id():
+    """
+    Regression Test 6d:
+    QUANT_SCREEN cannot create order_intent_id.
+    Quantitative screen results must remain explicitly:
+    QUANTITATIVE SCREEN / NON-TRADING / NOT AI DECISION.
+    """
+    from event_agent.execution.broker_state_machine import OrderLineage
+    from event_agent.execution.idempotency import IdempotencyEngine
+
+    # 1. OrderLineage barrier: Cannot be created with QUANT_SCREEN signal or order_intent_id
+    with pytest.raises(ValueError, match="QUANT_SCREEN cannot create order_intent_id"):
+        OrderLineage(
+            signal_id="QUANT_SCREEN_SETUP_TOP8_01",
+            decision_id="DEC-QUANT_SCREEN-01",
+            order_intent_id="INT-QUANT-001",
+        )
+
+    with pytest.raises(ValueError, match="QUANT_SCREEN cannot create order_intent_id"):
+        OrderLineage(
+            signal_id="SIG-20260924-001",
+            decision_id="DEC-20260924-001",
+            order_intent_id="INT-QUANT_SCREEN-LEAK",
+        )
+
+    # 2. Idempotency reservation barrier
+    engine = IdempotencyEngine()
+    with pytest.raises(ValueError, match="QUANT_SCREEN cannot create order_intent_id"):
+        engine.reserve(
+            signal_id="QUANT_SCREEN_CANDIDATE_LT",
+            symbol="LT.NS",
+            side="BUY",
+            order_intent_id="INT-LEAK-QUANT-01",
+        )
+
+    # 3. TradeGuard Gate 37 barrier
+    guard = TradeGuard()
+    signal = {
+        "symbol": "LT.NS",
+        "category": "QUANTITATIVE SCREEN / NON-TRADING / NOT AI DECISION",
+        "source": "QUANT_SCREEN",
+        "direction": "BULLISH",
+        "price": 3929.90,
+        "base_price": 3929.90,
+        "strategy": "QUANT_SCREEN",
+        "ai_status": "INFERENCE_SUCCESS",
+        "decision_mode": "AI_INFERENCE",
+    }
+    order_intent = {
+        "symbol": "LT.NS",
+        "category": "QUANTITATIVE SCREEN / NON-TRADING / NOT AI DECISION",
+        "source": "QUANT_SCREEN",
+        "price": 3929.90,
+        "quantity": 10,
+        "action": "BUY",
+        "order_intent_id": "INT-QUANT-SCREEN-BLOCKED",
+        "ai_status": "INFERENCE_SUCCESS",
+        "decision_mode": "AI_INFERENCE",
+    }
+    res = guard.evaluate(
+        signal=signal,
+        order_intent=order_intent,
+        portfolio={"current_capital": 2000000.0, "starting_capital": 2000000.0, "open_positions": []},
+        market_data={"price": 3929.90, "base_price": 3929.90},
+        active_positions=[],
+    )
+    assert res.verdict == TradeGuardVerdict.NO_TRADE
+    assert res.is_approved is False
+    assert res.rejection_code == "TRADE_BLOCKED_QUANT_SCREEN_NON_TRADING"
+    assert "cannot create order_intent_id" in res.rejection_message
