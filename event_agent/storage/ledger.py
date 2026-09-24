@@ -922,7 +922,7 @@ def save_prediction(pred: Dict[str, Any]) -> int:
             ))
             
         conn.commit()
-        return pred_id
+        return int(pred_id or 0)
 
 
 def save_news_article(symbol: str, title: str, source: str, pub_date: str, url: str, polarity: float, event_type: str) -> None:
@@ -1357,7 +1357,7 @@ def save_night_prediction(pred: Dict[str, Any], target_trade_date: str) -> int:
             except Exception:
                 pass
             
-        return last_id
+        return int(last_id or 0)
 
 
 def get_active_night_predictions(target_trade_date: Optional[str] = None) -> List[Dict[str, Any]]:
@@ -1466,7 +1466,7 @@ def save_daily_audit(audit: Dict[str, Any]) -> int:
         except Exception:
             pass
             
-        return last_id
+        return int(last_id or 0)
 
 
 def get_daily_audits(trade_date: Optional[str] = None, symbol: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
@@ -1578,7 +1578,7 @@ def log_job_execution(
         except Exception:
             pass
             
-        return last_id
+        return int(last_id or 0)
 
 
 def get_job_execution_logs(limit: int = 50) -> List[Dict[str, Any]]:
@@ -1634,7 +1634,7 @@ def save_prediction_snapshot(snapshot: Dict[str, Any]) -> int:
     except Exception:
         pass
 
-    return last_id
+    return int(last_id or 0)
 
 
 # =============================================================================

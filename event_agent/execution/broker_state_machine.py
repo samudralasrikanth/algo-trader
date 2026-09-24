@@ -85,9 +85,9 @@ class OrderLineage:
     pnl_id: Optional[str] = None
 
     def __post_init__(self):
-        sig = str(self.signal_id or "").upper()
-        dec = str(self.decision_id or "").upper()
-        oint = str(self.order_intent_id or "").upper()
+        sig = (self.signal_id or "").upper()
+        dec = (self.decision_id or "").upper()
+        oint = (self.order_intent_id or "").upper()
         if "QUANT" in sig and "SCREEN" in sig:
             raise ValueError("Invariant Violation: QUANT_SCREEN cannot create order_intent_id.")
         if "QUANT" in dec and "SCREEN" in dec:

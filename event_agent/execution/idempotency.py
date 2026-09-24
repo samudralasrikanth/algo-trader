@@ -179,12 +179,13 @@ class IdempotencyManager:
 
                     # Insert new reservation
                     now_str = datetime.now(timezone.utc).isoformat()
+                    insert_query = (
+                        "INSERT INTO v4_idempotency_keys "
+                        "(idempotency_key, signal_id, symbol, side, execution_window, order_intent_id, status, created_at) "
+                        "VALUES (?, ?, ?, ?, ?, ?, 'RESERVED', ?)"
+                    )
                     conn.execute(
-                        """
-                        INSERT INTO v4_idempotency_keys
-                        (idempotency_key, signal_id, symbol, side, execution_window, order_intent_id, status, created_at)
-                        VALUES (?, ?, ?, ?, ?, ?, 'RESERVED', ?)
-                        """,
+                        insert_query,
                         (key, signal_id, symbol, side, win, order_intent_id, now_str),
                     )
 
@@ -205,6 +206,12 @@ class IdempotencyManager:
                 # Concurrent race condition caught by SQLite UNIQUE constraint
                 existing = self._memory_cache.get(key)
                 return False, key, existing
+            except Exception as e:
+                logger.error(f"Idempotency reserve DB error: {e}")
+                existing = self._memory_cache.get(key)
+                return False, key, existing
+
+        return False, key, self._memory_cache.get(key)
 
     def mark_executed(self, idempotency_key: str) -> None:
         with self._lock:

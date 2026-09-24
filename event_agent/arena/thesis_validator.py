@@ -61,7 +61,7 @@ class MarketThesis:
     _is_sealed: bool = False
 
     def __post_init__(self):
-        if self.decision_mode == "AI_UNAVAILABLE" or str(self.ai_status).upper() != "INFERENCE_SUCCESS":
+        if self.decision_mode == "AI_UNAVAILABLE" or self.ai_status.upper() != "INFERENCE_SUCCESS":
             self.diagnostic_type = "DETERMINISTIC_DIAGNOSTIC"
             self.agent_ai_status = "UNAVAILABLE"
             self.ai_thesis = "NOT_GENERATED"
@@ -74,7 +74,7 @@ class MarketThesis:
         Institutional reporting representation:
         Clearly distinguishes AI_DECISION vs DETERMINISTIC_DIAGNOSTIC.
         """
-        if self.decision_mode == "AI_UNAVAILABLE" or str(self.ai_status).upper() != "INFERENCE_SUCCESS":
+        if self.decision_mode == "AI_UNAVAILABLE" or self.ai_status.upper() != "INFERENCE_SUCCESS":
             return (
                 "AGENT AI STATUS: UNAVAILABLE\n"
                 "AI THESIS: NOT GENERATED\n"
@@ -92,7 +92,7 @@ class MarketThesis:
         Strict Invariant: AI_UNAVAILABLE cannot be rendered as AI_AGENT_DECISION.
         """
         if target_format in ("AI_AGENT_DECISION", "AI_DECISION"):
-            if self.decision_mode == "AI_UNAVAILABLE" or str(self.ai_status).upper() != "INFERENCE_SUCCESS" or self.agent_ai_status == "UNAVAILABLE":
+            if self.decision_mode == "AI_UNAVAILABLE" or self.ai_status.upper() != "INFERENCE_SUCCESS" or self.agent_ai_status == "UNAVAILABLE":
                 raise ValueError("Reporting Integrity Invariant: AI_UNAVAILABLE cannot be rendered as AI_AGENT_DECISION.")
         return self.format_reporting_representation()
 
@@ -190,7 +190,7 @@ class MarketThesisValidator:
         conflicts: List[str] = []
 
         # Gate 0: AI Decision Availability Invariant (Fail-closed on AI failure)
-        if thesis.decision_mode == "AI_UNAVAILABLE" or str(thesis.ai_status).upper() != "INFERENCE_SUCCESS":
+        if thesis.decision_mode == "AI_UNAVAILABLE" or thesis.ai_status.upper() != "INFERENCE_SUCCESS":
             errors.append(f"AI decision unavailable (status: {thesis.ai_status}, reason: {thesis.fallback_reason or 'No inference'}). New AI-dependent entries blocked.")
             thesis.direction = "NO_TRADE"
             thesis.is_valid = False
@@ -204,7 +204,7 @@ class MarketThesisValidator:
             return thesis
 
         # 1. Direction check
-        clean_dir = str(thesis.direction or "").strip().upper()
+        clean_dir = (thesis.direction or "").strip().upper()
         if clean_dir not in CANONICAL_DIRECTIONS:
             errors.append(f"Invalid direction '{thesis.direction}'. Must be 'BULLISH' or 'BEARISH'.")
             thesis.direction = "NEUTRAL"
@@ -242,7 +242,7 @@ class MarketThesisValidator:
             errors.append(f"Direction is BEARISH but expected move is positive ({thesis.expected_move_pct:+.2f}%).")
 
         # 4. Canonical Horizon
-        clean_horizon = str(thesis.horizon or "").strip().upper()
+        clean_horizon = (thesis.horizon or "").strip().upper()
         if clean_horizon not in CANONICAL_HORIZONS:
             errors.append(f"Invalid horizon '{thesis.horizon}'. Must be one of {sorted(CANONICAL_HORIZONS)}.")
             thesis.horizon = "1D"

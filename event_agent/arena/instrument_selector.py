@@ -86,7 +86,7 @@ class InstrumentSelector:
         # new entries MUST NOT be proposed. Blocks model substitution and preserves cohort integrity.
         if (
             thesis.decision_mode == "AI_UNAVAILABLE"
-            or str(thesis.ai_status).upper() != "INFERENCE_SUCCESS"
+            or thesis.ai_status.upper() != "INFERENCE_SUCCESS"
             or direction_str in ("NO_TRADE", "UNAVAILABLE")
         ):
             return self._build_no_trade(
@@ -245,6 +245,7 @@ class InstrumentSelector:
         selected_opt_prem: float = 0.0
         selected_lot_size: int = 1
         reason_extra = ""
+        mode = self.option_provider.current_mode
 
         # Check options eligibility
         can_trade_opts = self.option_provider.can_trade_options(self.execution_env)

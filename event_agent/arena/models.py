@@ -130,7 +130,7 @@ class Instrument:
             errors.append("underlying_symbol is missing")
         if self.strike is None or self.strike <= 0:
             errors.append("strike is missing or <= 0")
-        if not self.expiry or str(self.expiry).strip() in ("", "None"):
+        if not self.expiry or self.expiry.strip() in ("", "None"):
             errors.append("expiry is missing")
         if not self.option_type or self.option_type in (OptionType.NONE, "NONE"):
             errors.append("option_type (call_put) is missing")
