@@ -460,12 +460,13 @@ class OpenRouterProvider(LLMProvider):
             "HTTP-Referer": "https://github.com/samudralasrikanth/algo-trader",
             "X-Title": "NEXUS Decision Engine",
         }
+        max_tokens = int(os.environ.get("OPENROUTER_MAX_TOKENS", "200"))
         body_str = json.dumps({
             "model": self.model,
             "messages": [{"role": "user", "content": prompt}],
             "response_format": {"type": "json_object"},
             "temperature": 0.1,
-            "max_tokens": 400,
+            "max_tokens": max_tokens,
         })
         body = body_str.encode("utf-8")
         in_hash = hashlib.sha256(body).hexdigest()
