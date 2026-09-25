@@ -87,7 +87,7 @@ class AgentAlpha(BaseAgent):
                         credibility_mult = 0.85
 
             # Alpha requires news/catalysts and conviction >= min_conviction
-            min_conviction = float(os.getenv("MIN_AGENT_CONVICTION", "48.0"))
+            min_conviction = float(os.getenv("MIN_AGENT_CONVICTION", "60.0"))
             has_catalysts = len(catalysts) > 0 or abs(sentiment) >= 0.10
             effective_conviction = conviction * credibility_mult
 

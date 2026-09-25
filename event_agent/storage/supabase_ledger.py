@@ -35,7 +35,10 @@ if "your-service-role-key" in SUPABASE_SERVICE_KEY:
 
 
 def get_headers(use_service_role: bool = True) -> Dict[str, str]:
-    key = SUPABASE_SERVICE_KEY if use_service_role else SUPABASE_ANON_KEY
+    # Cloud workers are intentionally provisioned with the service-role key only.
+    # Falling back to it for reads keeps ephemeral GitHub runners functional when
+    # SUPABASE_ANON_KEY is not configured, without exposing it to the browser.
+    key = SUPABASE_SERVICE_KEY if use_service_role else (SUPABASE_ANON_KEY or SUPABASE_SERVICE_KEY)
     return {
         "apikey": key,
         "Authorization": f"Bearer {key}",
@@ -96,6 +99,56 @@ def get_night_predictions_supabase(target_date: Optional[str] = None) -> List[Di
     except Exception as e:
         print(f"[!] Supabase get_night_predictions error: {e}")
     return []
+
+
+# -----------------------------------------------------------------------------
+# Ephemeral worker state
+# -----------------------------------------------------------------------------
+def save_arena_state_supabase(state: Dict[str, Any]) -> bool:
+    """Persist the paper arena snapshot in the existing job ledger.
+
+    GitHub Actions runners are disposable and the SQLite file is deliberately
+    ignored by git.  Keeping the latest arena snapshot in Supabase makes the
+    next five-minute cycle idempotent and prevents every fresh runner from
+    starting with a blank portfolio.
+    """
+    if not is_supabase_configured():
+        return False
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/job_execution_logs"
+        payload = {
+            "job_type": "ARENA_STATE_SNAPSHOT",
+            "started_at": state.get("as_of") or datetime.utcnow().isoformat() + "Z",
+            "completed_at": state.get("as_of") or datetime.utcnow().isoformat() + "Z",
+            "status": "SUCCESS",
+            "target_date": state.get("market_date") or datetime.utcnow().strftime("%Y-%m-%d"),
+            "records_stored": int(state.get("open_positions_count", 0)),
+            "log_summary": json.dumps(state, separators=(",", ":")),
+        }
+        res = requests.post(url, headers=get_headers(True), json=payload, timeout=15)
+        return res.status_code in [200, 201]
+    except Exception as exc:
+        print(f"[!] Supabase save_arena_state error: {exc}")
+        return False
+
+
+def get_latest_arena_state_supabase() -> Optional[Dict[str, Any]]:
+    """Load the latest paper arena snapshot for an ephemeral worker."""
+    if not is_supabase_configured():
+        return None
+    try:
+        url = (
+            f"{SUPABASE_URL}/rest/v1/job_execution_logs"
+            "?job_type=eq.ARENA_STATE_SNAPSHOT&status=eq.SUCCESS"
+            "&select=log_summary&order=completed_at.desc&limit=1"
+        )
+        res = requests.get(url, headers=get_headers(False), timeout=15)
+        if res.status_code == 200 and res.json():
+            raw = res.json()[0].get("log_summary")
+            return json.loads(raw) if raw else None
+    except Exception as exc:
+        print(f"[!] Supabase get_arena_state error: {exc}")
+    return None
 
 
 # -----------------------------------------------------------------------------
@@ -454,4 +507,3 @@ def get_latest_sentinel_telemetry_supabase() -> Optional[Dict[str, Any]]:
         print(f"[!] Supabase get_latest_sentinel_telemetry error: {e}")
 
     return None
-

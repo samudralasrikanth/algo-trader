@@ -366,7 +366,8 @@ class MultiAgentBroker:
         }
         self.executed_trade_ids: set = set()
         self.orders: Dict[str, Any] = {}
-        if auto_hydrate and os.getenv("TESTING", "").lower() not in ("1", "true", "yes"):
+        in_pytest = bool(os.getenv("PYTEST_CURRENT_TEST"))
+        if auto_hydrate and not in_pytest and os.getenv("TESTING", "").lower() not in ("1", "true", "yes"):
             self.hydrate_from_db()
 
     def hydrate_from_db(self) -> None:
@@ -377,6 +378,18 @@ class MultiAgentBroker:
         try:
             from event_agent.storage.ledger import get_agent_positions
             db_positions = get_agent_positions(status="OPEN")
+            cloud_state = None
+            if not db_positions:
+                try:
+                    from event_agent.storage.supabase_ledger import get_latest_arena_state_supabase
+                    cloud_state = get_latest_arena_state_supabase()
+                    if cloud_state:
+                        db_positions = [
+                            p for p in cloud_state.get("open_positions", [])
+                            if str(p.get("status", "OPEN")).upper() == "OPEN"
+                        ]
+                except Exception as cloud_err:
+                    logger.debug("Cloud arena hydration unavailable: %s", cloud_err)
             for p_dict in db_positions:
                 aid = p_dict.get("agent_id")
                 if aid not in self.sub_portfolios:
@@ -386,7 +399,8 @@ class MultiAgentBroker:
                 if not sym:
                     continue
 
-                itype_str = p_dict.get("instrument_type", "EQUITY")
+                instrument_data = p_dict.get("instrument") or {}
+                itype_str = p_dict.get("instrument_type") or instrument_data.get("instrument_type", "EQUITY")
                 inst_type = InstrumentType.EQUITY
                 if itype_str == "FUTURE":
                     inst_type = InstrumentType.FUTURE
@@ -401,7 +415,7 @@ class MultiAgentBroker:
                 sl = float(p_dict.get("stop_loss", 0.0))
                 tgt = float(p_dict.get("target", 0.0))
                 inv = float(p_dict.get("cost_basis", ep * qty))
-                tid = p_dict.get("position_id") or f"TRD-{aid}-{sym}"
+                tid = p_dict.get("position_id") or p_dict.get("trade_id") or f"TRD-{aid}-{sym}"
 
                 arena_pos = ArenaPosition(
                     agent_id=aid,
@@ -424,12 +438,46 @@ class MultiAgentBroker:
                 sub_port.open_positions[sym] = arena_pos
                 self.executed_trade_ids.add(tid)
 
+            # Restore realized P&L and deterministic ids from the cloud snapshot
+            # before calculating cash.  This is essential on fresh CI runners.
+            if cloud_state:
+                for aid, snapshot in cloud_state.get("portfolios", {}).items():
+                    if aid in self.sub_portfolios:
+                        self.sub_portfolios[aid].realized_pnl = float(snapshot.get("realized_pnl", 0.0))
+                self.executed_trade_ids.update(cloud_state.get("executed_trade_ids", []))
+
             # Synchronize cash strictly
             for aid, sub_port in self.sub_portfolios.items():
                 total_invested = sum(pos.invested_capital for pos in sub_port.open_positions.values())
-                sub_port.cash = max(0.0, sub_port.starting_capital - total_invested + sub_port.realized_pnl)
+                if cloud_state and aid in cloud_state.get("portfolios", {}):
+                    sub_port.cash = max(0.0, float(cloud_state["portfolios"][aid].get("cash", 0.0)))
+                else:
+                    sub_port.cash = max(0.0, sub_port.starting_capital - total_invested + sub_port.realized_pnl)
         except Exception as e:
             logger.debug(f"MultiAgentBroker DB hydration notice: {e}")
+
+    def to_cloud_state(self, market_date: str, snapshot_id: str = "") -> Dict[str, Any]:
+        """Return a compact serializable snapshot for the next CI worker."""
+        portfolios = {}
+        open_positions = []
+        for aid, portfolio in self.sub_portfolios.items():
+            positions = [p.to_dict() for p in portfolio.open_positions.values()]
+            open_positions.extend(positions)
+            portfolios[aid] = {
+                "cash": round(portfolio.cash, 2),
+                "realized_pnl": round(portfolio.realized_pnl, 2),
+                "open_positions_count": len(positions),
+            }
+        return {
+            "version": 1,
+            "as_of": datetime.now(timezone.utc).isoformat(),
+            "market_date": market_date,
+            "snapshot_id": snapshot_id,
+            "portfolios": portfolios,
+            "open_positions": open_positions,
+            "open_positions_count": len(open_positions),
+            "executed_trade_ids": sorted(self.executed_trade_ids),
+        }
 
     def create_portfolio(self, agent_id: str, initial_capital: float = AGENT_STARTING_CAPITAL) -> SubPortfolio:
         if agent_id not in self.sub_portfolios:
@@ -683,6 +731,43 @@ class MultiAgentBroker:
             for sym, pos in sub_port.open_positions.items():
                 if sym in current_market_prices:
                     pos.update_market_price(current_market_prices[sym])
+
+    def close_triggered_positions(self, current_market_prices: Dict[str, float]) -> List[Dict[str, Any]]:
+        """Apply deterministic stop/target exits to equity/futures paper positions."""
+        closed: List[Dict[str, Any]] = []
+        for aid, sub_port in self.sub_portfolios.items():
+            for symbol, pos in list(sub_port.open_positions.items()):
+                price = current_market_prices.get(symbol)
+                if price is None or price <= 0:
+                    continue
+                reason = None
+                if pos.direction == TradeDirection.BUY:
+                    if pos.stop_loss > 0 and price <= pos.stop_loss:
+                        reason = "STOP_LOSS_TRIGGERED"
+                    elif pos.target > 0 and price >= pos.target:
+                        reason = "TARGET_PROFIT_REACHED"
+                else:
+                    if pos.stop_loss > 0 and price >= pos.stop_loss:
+                        reason = "STOP_LOSS_TRIGGERED"
+                    elif pos.target > 0 and price <= pos.target:
+                        reason = "TARGET_PROFIT_REACHED"
+                if not reason:
+                    continue
+
+                closed_trade = self.close_position(aid, symbol, exit_price=price, exit_reason=reason)
+                if closed_trade:
+                    try:
+                        from event_agent.storage.ledger import close_agent_position
+                        close_agent_position(
+                            position_id=pos.trade_id,
+                            exit_price=price,
+                            exit_reason=reason,
+                            brokerage_costs=closed_trade.total_fees,
+                        )
+                    except Exception as persist_err:
+                        logger.debug("Exit persistence warning for %s: %s", symbol, persist_err)
+                    closed.append(closed_trade.to_dict())
+        return closed
 
     def get_total_arena_summary(self) -> Dict[str, Any]:
         """Aggregate performance summary across the entire ₹1 Crore virtual arena."""

@@ -1385,6 +1385,27 @@ def get_active_night_predictions(target_trade_date: Optional[str] = None) -> Lis
             """, (latest_target,))
             
         rows = cursor.fetchall()
+        # A GitHub Actions runner starts with an empty ignored SQLite database.
+        # The locked forecast is authoritative in Supabase, so restore it when
+        # the local cache has no matching rows.
+        if not rows:
+            try:
+                from event_agent.storage.supabase_ledger import get_night_predictions_supabase
+                cloud_rows = get_night_predictions_supabase(target_trade_date)
+                if cloud_rows:
+                    if not target_trade_date:
+                        latest_cloud_date = max(
+                            (row.get("target_trade_date") for row in cloud_rows if row.get("target_trade_date")),
+                            default=None,
+                        )
+                        if latest_cloud_date:
+                            cloud_rows = [
+                                row for row in cloud_rows
+                                if row.get("target_trade_date") == latest_cloud_date
+                            ]
+                    return cloud_rows
+            except Exception:
+                pass
         results = []
         for r in rows:
             d = dict(r)
@@ -2852,6 +2873,4 @@ def get_latest_event_coverage_metric(target_date: Optional[str] = None) -> Optio
             cursor.execute("SELECT * FROM event_coverage_metrics ORDER BY id DESC LIMIT 1")
         row = cursor.fetchone()
         return dict(row) if row else None
-
-
 

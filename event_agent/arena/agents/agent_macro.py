@@ -78,7 +78,7 @@ class AgentMacro(BaseAgent):
             pred_pct = float(data.get("predicted_1d_pct", 0.0))
             base_price = float(data.get("base_price", 0.0))
 
-            min_conviction = float(os.getenv("MIN_AGENT_CONVICTION", "48.0"))
+            min_conviction = float(os.getenv("MIN_AGENT_CONVICTION", "60.0"))
 
             # Macro combines regime + sector + company debt profile
             fund_snap = data.get("fundamental_snapshot") or data.get("fundamentals")

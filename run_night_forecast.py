@@ -10,19 +10,17 @@ from event_agent.config import NIFTY50_UNIVERSE
 from event_agent.engine.prediction_algo import generate_all_predictions, MODEL_VERSION
 from event_agent.storage.ledger import init_db, save_night_prediction, get_active_night_predictions, log_job_execution
 from event_agent.research.model_versioning import get_current_version_record
+from event_agent.arena.market_clock import MarketClock
 
 
 def get_next_trading_day(ref_date: Optional[date] = None) -> str:
-    """Calculate the next trading date (skipping weekends)."""
+    """Calculate the next NSE trading date, including official holidays."""
     if ref_date is None:
         ref_date = datetime.now().date()
         
     next_day = ref_date + timedelta(days=1)
-    if next_day.weekday() == 5:
-        next_day += timedelta(days=2)
-    elif next_day.weekday() == 6:
+    while not MarketClock.is_trading_day(datetime.combine(next_day, datetime.min.time())):
         next_day += timedelta(days=1)
-        
     return next_day.strftime("%Y-%m-%d")
 
 

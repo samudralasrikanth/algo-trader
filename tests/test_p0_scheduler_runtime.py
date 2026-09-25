@@ -149,12 +149,13 @@ def test_06_duplicate_cron_delivery_preserves_single_run(hb_manager):
 
 def test_07_missed_run_detection_at_1845_boundary(hb_manager):
     """Verify that at or after 18:45 IST without a today invocation, status latches to MISSED."""
-    # Simulate a Monday trading day at 18:50 IST (13:20 UTC)
-    simulated_now_utc = datetime(2026, 9, 14, 13, 20, 0, tzinfo=timezone.utc)
-    # Ensure no invocation for 2026-09-14 exists
+    # Simulate a Tuesday trading day at 18:50 IST (13:20 UTC).
+    # 14 Sep 2026 is an official NSE holiday (Ganesh Chaturthi).
+    simulated_now_utc = datetime(2026, 9, 15, 13, 20, 0, tzinfo=timezone.utc)
+    # Ensure no invocation for 2026-09-15 exists
     health = hb_manager.evaluate_scheduler_health(current_dt=simulated_now_utc)
     # Since simulated_now_utc has no invocation today, it should detect MISSED
-    # First verify September 14, 2026 is an active trading day (Monday)
+    # First verify September 15, 2026 is an active trading day (Tuesday)
     ist_tz = timezone(timedelta(hours=5, minutes=30))
     sim_ist = simulated_now_utc.astimezone(ist_tz)
     assert MarketClock.is_trading_day(sim_ist) is True
@@ -178,8 +179,8 @@ def test_07_missed_run_detection_at_1845_boundary(hb_manager):
 
 def test_08_red_latch_persists_until_recovery(hb_manager):
     """Verify red latch remains MISSED until a valid subsequent run recovers it."""
-    # 13:30 UTC = 19:00 IST on Monday Sept 14, 2026
-    simulated_now = datetime(2026, 9, 14, 13, 30, 0, tzinfo=timezone.utc)
+    # 13:30 UTC = 19:00 IST on Tuesday Sept 15, 2026
+    simulated_now = datetime(2026, 9, 15, 13, 30, 0, tzinfo=timezone.utc)
     # Insert older record
     hb_manager.record_heartbeat(SchedulerInvocation(
         invocation_id="INV-2026-09-11-OLD",
@@ -197,10 +198,10 @@ def test_08_red_latch_persists_until_recovery(hb_manager):
 
     # Now recovery happens: today's run starts and succeeds
     recovery_rec = SchedulerInvocation(
-        invocation_id="INV-2026-09-14-1300UTC-PAPER-RECOVERY",
-        scheduled_for="2026-09-14T13:00:00Z",
-        started_at="2026-09-14T13:30:00Z",
-        completed_at="2026-09-14T13:35:00Z",
+        invocation_id="INV-2026-09-15-1300UTC-PAPER-RECOVERY",
+        scheduled_for="2026-09-15T13:00:00Z",
+        started_at="2026-09-15T13:30:00Z",
+        completed_at="2026-09-15T13:35:00Z",
         status="SUCCESS",
         trigger_source="RECOVERY",
         environment="PAPER",
@@ -214,7 +215,7 @@ def test_08_red_latch_persists_until_recovery(hb_manager):
 
 def test_09_no_hardcoded_next_run_value(hb_manager):
     """Verify next run is dynamically computed from trading days, not hardcoded 21:00."""
-    now_utc = datetime(2026, 9, 14, 12, 0, 0, tzinfo=timezone.utc) # 17:30 IST on trading day
+    now_utc = datetime(2026, 9, 15, 12, 0, 0, tzinfo=timezone.utc) # 17:30 IST on trading day
     next_utc, next_ist_str = hb_manager.calculate_next_expected_run(now_utc)
     assert "18:30:00 IST" in next_ist_str
     assert "21:00" not in next_ist_str
@@ -512,8 +513,9 @@ def test_failure_injection_test_i_dashboard_opens_with_supabase_unavailable(hb_m
 
 def test_failure_injection_test_j_no_heartbeat_past_1845_latches_missed(hb_manager):
     """Test J: No scheduler heartbeat after 18:45 IST on trading day -> SCHEDULER_MISSED, RED LATCH."""
-    # 18:46 IST on Monday Sept 14, 2026 = 13:16 UTC
-    now_past_tolerance = datetime(2026, 9, 14, 13, 16, 0, tzinfo=timezone.utc)
+    # 18:46 IST on Tuesday Sept 15, 2026 = 13:16 UTC
+    # 14 Sep 2026 is an official NSE holiday.
+    now_past_tolerance = datetime(2026, 9, 15, 13, 16, 0, tzinfo=timezone.utc)
     # Put an old record from Friday
     hb_manager.record_heartbeat(SchedulerInvocation(
         invocation_id="INV-2026-09-11-FRIDAY",

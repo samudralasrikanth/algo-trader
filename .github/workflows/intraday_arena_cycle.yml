@@ -1,0 +1,74 @@
+name: 📈 NEXUS Intraday Paper Arena Cycle
+
+# The primary trigger is the Netlify sentinel, which dispatches this workflow
+# every five minutes only during the NSE session.  workflow_dispatch remains
+# available for recovery/testing without weakening the market-clock guard.
+on:
+  workflow_dispatch:
+    inputs:
+      scheduled_date:
+        description: Target trading date (YYYY-MM-DD)
+        required: false
+        default: ''
+      invocation_id:
+        description: Sentinel invocation identity
+        required: false
+        default: ''
+      trigger_source:
+        description: Trigger source
+        required: false
+        default: MANUAL
+
+concurrency:
+  group: nexus-intraday-paper-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  execute-cycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: pip
+
+      - name: Install Dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install yfinance pandas requests python-dotenv
+
+      - name: Run Guarded Intraday Paper Cycle
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL || 'openai/gpt-4o-mini' }}
+          NEXUS_ENVIRONMENT: PAPER
+          PAPER_BROKER: upstox_sandbox
+        run: python3 run_intraday_cycle.py
+
+      - name: Refresh Dashboard Snapshot
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL: ${{ vars.OPENROUTER_MODEL || 'openai/gpt-4o-mini' }}
+          NEXUS_ENVIRONMENT: PAPER
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ vars.NETLIFY_SITE_ID }}
+        run: |
+          python3 generate_web_data.py
+          if [ -n "$NETLIFY_AUTH_TOKEN" ] && [ -n "$NETLIFY_SITE_ID" ]; then
+            npx -y netlify-cli deploy --dir=web_app --site "$NETLIFY_SITE_ID" --prod --no-build
+          fi

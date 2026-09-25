@@ -63,7 +63,11 @@ def export_web_dataset():
     orch = ArenaOrchestrator()
     arena_result = orch.run_cycle(
         predictions=night_preds,
-        force_execute=True,
+        # Rendering the dashboard must be read-only.  The previous force_execute
+        # call placed paper orders during the 20:30 forecast/export job, outside
+        # exchange hours, and made the next session appear already invested.
+        force_execute=False,
+        execute_trades=False,
     )
 
     # Revalue all positions with live market rates immediately after cycle
@@ -82,7 +86,6 @@ def export_web_dataset():
         arena_result["summary"]["total_arena_return_pct"] = round((arena_result["summary"]["total_arena_value"] - 10000000.0) / 10000000.0 * 100, 2)
 
         # Synchronize each agent's portfolio & leaderboard with live MTM rates
-        from event_agent.storage.ledger import get_agent_positions
         import collections
         open_db_pos = [p for p in get_agent_positions() if p.get("status") == "OPEN"]
         agent_pos_map = collections.defaultdict(list)

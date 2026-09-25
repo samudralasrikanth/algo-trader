@@ -62,7 +62,7 @@ class AgentMomentum(BaseAgent):
                 continue
 
             # Momentum threshold: Strong trend (>0.5% or <-0.5%) and conviction >= min_conviction (default 48.0% for paper trading)
-            min_conviction = float(os.getenv("MIN_AGENT_CONVICTION", "48.0"))
+            min_conviction = float(os.getenv("MIN_AGENT_CONVICTION", "60.0"))
             if abs(momentum_5d) >= 0.5 and conviction >= min_conviction:
                 candidates.append((symbol, data, abs(momentum_5d)))
 

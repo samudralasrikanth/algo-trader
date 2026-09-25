@@ -328,7 +328,10 @@ class EventSentinel:
             from event_agent.arena.orchestrator import ArenaOrchestrator
             orch = ArenaOrchestrator()
             market_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-            cycle_res = orch.run_cycle(market_date=market_date, force_execute=True)
+            # Event re-evaluation must still obey the exchange clock.  The old
+            # force_execute flag could create off-hours fills from a sentinel
+            # event received overnight.
+            cycle_res = orch.run_cycle(market_date=market_date, force_execute=False)
 
             if cycle_res:
                 decisions = cycle_res.get("decisions", [])

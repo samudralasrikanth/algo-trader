@@ -79,7 +79,7 @@ class AgentDefensive(BaseAgent):
                 continue
 
             # Defensive requires low beta (<0.95) or defensive sector, and conviction >= min_conviction
-            min_conviction = float(os.getenv("MIN_AGENT_CONVICTION", "48.0"))
+            min_conviction = float(os.getenv("MIN_AGENT_CONVICTION", "60.0"))
             is_low_beta = beta < 0.95 or any(ds.lower() in sector.lower() for ds in defensive_sectors)
 
             # Defensive applies sector-aware fundamental quality, leverage, and solvency filter

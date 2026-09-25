@@ -77,6 +77,7 @@ class ArenaOrchestrator:
         regime_data: Optional[Dict[str, Any]] = None,
         simulated_time: Optional[datetime] = None,
         force_execute: bool = False,
+        execute_trades: bool = True,
     ) -> Dict[str, Any]:
         """
         Execute a full Arena cycle:
@@ -229,7 +230,7 @@ class ArenaOrchestrator:
         # 5. Execute Approved Trades / Strategies via Broker
         executed_trades_info = []
         for trade, eval_obj in trade_evaluations:
-            if eval_obj.is_approved and eval_obj.adjusted_quantity > 0 and trade.action != TradeAction.NO_TRADE:
+            if execute_trades and eval_obj.is_approved and eval_obj.adjusted_quantity > 0 and trade.action != TradeAction.NO_TRADE:
                 if trade.strategy:
                     success, reason, strat = self.broker.execute_approved_strategy(
                         strategy=trade.strategy,
@@ -266,6 +267,7 @@ class ArenaOrchestrator:
 
         # 6. Mark to Market (Equities and Multi-Leg Options)
         self.broker.mark_to_market_revaluation(stock_prices)
+        triggered_exits = self.broker.close_triggered_positions(stock_prices) if execute_trades else []
         self.broker.mark_to_market_strategies(stock_prices, expiry_days_remaining=7)
 
         # 7. Compute Consensus Matrix across all 50 stocks
@@ -369,6 +371,7 @@ class ArenaOrchestrator:
             "execution_mode": "TEST / SIMULATION" if force_execute else "SCHEDULED_AUTOMATED",
             "audit_clock_eligible": not force_execute,
             "force_execute": force_execute,
+            "execute_trades": execute_trades,
             "fundamental_breadth": market_snapshot.get("fundamental_breadth"),
             "fundamental_regime": market_snapshot.get("fundamental_regime"),
             "market_clock": clock_status,
@@ -378,6 +381,7 @@ class ArenaOrchestrator:
             "decisions": decisions_log,
             "executed_trades_count": len(executed_trades_info),
             "executed_trades": executed_trades_info,
+            "triggered_exits": triggered_exits,
             "option_chain": nifty_chain.to_dict(),
             "recommended_options_strategies": recommended_options_strategies,
             "orders": [o.to_dict() for o in getattr(self.broker, "orders", {}).values()],
@@ -553,6 +557,7 @@ class ArenaOrchestrator:
             from ..storage.ledger import save_order
             for order in getattr(self.broker, "orders", {}).values():
                 save_order(order.to_dict())
+            from ..storage.supabase_ledger import save_arena_state_supabase
+            save_arena_state_supabase(self.broker.to_cloud_state(market_date, snapshot_id))
         except Exception as exc:
             logger.debug(f"Orders persistence: {exc}")
-

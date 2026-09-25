@@ -199,7 +199,8 @@ def build_web_payload(
             arena_cycle_result = orch.run_cycle(
                 predictions=predictions,
                 regime_data=regime_display,
-                force_execute=True,
+                force_execute=False,
+                execute_trades=False,
             )
         except Exception as e:
             logger.warning(f"Arena cycle execution fallback: {e}")
