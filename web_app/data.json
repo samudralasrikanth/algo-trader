@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2026-09-25T07:15:48.095787+00:00",
+    "generated_at": "2026-09-25T07:45:18.789090+00:00",
     "system_name": "NEXUS AI \u2014 ENTERPRISE MULTI-ASSET INVESTMENT INTELLIGENCE",
     "subtitle": "Equities \u2022 Derivatives (Paper Options & Futures) \u2022 \u20b91 Crore AI Arena \u2022 Real-time Risk Gate",
     "version_record": {
@@ -510,8 +510,8 @@
       "is_market_open": true,
       "can_accept_orders": true,
       "status_reason": "MARKET_ACTIVE: Order accepted for execution simulation.",
-      "ist_timestamp": "2026-09-25 12:45:44 IST",
-      "ist_time": "12:45 IST",
+      "ist_timestamp": "2026-09-25 13:15:10 IST",
+      "ist_time": "13:15 IST",
       "market_date": "2026-09-25",
       "order_cutoff_time": "15:30 IST",
       "forecast_run_time": "20:30 IST",
@@ -2440,7 +2440,7 @@
     ],
     "implied_volatility_pct": 13.8,
     "price_source": "MODELLED_BLACK_SCHOLES",
-    "as_of": "2026-09-25T07:15:47.812701+00:00"
+    "as_of": "2026-09-25T07:45:18.345758+00:00"
   },
   "recommended_options_strategies": [
     {
@@ -2541,7 +2541,7 @@
         "strategy_version": "OPT-1.0",
         "pricing_model": "BLACK_SCHOLES_VIX",
         "pricing_version": "BS-1.0",
-        "entry_time": "2026-09-25T07:15:47.812785+00:00",
+        "entry_time": "2026-09-25T07:45:18.345869+00:00",
         "closed_time": null,
         "exit_reason": ""
       },
@@ -2735,7 +2735,7 @@
         "strategy_version": "OPT-1.0",
         "pricing_model": "BLACK_SCHOLES_VIX",
         "pricing_version": "BS-1.0",
-        "entry_time": "2026-09-25T07:15:47.812831+00:00",
+        "entry_time": "2026-09-25T07:45:18.345934+00:00",
         "closed_time": null,
         "exit_reason": ""
       },
@@ -2930,7 +2930,7 @@
         "strategy_version": "OPT-1.0",
         "pricing_model": "BLACK_SCHOLES_VIX",
         "pricing_version": "BS-1.0",
-        "entry_time": "2026-09-25T07:15:47.812876+00:00",
+        "entry_time": "2026-09-25T07:45:18.345990+00:00",
         "closed_time": null,
         "exit_reason": ""
       },
@@ -3091,7 +3091,7 @@
         "strategy_version": "OPT-1.0",
         "pricing_model": "BLACK_SCHOLES_VIX",
         "pricing_version": "BS-1.0",
-        "entry_time": "2026-09-25T07:15:47.812908+00:00",
+        "entry_time": "2026-09-25T07:45:18.346027+00:00",
         "closed_time": null,
         "exit_reason": ""
       },
@@ -3931,7 +3931,7 @@
     "audit": {
       "provenance_mode": "SHA-256 Cryptographic Snapshot Lock",
       "snapshot_id": "f2dcc9bcc761b34e656dba540f785d18eb0c664625d8cbdff54ebaa2f589e58c",
-      "market_timestamp": "2026-09-25T07:15:48.095787+00:00",
+      "market_timestamp": "2026-09-25T07:45:18.789090+00:00",
       "integrity_status": "VERIFIED"
     }
   },
@@ -3943,7 +3943,7 @@
       "EVENT_DATA": "DEGRADED",
       "OPTION_CHAIN": "UNAVAILABLE"
     },
-    "last_checked": "2026-09-25T07:15:48.095787+00:00"
+    "last_checked": "2026-09-25T07:45:18.789090+00:00"
   },
   "execution_telemetry": {
     "data_quality": "GOOD",
@@ -5513,8 +5513,8 @@
       "is_market_open": true,
       "can_accept_orders": true,
       "status_reason": "MARKET_ACTIVE: Order accepted for execution simulation.",
-      "ist_timestamp": "2026-09-25 12:45:44 IST",
-      "ist_time": "12:45 IST",
+      "ist_timestamp": "2026-09-25 13:15:10 IST",
+      "ist_time": "13:15 IST",
       "market_date": "2026-09-25",
       "order_cutoff_time": "15:30 IST",
       "forecast_run_time": "20:30 IST",
@@ -7997,7 +7997,7 @@
       ]
     }
   },
-  "generated_at": "2026-09-25T12:45:50.519327",
+  "generated_at": "2026-09-25T13:15:21.771785",
   "next_trading_day": "2026-09-28",
   "scorecard": {
     "total_evaluations": 1594,
@@ -29513,10 +29513,10 @@
       "CAPTURED_SUCCESS": 72
     },
     "refactoring_priorities": [
-      "Weights and sensitivity for this sector/event type are well-calibrated. Maintain current parameter matrix.",
       "Incorporate intra-day live news polling and broaden sector peer contagion weights.",
+      "Tighten HOLD threshold bands to avoid false trigger entries on low conviction setups.",
       "Increase macro/Nifty broader index weight relative to single-stock headline score.",
-      "Tighten HOLD threshold bands to avoid false trigger entries on low conviction setups."
+      "Weights and sensitivity for this sector/event type are well-calibrated. Maintain current parameter matrix."
     ]
   },
   "job_logs": [
@@ -30928,7 +30928,7 @@
         1240.4,
         1248.0,
         1219.2,
-        1217.0
+        1216.4
       ],
       "volume": [
         12694362,
@@ -30997,7 +30997,7 @@
         10684376,
         8352048,
         13923795,
-        7572158
+        8293267
       ]
     },
     "HDFCBANK.NS": {
@@ -31344,7 +31344,7 @@
         738.6,
         737.25,
         728.9,
-        734.0
+        734.6
       ],
       "volume": [
         46707966,
@@ -31413,7 +31413,7 @@
         35483669,
         23197231,
         29575194,
-        10233611
+        11522426
       ]
     },
     "ICICIBANK.NS": {
@@ -31691,7 +31691,7 @@
         1333.8,
         1333.5,
         1330.1,
-        1326.2
+        1326.1
       ],
       "close": [
         1375.9,
@@ -31760,7 +31760,7 @@
         1339.6,
         1340.0,
         1334.5,
-        1327.8
+        1327.9
       ],
       "volume": [
         17173209,
@@ -31829,7 +31829,7 @@
         6433249,
         4758314,
         8653920,
-        3920004
+        4298676
       ]
     },
     "TCS.NS": {
@@ -32176,7 +32176,7 @@
         2105.0,
         2089.6,
         2087.0,
-        2079.0
+        2079.5
       ],
       "volume": [
         4738903,
@@ -32245,7 +32245,7 @@
         3641623,
         2228402,
         1760662,
-        1705592
+        1798727
       ]
     },
     "INFY.NS": {
@@ -32592,7 +32592,7 @@
         1029.4,
         1020.5,
         1014.5,
-        997.1
+        995.7
       ],
       "volume": [
         15866779,
@@ -32661,7 +32661,7 @@
         9341109,
         5108734,
         6891893,
-        6103771
+        6619599
       ]
     },
     "BHARTIARTL.NS": {
@@ -32939,7 +32939,7 @@
         1813.0,
         1818.0,
         1795.8,
-        1790.7
+        1787.3
       ],
       "close": [
         1827.7,
@@ -33008,7 +33008,7 @@
         1817.2,
         1833.2,
         1795.8,
-        1791.0
+        1788.8
       ],
       "volume": [
         8521503,
@@ -33077,7 +33077,7 @@
         4134236,
         3698253,
         4567379,
-        1902688
+        2183698
       ]
     },
     "SBIN.NS": {
@@ -33424,7 +33424,7 @@
         987.0,
         994.1,
         978.5,
-        979.7
+        979.9
       ],
       "volume": [
         16002360,
@@ -33493,7 +33493,7 @@
         6126235,
         4522248,
         13724672,
-        2204357
+        2375803
       ]
     },
     "LT.NS": {
@@ -33840,7 +33840,7 @@
         3866.4,
         3929.9,
         3858.4,
-        3855.2
+        3850.0
       ],
       "volume": [
         3104020,
@@ -33909,7 +33909,7 @@
         1355288,
         945462,
         1649308,
-        626611
+        699245
       ]
     },
     "ITC.NS": {
@@ -34256,7 +34256,7 @@
         265.8,
         270.15,
         268.0,
-        268.05
+        268.1
       ],
       "volume": [
         11230239,
@@ -34325,7 +34325,7 @@
         7177847,
         13142058,
         7398276,
-        3308093
+        3575270
       ]
     },
     "MARUTI.NS": {
@@ -34603,7 +34603,7 @@
         12142.0,
         12106.0,
         11975.0,
-        11997.0
+        11975.0
       ],
       "close": [
         13608.33,
@@ -34672,7 +34672,7 @@
         12190.0,
         12230.0,
         11990.0,
-        12012.0
+        11997.0
       ],
       "volume": [
         981556,
@@ -34741,7 +34741,7 @@
         246724,
         220483,
         393665,
-        81670
+        106938
       ]
     }
   },
@@ -34889,128 +34889,134 @@
     ]
   },
   "daily_video_report": {
-    "id": 110,
-    "report_date": "2026-09-24",
-    "job_run_id": "RUN-20260924-012741-0be66a82",
+    "report_date": "2026-09-18",
+    "job_run_id": "RUN-20260925-074531-0f78c026",
     "status": "PARTIAL_SUCCESS",
-    "total_trades": 2,
-    "winning_trades": 2,
+    "data_mode": "TEST_FIXTURE",
+    "total_trades": 1,
+    "winning_trades": 1,
     "losing_trades": 0,
     "win_rate": 100.0,
-    "gross_pnl": 5660.0,
-    "charges": 290.0,
-    "net_pnl": 5370.0,
-    "realized_pnl": 5370.0,
+    "gross_pnl": 4000.0,
+    "charges": 180.0,
+    "net_pnl": 3820.0,
+    "realized_pnl": 3820.0,
     "unrealized_pnl": 0.0,
     "best_trade": {
-      "trade_id": "TRD-SCHED-RELIANCE",
+      "trade_id": "TRD-E2E-1",
       "symbol": "RELIANCE.NS",
       "direction": "BUY",
-      "quantity": 80,
-      "entry_price": 2510.0,
-      "exit_price": 2562.0,
-      "net_pnl": 3980.0,
+      "quantity": 100,
+      "entry_price": 2500.0,
+      "exit_price": 2540.0,
+      "net_pnl": 3820.0,
       "agent_id": "ALPHA",
       "strategy": "Event_Arbitrage_V1",
-      "reason": "Pre-market catalyst beat street estimates"
+      "reason": "Earnings beat expectation"
     },
     "worst_trade": {
-      "trade_id": "TRD-SCHED-HDFC",
-      "symbol": "HDFCBANK.NS",
+      "trade_id": "TRD-E2E-1",
+      "symbol": "RELIANCE.NS",
       "direction": "BUY",
       "quantity": 100,
-      "entry_price": 1650.0,
-      "exit_price": 1665.0,
-      "net_pnl": 1390.0,
-      "agent_id": "BETA",
-      "strategy": "Momentum_V1",
-      "reason": "Credit growth expansion catalyst"
+      "entry_price": 2500.0,
+      "exit_price": 2540.0,
+      "net_pnl": 3820.0,
+      "agent_id": "ALPHA",
+      "strategy": "Event_Arbitrage_V1",
+      "reason": "Earnings beat expectation"
     },
     "best_strategy": "Event_Arbitrage_V1",
     "best_agent": "ALPHA",
     "prediction_direction": "NEUTRAL",
     "actual_direction": "NEUTRAL",
-    "prediction_correct": 1,
-    "ai_provider": "nexus_deterministic_analyst",
-    "ai_model": "openai/gpt-4o-mini",
-    "ai_request_id": "FALLBACK-2026-09-24",
-    "ai_latency_ms": 240,
+    "prediction_correct": true,
+    "ai_provider": "openrouter",
+    "ai_model": "test-mock",
+    "ai_request_id": "REQ-MOCK",
+    "ai_latency_ms": 10,
     "ai_tokens": {
-      "input_tokens": 0,
-      "output_tokens": 0,
-      "total_tokens": 0
+      "total_tokens": 100
     },
     "ai_status": "SUCCESS",
     "voice_provider": "elevenlabs",
     "voice_status": "SUCCESS",
-    "voice_duration_ms": 65596,
-    "video_provider": "nexus_local_engine",
-    "video_render_id": "LOCAL-VID-2026-09-24",
+    "voice_duration_ms": 68000,
+    "video_provider": "creatomate",
+    "video_render_id": "REND-MOCK-VID",
     "video_status": "SUCCESS",
-    "video_url": "/reports/videos/nexus_daily_report_2026-09-24.mp4",
-    "youtube_video_id": "pq07bgOfYAs",
-    "youtube_url": "https://youtu.be/pq07bgOfYAs",
+    "video_url": "https://creatomate.com/mock_short.mp4",
+    "video_duration_seconds": 70.0,
+    "thumbnail_url": "https://creatomate.com/mock_thumb.jpg",
+    "thumbnail_render_id": "REND-MOCK-THUMB",
+    "thumbnail_status": "SUCCESS",
+    "thumbnail_template": "RESULT",
+    "thumbnail_headline": "THE WINNING SIGNAL",
+    "content_theme": "STANDOUT_TRADE",
+    "content_score": 96.0,
+    "content_data_hash": "c18014b1eb7f374bf5b68cfc9bb1c4c19d345a5c9029bec321338e0d03f3ac1c",
+    "content_generated_at": "2026-09-25T07:45:31.298328+00:00",
+    "youtube_video_id": "YT-VID-MOCK",
+    "youtube_url": "https://youtu.be/YT-VID-MOCK",
     "youtube_status": "SUCCESS",
+    "youtube_upload_status": "SUCCESS",
+    "youtube_thumbnail_status": "SUCCESS",
     "email_status": "EMAIL_FAILED",
     "email_sent_at": null,
-    "created_at": "2026-09-24T06:58:16.282041",
-    "updated_at": "2026-09-24T06:58:16.282041",
-    "provenance_hash": "PRV-2026-09-24-84ec5b884fab9fa0",
+    "provenance_hash": "PRV-2026-09-18-6ad86c391c4b7d0d",
     "report_payload_json": {
       "data_mode": "TEST_FIXTURE",
       "reconciliation": {
-        "report_date": "2026-09-24",
+        "report_date": "2026-09-18",
         "trading_status": "ACTIVE_TRADING",
-        "total_trades": 2,
-        "buy_orders": 2,
+        "total_trades": 1,
+        "buy_orders": 1,
         "sell_orders": 0,
-        "winning_trades": 2,
+        "winning_trades": 1,
         "losing_trades": 0,
         "break_even_trades": 0,
         "win_rate": 100.0,
-        "gross_pnl": 5660.0,
-        "charges": 290.0,
-        "net_pnl": 5370.0,
-        "realized_pnl": 5370.0,
+        "gross_pnl": 4000.0,
+        "charges": 180.0,
+        "net_pnl": 3820.0,
+        "realized_pnl": 3820.0,
         "unrealized_pnl": 0.0,
-        "total_pnl": 5370.0,
+        "total_pnl": 3820.0,
         "exposure": 0.0,
         "open_positions_count": 0,
         "best_trade": {
-          "trade_id": "TRD-SCHED-RELIANCE",
+          "trade_id": "TRD-E2E-1",
           "symbol": "RELIANCE.NS",
           "direction": "BUY",
-          "quantity": 80,
-          "entry_price": 2510.0,
-          "exit_price": 2562.0,
-          "net_pnl": 3980.0,
+          "quantity": 100,
+          "entry_price": 2500.0,
+          "exit_price": 2540.0,
+          "net_pnl": 3820.0,
           "agent_id": "ALPHA",
           "strategy": "Event_Arbitrage_V1",
-          "reason": "Pre-market catalyst beat street estimates"
+          "reason": "Earnings beat expectation"
         },
         "worst_trade": {
-          "trade_id": "TRD-SCHED-HDFC",
-          "symbol": "HDFCBANK.NS",
+          "trade_id": "TRD-E2E-1",
+          "symbol": "RELIANCE.NS",
           "direction": "BUY",
           "quantity": 100,
-          "entry_price": 1650.0,
-          "exit_price": 1665.0,
-          "net_pnl": 1390.0,
-          "agent_id": "BETA",
-          "strategy": "Momentum_V1",
-          "reason": "Credit growth expansion catalyst"
+          "entry_price": 2500.0,
+          "exit_price": 2540.0,
+          "net_pnl": 3820.0,
+          "agent_id": "ALPHA",
+          "strategy": "Event_Arbitrage_V1",
+          "reason": "Earnings beat expectation"
         },
-        "avg_win_trade": 2685.0,
+        "avg_win_trade": 3820.0,
         "avg_loss_trade": 0.0,
         "profit_factor": 99.0,
         "max_drawdown_pct": 0.0,
         "strategy_pnl": {
-          "Event_Arbitrage_V1": 3980.0,
-          "Momentum_V1": 1390.0
+          "Event_Arbitrage_V1": 3820.0
         },
         "agent_pnl": {
-          "ALPHA": 3980.0,
-          "BETA": 1390.0
+          "ALPHA": 3820.0
         },
         "rejected_trades_count": 0,
         "risk_rejected_count": 0,
@@ -35031,73 +35037,60 @@
         "EMAIL": "EMAIL_FAILED",
         "WEB_SYNC": "PENDING"
       },
-      "ai_summary": "NEXUS autonomous trading session completed for 2026-09-24. Net settled P&L: INR 5,370.00 across 2 executed trades. Multi-agent consensus enforced systematic capital preservation with zero drawdown.",
-      "narration_script": "What did NEXUS discover today? Our pre-market event intelligence identified an asymmetric catalyst in RELIANCE, and the algorithm moved decisively. Alpha Agent triggered entry right at key institutional support, riding price momentum into the morning high. The result was an exceptional standalone gain of +\u20b93,980, leading our overall session to close at +\u20b95,370. Why did the trade work? Pre-market volume spikes signaled heavy accumulation before the broader market caught on. Our thirty-four-gate TradeGuard verified liquidity and maximum drawdown bounds before routing the order. The key systematic takeaway: disciplined catalyst identification consistently delivers alpha. NEXUS is now screening order books and momentum indicators for Monitoring Nifty 50 sector leaders for confirmed 5-agent consensus breakout signals. ahead of tomorrow's open. Trade smarter, live better. Reconciled paper trading report. Not financial advice.",
-      "lessons_learned": "Patience and selective execution during low-edge market regimes protects cumulative alpha.",
-      "tomorrow_watchlist": "Monitoring Nifty 50 sector leaders for confirmed 5-agent consensus breakout signals.",
+      "ai_summary": "Solid session with Reliance leading momentum alpha.",
+      "narration_script": "What did NEXUS discover today? Our pre-market event intelligence identified an asymmetric catalyst in RELIANCE, and the algorithm moved decisively. Alpha Agent triggered entry right at key institutional support, riding price momentum into the morning high. The result was an exceptional standalone gain of +\u20b93,820, leading our overall session to close at +\u20b93,820. Why did the trade work? Pre-market volume spikes signaled heavy accumulation before the broader market caught on. Our thirty-four-gate TradeGuard verified liquidity and maximum drawdown bounds before routing the order. The key systematic takeaway: disciplined catalyst identification consistently delivers alpha. NEXUS is now screening order books and momentum indicators for RELIANCE, TCS, INFY ahead of tomorrow's open. Trade smarter, live better. Reconciled paper trading report. Not financial advice.",
+      "lessons_learned": "Maintain disciplined event screening.",
+      "tomorrow_watchlist": "RELIANCE, TCS, INFY",
       "content_package": {
-        "report_date": "2026-09-24",
+        "report_date": "2026-09-18",
         "content_theme": "STANDOUT_TRADE",
         "content_score": 96.0,
-        "content_reason": "Exceptional trade in RELIANCE delivering +\u20b93,980.00 gain.",
+        "content_reason": "Exceptional trade in RELIANCE delivering +\u20b93,820.00 gain.",
         "hook": "NEXUS SPOTTED SOMETHING",
-        "result_headline": "+\u20b95,370",
-        "result_subheadline": "2 Trades \u2022 100% Win Rate",
+        "result_headline": "+\u20b93,820",
+        "result_subheadline": "1 Trades \u2022 100% Win Rate",
         "trade_headline": "RELIANCE WINNING SIGNAL",
-        "trade_subheadline": "Generated +\u20b93,980 \u2022 Event Momentum",
+        "trade_subheadline": "Generated +\u20b93,820 \u2022 Event Momentum",
         "agent_headline": "5 AI AGENTS. 1 DECISION.",
         "agent_subheadline": "Alpha \u00b7 Momentum \u00b7 Macro \u00b7 Defensive \u00b7 Contrarian",
         "risk_headline": "34 GATES VERIFIED",
         "risk_subheadline": "Position size, spread & session limits confirmed",
         "why_headline": "QUANTITATIVE ATTRIBUTION",
-        "why_subheadline": "NEXUS autonomous trading session completed for 2026-09-24. Net settled P&L: INR 5,370.00 a...",
+        "why_subheadline": "Solid session with Reliance leading momentum alpha....",
         "next_headline": "WHAT'S NEXT FOR NEXUS?",
-        "next_subheadline": "Tracking: Monitoring Nifty 50 sector leaders for confirmed 5-agent con",
+        "next_subheadline": "Tracking: RELIANCE, TCS, INFY",
         "close_headline": "TRADE SMARTER. LIVE BETTER.",
-        "video_script": "What did NEXUS discover today? Our pre-market event intelligence identified an asymmetric catalyst in RELIANCE, and the algorithm moved decisively. Alpha Agent triggered entry right at key institutional support, riding price momentum into the morning high. The result was an exceptional standalone gain of +\u20b93,980, leading our overall session to close at +\u20b95,370. Why did the trade work? Pre-market volume spikes signaled heavy accumulation before the broader market caught on. Our thirty-four-gate TradeGuard verified liquidity and maximum drawdown bounds before routing the order. The key systematic takeaway: disciplined catalyst identification consistently delivers alpha. NEXUS is now screening order books and momentum indicators for Monitoring Nifty 50 sector leaders for confirmed 5-agent consensus breakout signals. ahead of tomorrow's open. Trade smarter, live better. Reconciled paper trading report. Not financial advice.",
+        "video_script": "What did NEXUS discover today? Our pre-market event intelligence identified an asymmetric catalyst in RELIANCE, and the algorithm moved decisively. Alpha Agent triggered entry right at key institutional support, riding price momentum into the morning high. The result was an exceptional standalone gain of +\u20b93,820, leading our overall session to close at +\u20b93,820. Why did the trade work? Pre-market volume spikes signaled heavy accumulation before the broader market caught on. Our thirty-four-gate TradeGuard verified liquidity and maximum drawdown bounds before routing the order. The key systematic takeaway: disciplined catalyst identification consistently delivers alpha. NEXUS is now screening order books and momentum indicators for RELIANCE, TCS, INFY ahead of tomorrow's open. Trade smarter, live better. Reconciled paper trading report. Not financial advice.",
         "thumbnail_template": "SIGNAL",
         "thumbnail_headline": "THE WINNING SIGNAL",
-        "thumbnail_subheadline": "RELIANCE +\u20b93,980",
+        "thumbnail_subheadline": "RELIANCE +\u20b93,820",
         "thumbnail_accent_color": "#00F0FF",
         "thumbnail_badge_text": "SNIPER TRADE",
-        "net_pnl": 5370.0,
-        "total_trades": 2,
+        "net_pnl": 3820.0,
+        "total_trades": 1,
         "win_rate": 100.0,
         "best_trade_symbol": "RELIANCE.NS",
-        "best_trade_pnl": 3980.0,
-        "data_hash": "bce364549aca178f566c5b9567b32450efd295c6c9c5c14a38f9293e256bec4d",
+        "best_trade_pnl": 3820.0,
+        "data_hash": "c18014b1eb7f374bf5b68cfc9bb1c4c19d345a5c9029bec321338e0d03f3ac1c",
         "data_mode": "TEST_FIXTURE",
-        "generated_at": "2026-09-24T01:27:41.531602+00:00"
+        "generated_at": "2026-09-25T07:45:31.298328+00:00"
       },
       "thumbnail": {
         "status": "SUCCESS",
-        "render_id": "LOCAL-THUMB-2026-09-24",
-        "image_url": "/reports/thumbnails/nexus_daily_thumbnail_2026-09-24.jpg",
+        "render_id": "REND-MOCK-THUMB",
+        "image_url": "https://creatomate.com/mock_thumb.jpg",
         "output_format": "jpg",
         "width": 1280,
         "height": 720,
-        "template": "SIGNAL",
-        "headline": "THE WINNING SIGNAL",
-        "latency_ms": 22,
+        "template": "RESULT",
+        "headline": "+\u20b93,820",
+        "latency_ms": 0,
         "error_message": null,
-        "created_at": "2026-09-24T01:28:03.480419+00:00",
-        "completed_at": "2026-09-24T01:28:03.480405+00:00",
-        "template_id": "SIGNAL"
+        "created_at": "2026-09-25T07:45:31.297049+00:00",
+        "completed_at": null,
+        "template_id": "RESULT"
       }
-    },
-    "thumbnail_url": "/reports/thumbnails/nexus_daily_thumbnail_2026-09-24.jpg",
-    "thumbnail_render_id": "LOCAL-THUMB-2026-09-24",
-    "thumbnail_status": "SUCCESS",
-    "thumbnail_template": "SIGNAL",
-    "thumbnail_headline": "THE WINNING SIGNAL",
-    "video_duration_seconds": 70.0,
-    "content_theme": "STANDOUT_TRADE",
-    "content_score": 96.0,
-    "content_data_hash": "bce364549aca178f566c5b9567b32450efd295c6c9c5c14a38f9293e256bec4d",
-    "content_generated_at": "2026-09-24T01:27:41.531602+00:00",
-    "youtube_upload_status": "SUCCESS",
-    "youtube_thumbnail_status": "SUCCESS",
-    "data_mode": "TEST_FIXTURE"
+    }
   },
   "daily_video_report_history": [
     {
@@ -35996,7 +35989,7 @@
     {
       "id": 38,
       "report_date": "2026-09-18",
-      "job_run_id": "RUN-20260925-071454-13341f84",
+      "job_run_id": "RUN-20260925-074531-0f78c026",
       "status": "PARTIAL_SUCCESS",
       "total_trades": 1,
       "winning_trades": 1,
@@ -36057,8 +36050,8 @@
       "email_status": "EMAIL_FAILED",
       "email_sent_at": null,
       "created_at": "2026-09-13T17:54:55.801996",
-      "updated_at": "2026-09-25T12:44:54.509242",
-      "provenance_hash": "PRV-2026-09-18-703d6586ae9fc3bd",
+      "updated_at": "2026-09-25T13:15:31.310759",
+      "provenance_hash": "PRV-2026-09-18-6ad86c391c4b7d0d",
       "report_payload_json": {
         "data_mode": "TEST_FIXTURE",
         "reconciliation": {
@@ -36168,7 +36161,7 @@
           "best_trade_pnl": 3820.0,
           "data_hash": "c18014b1eb7f374bf5b68cfc9bb1c4c19d345a5c9029bec321338e0d03f3ac1c",
           "data_mode": "TEST_FIXTURE",
-          "generated_at": "2026-09-25T07:14:54.494396+00:00"
+          "generated_at": "2026-09-25T07:45:31.298328+00:00"
         },
         "thumbnail": {
           "status": "SUCCESS",
@@ -36181,7 +36174,7 @@
           "headline": "+\u20b93,820",
           "latency_ms": 0,
           "error_message": null,
-          "created_at": "2026-09-25T07:14:54.493209+00:00",
+          "created_at": "2026-09-25T07:45:31.297049+00:00",
           "completed_at": null,
           "template_id": "RESULT"
         }
@@ -36195,7 +36188,7 @@
       "content_theme": "STANDOUT_TRADE",
       "content_score": 96.0,
       "content_data_hash": "c18014b1eb7f374bf5b68cfc9bb1c4c19d345a5c9029bec321338e0d03f3ac1c",
-      "content_generated_at": "2026-09-25T07:14:54.494396+00:00",
+      "content_generated_at": "2026-09-25T07:45:31.298328+00:00",
       "youtube_upload_status": "SUCCESS",
       "youtube_thumbnail_status": "SUCCESS",
       "data_mode": "TEST_FIXTURE"
@@ -37202,7 +37195,7 @@
       "Baseline 6: NIFTY Direction": 54.2,
       "Baseline 7: Simple RSI-14": 52.1
     },
-    "generated_at": "2026-09-25T07:14:55.734527+00:00"
+    "generated_at": "2026-09-25T07:45:32.324370+00:00"
   },
   "certification_v36": {
     "is_certified": true,
@@ -37279,7 +37272,7 @@
       "is_converged": false,
       "status": "ACCEPTABLE"
     },
-    "timestamp": "2026-09-25T07:15:22.276174+00:00"
+    "timestamp": "2026-09-25T07:45:55.040158+00:00"
   },
   "next_scheduled_runs": {
     "next_run_utc": "2026-09-24T12:30:00+00:00",
@@ -43631,18 +43624,258 @@
     "substatus": "AUTHENTICATED",
     "provider": "openrouter",
     "configured": true,
-    "credential_fingerprint": "SHA256:ba2d43617115d7f5",
+    "credential_fingerprint": "SHA256:92cd102cc57fab4e",
     "inference_mode": "OPENROUTER_LIVE",
     "model": "openai/gpt-4o-mini",
-    "request_id": "gen-1790320550-MBvifyNlYJ0LK2FxFT0p",
-    "latency_ms": 1514,
+    "request_id": "gen-1790322322-W4eUAIFpFGYw0XKfPeGz",
+    "latency_ms": 1299,
     "input_tokens": 8,
     "output_tokens": 5,
     "total_tokens": 13,
     "cost_usd": 4e-06,
-    "last_success": "2026-09-25T07:15:52.511582+00:00",
+    "last_success": "2026-09-25T07:45:23.286932+00:00",
     "last_failure": null,
     "recent_inferences": [
+      {
+        "id": 347,
+        "ai_request_id": "failed_1790322318325",
+        "market_date": "2026-09-25",
+        "call_type": "DECISION_THESIS",
+        "agent_id": "DEFENSIVE",
+        "symbol": "BAJAJ-AUTO.NS",
+        "prediction_id": null,
+        "decision_id": null,
+        "model": "openai/gpt-4o-mini",
+        "model_provider": "openrouter",
+        "input_hash": "137b3cfff32b3165a14c347c9619087cbe17a1410d73cec02bf041cdeef2189e",
+        "output_hash": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0,
+        "latency_ms": 1940,
+        "http_status": 402,
+        "status": "CREDIT_EXHAUSTED",
+        "error_message": "HTTP Error 402: Payment Required",
+        "finish_reason": "stop",
+        "created_at": "2026-09-25T07:45:18.331580+00:00"
+      },
+      {
+        "id": 346,
+        "ai_request_id": "failed_1790322316375",
+        "market_date": "2026-09-25",
+        "call_type": "DECISION_THESIS",
+        "agent_id": "DEFENSIVE",
+        "symbol": "NESTLEIND.NS",
+        "prediction_id": null,
+        "decision_id": null,
+        "model": "openai/gpt-4o-mini",
+        "model_provider": "openrouter",
+        "input_hash": "325d39fe5a698c82b19ee84f748034385d446b75b4ff9770bed7a267e8348abb",
+        "output_hash": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0,
+        "latency_ms": 289,
+        "http_status": 402,
+        "status": "CREDIT_EXHAUSTED",
+        "error_message": "HTTP Error 402: Payment Required",
+        "finish_reason": "stop",
+        "created_at": "2026-09-25T07:45:16.379894+00:00"
+      },
+      {
+        "id": 345,
+        "ai_request_id": "failed_1790322316074",
+        "market_date": "2026-09-25",
+        "call_type": "DECISION_THESIS",
+        "agent_id": "MACRO",
+        "symbol": "M&M.NS",
+        "prediction_id": null,
+        "decision_id": null,
+        "model": "openai/gpt-4o-mini",
+        "model_provider": "openrouter",
+        "input_hash": "41098cc91fffb273efd0792e1b260d3bf97ea70ada7dff5bdc326fd217787354",
+        "output_hash": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0,
+        "latency_ms": 1965,
+        "http_status": 402,
+        "status": "CREDIT_EXHAUSTED",
+        "error_message": "HTTP Error 402: Payment Required",
+        "finish_reason": "stop",
+        "created_at": "2026-09-25T07:45:16.079601+00:00"
+      },
+      {
+        "id": 344,
+        "ai_request_id": "failed_1790322314097",
+        "market_date": "2026-09-25",
+        "call_type": "DECISION_THESIS",
+        "agent_id": "MACRO",
+        "symbol": "BAJAJ-AUTO.NS",
+        "prediction_id": null,
+        "decision_id": null,
+        "model": "openai/gpt-4o-mini",
+        "model_provider": "openrouter",
+        "input_hash": "fe8914f374ef73425d8f4f77b926087e1a168aa41e06e235f049a3929bd3aeb3",
+        "output_hash": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0,
+        "latency_ms": 268,
+        "http_status": 402,
+        "status": "CREDIT_EXHAUSTED",
+        "error_message": "HTTP Error 402: Payment Required",
+        "finish_reason": "stop",
+        "created_at": "2026-09-25T07:45:14.103077+00:00"
+      },
+      {
+        "id": 343,
+        "ai_request_id": "failed_1790322313817",
+        "market_date": "2026-09-25",
+        "call_type": "DECISION_THESIS",
+        "agent_id": "MOMENTUM",
+        "symbol": "BAJAJ-AUTO.NS",
+        "prediction_id": null,
+        "decision_id": null,
+        "model": "openai/gpt-4o-mini",
+        "model_provider": "openrouter",
+        "input_hash": "99f2aa0f60a1fbee6a065b8bce07aa7b7c344046ca5f864df4c10ecda564f176",
+        "output_hash": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0,
+        "latency_ms": 220,
+        "http_status": 402,
+        "status": "CREDIT_EXHAUSTED",
+        "error_message": "HTTP Error 402: Payment Required",
+        "finish_reason": "stop",
+        "created_at": "2026-09-25T07:45:13.823846+00:00"
+      },
+      {
+        "id": 342,
+        "ai_request_id": "failed_1790322313587",
+        "market_date": "2026-09-25",
+        "call_type": "DECISION_THESIS",
+        "agent_id": "MOMENTUM",
+        "symbol": "M&M.NS",
+        "prediction_id": null,
+        "decision_id": null,
+        "model": "openai/gpt-4o-mini",
+        "model_provider": "openrouter",
+        "input_hash": "193b916d798abd1c47a0d05bb054ce64b1ada2e9614d52ce2bc828f9a436401f",
+        "output_hash": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0,
+        "latency_ms": 294,
+        "http_status": 402,
+        "status": "CREDIT_EXHAUSTED",
+        "error_message": "HTTP Error 402: Payment Required",
+        "finish_reason": "stop",
+        "created_at": "2026-09-25T07:45:13.592198+00:00"
+      },
+      {
+        "id": 341,
+        "ai_request_id": "failed_1790322313283",
+        "market_date": "2026-09-25",
+        "call_type": "DECISION_THESIS",
+        "agent_id": "MOMENTUM",
+        "symbol": "LT.NS",
+        "prediction_id": null,
+        "decision_id": null,
+        "model": "openai/gpt-4o-mini",
+        "model_provider": "openrouter",
+        "input_hash": "baf992daeae4f91489cd39c73275e1d1fe1ebc3d72f00e276c1994e439c40c85",
+        "output_hash": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0,
+        "latency_ms": 273,
+        "http_status": 402,
+        "status": "CREDIT_EXHAUSTED",
+        "error_message": "HTTP Error 402: Payment Required",
+        "finish_reason": "stop",
+        "created_at": "2026-09-25T07:45:13.288598+00:00"
+      },
+      {
+        "id": 340,
+        "ai_request_id": "failed_1790322312999",
+        "market_date": "2026-09-25",
+        "call_type": "DECISION_THESIS",
+        "agent_id": "ALPHA",
+        "symbol": "M&M.NS",
+        "prediction_id": null,
+        "decision_id": null,
+        "model": "openai/gpt-4o-mini",
+        "model_provider": "openrouter",
+        "input_hash": "912df8734a442cb93ee7dde965b02119436e3903fc5f9f875031752a4eda280f",
+        "output_hash": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0,
+        "latency_ms": 1941,
+        "http_status": 402,
+        "status": "CREDIT_EXHAUSTED",
+        "error_message": "HTTP Error 402: Payment Required",
+        "finish_reason": "stop",
+        "created_at": "2026-09-25T07:45:13.004395+00:00"
+      },
+      {
+        "id": 339,
+        "ai_request_id": "failed_1790322311046",
+        "market_date": "2026-09-25",
+        "call_type": "DECISION_THESIS",
+        "agent_id": "ALPHA",
+        "symbol": "BAJAJ-AUTO.NS",
+        "prediction_id": null,
+        "decision_id": null,
+        "model": "openai/gpt-4o-mini",
+        "model_provider": "openrouter",
+        "input_hash": "9c5fdcb5caefe39afb11b1345664274ce2701832e7d8a2d24b1692a5f24f0a78",
+        "output_hash": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0,
+        "latency_ms": 302,
+        "http_status": 402,
+        "status": "CREDIT_EXHAUSTED",
+        "error_message": "HTTP Error 402: Payment Required",
+        "finish_reason": "stop",
+        "created_at": "2026-09-25T07:45:11.052032+00:00"
+      },
+      {
+        "id": 338,
+        "ai_request_id": "failed_1790322310729",
+        "market_date": "2026-09-25",
+        "call_type": "DECISION_THESIS",
+        "agent_id": "ALPHA",
+        "symbol": "LT.NS",
+        "prediction_id": null,
+        "decision_id": null,
+        "model": "openai/gpt-4o-mini",
+        "model_provider": "openrouter",
+        "input_hash": "e93c3b8e7f32fb4ff2e9720ab749eb742796c59cdd989ac022ad994803477eda",
+        "output_hash": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0,
+        "latency_ms": 622,
+        "http_status": 402,
+        "status": "CREDIT_EXHAUSTED",
+        "error_message": "HTTP Error 402: Payment Required",
+        "finish_reason": "stop",
+        "created_at": "2026-09-25T07:45:10.735356+00:00"
+      },
       {
         "id": 337,
         "ai_request_id": "failed_1790320547802",
@@ -44002,246 +44235,6 @@
         "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
         "finish_reason": "stop",
         "created_at": "2026-09-25T07:12:38.180998+00:00"
-      },
-      {
-        "id": 322,
-        "ai_request_id": "failed_1790320358173",
-        "market_date": "2026-09-25",
-        "call_type": "DECISION_THESIS",
-        "agent_id": "MOMENTUM",
-        "symbol": "M&M.NS",
-        "prediction_id": null,
-        "decision_id": null,
-        "model": "openai/gpt-4o-mini",
-        "model_provider": "openrouter",
-        "input_hash": "193b916d798abd1c47a0d05bb054ce64b1ada2e9614d52ce2bc828f9a436401f",
-        "output_hash": "",
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "cost_usd": 0.0,
-        "latency_ms": 2,
-        "http_status": 500,
-        "status": "INFERENCE_FAILED",
-        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
-        "finish_reason": "stop",
-        "created_at": "2026-09-25T07:12:38.174520+00:00"
-      },
-      {
-        "id": 321,
-        "ai_request_id": "failed_1790320358167",
-        "market_date": "2026-09-25",
-        "call_type": "DECISION_THESIS",
-        "agent_id": "MOMENTUM",
-        "symbol": "LT.NS",
-        "prediction_id": null,
-        "decision_id": null,
-        "model": "openai/gpt-4o-mini",
-        "model_provider": "openrouter",
-        "input_hash": "baf992daeae4f91489cd39c73275e1d1fe1ebc3d72f00e276c1994e439c40c85",
-        "output_hash": "",
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "cost_usd": 0.0,
-        "latency_ms": 2,
-        "http_status": 500,
-        "status": "INFERENCE_FAILED",
-        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
-        "finish_reason": "stop",
-        "created_at": "2026-09-25T07:12:38.169190+00:00"
-      },
-      {
-        "id": 320,
-        "ai_request_id": "failed_1790320358162",
-        "market_date": "2026-09-25",
-        "call_type": "DECISION_THESIS",
-        "agent_id": "ALPHA",
-        "symbol": "M&M.NS",
-        "prediction_id": null,
-        "decision_id": null,
-        "model": "openai/gpt-4o-mini",
-        "model_provider": "openrouter",
-        "input_hash": "912df8734a442cb93ee7dde965b02119436e3903fc5f9f875031752a4eda280f",
-        "output_hash": "",
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "cost_usd": 0.0,
-        "latency_ms": 2,
-        "http_status": 500,
-        "status": "INFERENCE_FAILED",
-        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
-        "finish_reason": "stop",
-        "created_at": "2026-09-25T07:12:38.163972+00:00"
-      },
-      {
-        "id": 319,
-        "ai_request_id": "failed_1790320358156",
-        "market_date": "2026-09-25",
-        "call_type": "DECISION_THESIS",
-        "agent_id": "ALPHA",
-        "symbol": "BAJAJ-AUTO.NS",
-        "prediction_id": null,
-        "decision_id": null,
-        "model": "openai/gpt-4o-mini",
-        "model_provider": "openrouter",
-        "input_hash": "9c5fdcb5caefe39afb11b1345664274ce2701832e7d8a2d24b1692a5f24f0a78",
-        "output_hash": "",
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "cost_usd": 0.0,
-        "latency_ms": 2,
-        "http_status": 500,
-        "status": "INFERENCE_FAILED",
-        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
-        "finish_reason": "stop",
-        "created_at": "2026-09-25T07:12:38.157884+00:00"
-      },
-      {
-        "id": 318,
-        "ai_request_id": "failed_1790320358151",
-        "market_date": "2026-09-25",
-        "call_type": "DECISION_THESIS",
-        "agent_id": "ALPHA",
-        "symbol": "LT.NS",
-        "prediction_id": null,
-        "decision_id": null,
-        "model": "openai/gpt-4o-mini",
-        "model_provider": "openrouter",
-        "input_hash": "e93c3b8e7f32fb4ff2e9720ab749eb742796c59cdd989ac022ad994803477eda",
-        "output_hash": "",
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "cost_usd": 0.0,
-        "latency_ms": 2,
-        "http_status": 500,
-        "status": "INFERENCE_FAILED",
-        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
-        "finish_reason": "stop",
-        "created_at": "2026-09-25T07:12:38.152296+00:00"
-      },
-      {
-        "id": 317,
-        "ai_request_id": "failed_1790320358047",
-        "market_date": "2026-09-25",
-        "call_type": "DECISION_THESIS",
-        "agent_id": "DEFENSIVE",
-        "symbol": "TCS.NS",
-        "prediction_id": null,
-        "decision_id": null,
-        "model": "openai/gpt-4o-mini",
-        "model_provider": "openrouter",
-        "input_hash": "f84fd76028f7b4d868cbbbddcdb6eb2b1eafd012eba628ad25003e13b9a696c3",
-        "output_hash": "",
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "cost_usd": 0.0,
-        "latency_ms": 3,
-        "http_status": 500,
-        "status": "INFERENCE_FAILED",
-        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
-        "finish_reason": "stop",
-        "created_at": "2026-09-25T07:12:38.049058+00:00"
-      },
-      {
-        "id": 316,
-        "ai_request_id": "failed_1790320358041",
-        "market_date": "2026-09-25",
-        "call_type": "DECISION_THESIS",
-        "agent_id": "MACRO",
-        "symbol": "TCS.NS",
-        "prediction_id": null,
-        "decision_id": null,
-        "model": "openai/gpt-4o-mini",
-        "model_provider": "openrouter",
-        "input_hash": "89cc7589804cf8cd7e5e1d7681468c3492e8e6470ad1037d872789f7c608f355",
-        "output_hash": "",
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "cost_usd": 0.0,
-        "latency_ms": 2,
-        "http_status": 500,
-        "status": "INFERENCE_FAILED",
-        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
-        "finish_reason": "stop",
-        "created_at": "2026-09-25T07:12:38.042263+00:00"
-      },
-      {
-        "id": 315,
-        "ai_request_id": "failed_1790320358035",
-        "market_date": "2026-09-25",
-        "call_type": "DECISION_THESIS",
-        "agent_id": "MOMENTUM",
-        "symbol": "TCS.NS",
-        "prediction_id": null,
-        "decision_id": null,
-        "model": "openai/gpt-4o-mini",
-        "model_provider": "openrouter",
-        "input_hash": "4c0ace46f18d31539663abdeca61ea7f556b8d9727d85df3c5911a802308137d",
-        "output_hash": "",
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "cost_usd": 0.0,
-        "latency_ms": 2,
-        "http_status": 500,
-        "status": "INFERENCE_FAILED",
-        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
-        "finish_reason": "stop",
-        "created_at": "2026-09-25T07:12:38.036583+00:00"
-      },
-      {
-        "id": 314,
-        "ai_request_id": "failed_1790320358028",
-        "market_date": "2026-09-25",
-        "call_type": "DECISION_THESIS",
-        "agent_id": "ALPHA",
-        "symbol": "TCS.NS",
-        "prediction_id": null,
-        "decision_id": null,
-        "model": "openai/gpt-4o-mini",
-        "model_provider": "openrouter",
-        "input_hash": "960d1073ffab640de9661de6a00aef2bfba52a592c104fcfc334f733a188bff8",
-        "output_hash": "",
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "cost_usd": 0.0,
-        "latency_ms": 2,
-        "http_status": 500,
-        "status": "INFERENCE_FAILED",
-        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
-        "finish_reason": "stop",
-        "created_at": "2026-09-25T07:12:38.030605+00:00"
-      },
-      {
-        "id": 313,
-        "ai_request_id": "failed_1790320357953",
-        "market_date": "2026-09-25",
-        "call_type": "DECISION_THESIS",
-        "agent_id": "DEFENSIVE",
-        "symbol": "TCS.NS",
-        "prediction_id": null,
-        "decision_id": null,
-        "model": "openai/gpt-4o-mini",
-        "model_provider": "openrouter",
-        "input_hash": "f84fd76028f7b4d868cbbbddcdb6eb2b1eafd012eba628ad25003e13b9a696c3",
-        "output_hash": "",
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "cost_usd": 0.0,
-        "latency_ms": 2,
-        "http_status": 500,
-        "status": "INFERENCE_FAILED",
-        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
-        "finish_reason": "stop",
-        "created_at": "2026-09-25T07:12:37.955123+00:00"
       }
     ]
   },
@@ -44506,7 +44499,7 @@
         "category": "GOVERNANCE"
       }
     ],
-    "evaluated_at": "2026-09-25T07:15:50.524786+00:00"
+    "evaluated_at": "2026-09-25T07:45:21.777009+00:00"
   },
   "v4_six_month_calendar": {
     "is_clock_started": false,
@@ -44606,7 +44599,7 @@
     "p95_max_drawdown_pct": 0.8,
     "p99_max_drawdown_pct": 1.0,
     "expected_recovery_trades": 14,
-    "evaluated_at": "2026-09-25T07:15:50.562003+00:00"
+    "evaluated_at": "2026-09-25T07:45:21.814176+00:00"
   },
   "v4_stress_test_summary": {
     "total_scenarios": 30,
@@ -47619,12 +47612,12 @@
     }
   ],
   "event_sentinel": {
-    "status": "HEALTHY",
+    "status": "DEGRADED",
     "scheduler_cron": "*/5 * * * *",
     "cadence": "Every 5 minutes",
     "last_scan": "2026-09-25T07:15:25.030916+00:00",
-    "next_expected_invocation": "2026-09-25 07:20:00 UTC",
-    "last_error": null,
+    "next_expected_invocation": "2026-09-25 07:50:00 UTC",
+    "last_error": "Heartbeat overdue: last scan 30m ago (schedule: 5m)",
     "telemetry": {
       "scheduled_invocation_id": "SCHED-TEST-1790320525",
       "sentinel_invocation_id": "SENT-TEST-1790320525030",
@@ -48002,10 +47995,10 @@
     "active_source": "REFERENCE_DATASET",
     "trade_eligible": false,
     "data_mode": "REFERENCE_ONLY",
-    "data_as_of": "2026-08-26T07:15:52.519673+00:00",
+    "data_as_of": "2026-08-26T07:45:23.290688+00:00",
     "financial_period": "Q1 FY27",
-    "snapshot_id": "PIT-20260925-071552-RELIANCE",
-    "provenance_hash": "040ebe720bda4c7b1cc397603fa627baf8675ee25a37f952a8d9d0618382a613",
+    "snapshot_id": "PIT-20260925-074523-RELIANCE",
+    "provenance_hash": "2b21a33781f23d7d4df5abdf2e9fa9c05a327543803057383c9da1f08feec679",
     "fundamental_regime": "INSUFFICIENT_DATA",
     "breadth": {
       "total_equities": 8,
@@ -48022,7 +48015,7 @@
     "sample_symbol": "RELIANCE.NS",
     "sample_snapshot": {
       "symbol": "RELIANCE.NS",
-      "as_of": "2026-08-26T07:15:52.519673+00:00",
+      "as_of": "2026-08-26T07:45:23.290688+00:00",
       "source": "REFERENCE_DATASET",
       "data_mode": "REFERENCE_ONLY",
       "financial_period": "Q1 FY27",
@@ -48061,7 +48054,7 @@
       "balance_sheet_score": 81.25,
       "fundamental_regime": "MIXED",
       "freshness": "FRESH",
-      "provenance_hash": "d69e72ea3b7cfb5036381c8b7c7d5eecdfaba0d0cd70f128843334ae19945380",
+      "provenance_hash": "9ee565ba36c1ccd2d21bbc3690837372e994cc3593109c2ca867f5698f4797dc",
       "is_available": true,
       "is_fresh": true
     },
