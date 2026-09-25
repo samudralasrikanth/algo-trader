@@ -35,10 +35,11 @@ if "your-service-role-key" in SUPABASE_SERVICE_KEY:
 
 
 def get_headers(use_service_role: bool = True) -> Dict[str, str]:
-    # Cloud workers are intentionally provisioned with the service-role key only.
-    # Falling back to it for reads keeps ephemeral GitHub runners functional when
-    # SUPABASE_ANON_KEY is not configured, without exposing it to the browser.
-    key = SUPABASE_SERVICE_KEY if use_service_role else (SUPABASE_ANON_KEY or SUPABASE_SERVICE_KEY)
+    # This module is server-side only. Cloud workers must use the service-role
+    # credential for both reads and writes: a stale or missing anon key on an
+    # ephemeral GitHub runner must never make an authoritative forecast appear
+    # absent. The service-role key is never returned to the browser.
+    key = SUPABASE_SERVICE_KEY if use_service_role else (SUPABASE_SERVICE_KEY or SUPABASE_ANON_KEY)
     return {
         "apikey": key,
         "Authorization": f"Bearer {key}",
@@ -93,7 +94,7 @@ def get_night_predictions_supabase(target_date: Optional[str] = None) -> List[Di
         if target_date:
             url += f"&target_trade_date=eq.{target_date}"
         url += "&order=target_trade_date.desc,created_at.desc"
-        res = requests.get(url, headers=get_headers(False), timeout=10)
+        res = requests.get(url, headers=get_headers(True), timeout=10)
         if res.status_code == 200:
             return res.json()
     except Exception as e:
@@ -142,7 +143,7 @@ def get_latest_arena_state_supabase() -> Optional[Dict[str, Any]]:
             "?job_type=eq.ARENA_STATE_SNAPSHOT&status=eq.SUCCESS"
             "&select=log_summary&order=completed_at.desc&limit=1"
         )
-        res = requests.get(url, headers=get_headers(False), timeout=15)
+        res = requests.get(url, headers=get_headers(True), timeout=15)
         if res.status_code == 200 and res.json():
             raw = res.json()[0].get("log_summary")
             return json.loads(raw) if raw else None
@@ -200,7 +201,7 @@ def get_daily_audits_supabase(start_date: Optional[str] = None, end_date: Option
             url += f"&trade_date=gte.{start_date}"
         if end_date:
             url += f"&trade_date=lte.{end_date}"
-        res = requests.get(url, headers=get_headers(False), timeout=10)
+        res = requests.get(url, headers=get_headers(True), timeout=10)
         if res.status_code == 200:
             return res.json()
     except Exception as e:
@@ -245,7 +246,7 @@ def get_job_logs_supabase(limit: int = 50) -> List[Dict[str, Any]]:
         return []
     try:
         url = f"{SUPABASE_URL}/rest/v1/job_execution_logs?select=*&order=started_at.desc&limit={limit}"
-        res = requests.get(url, headers=get_headers(False), timeout=10)
+        res = requests.get(url, headers=get_headers(True), timeout=10)
         if res.status_code == 200:
             return res.json()
     except Exception as e:
@@ -468,7 +469,7 @@ def get_latest_sentinel_telemetry_supabase() -> Optional[Dict[str, Any]]:
     # 1. Try dedicated table
     try:
         url = f"{SUPABASE_URL}/rest/v1/sentinel_invocations?select=*&order=completed_at.desc&limit=1"
-        res = requests.get(url, headers=get_headers(False), timeout=10)
+        res = requests.get(url, headers=get_headers(True), timeout=10)
         if res.status_code == 200 and res.json():
             return res.json()[0]
     except Exception:
@@ -477,7 +478,7 @@ def get_latest_sentinel_telemetry_supabase() -> Optional[Dict[str, Any]]:
     # 2. Try scheduler_invocations with trigger_source = NETLIFY_SENTINEL
     try:
         url_sched = f"{SUPABASE_URL}/rest/v1/scheduler_invocations?trigger_source=eq.NETLIFY_SENTINEL&order=started_at.desc&limit=1"
-        res_sched = requests.get(url_sched, headers=get_headers(False), timeout=10)
+        res_sched = requests.get(url_sched, headers=get_headers(True), timeout=10)
         if res_sched.status_code == 200 and res_sched.json():
             row = res_sched.json()[0]
             # Parse payload from job_run_id if present
