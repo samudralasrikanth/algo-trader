@@ -3,6 +3,7 @@
 # run_night_forecast.py — Pre-Market / Night Forecast Runner for Tomorrow (v3.0)
 # =============================================================================
 
+import os
 import sys
 from datetime import datetime, date, timedelta
 from typing import Optional
@@ -24,11 +25,42 @@ def get_next_trading_day(ref_date: Optional[date] = None) -> str:
     return next_day.strftime("%Y-%m-%d")
 
 
+def get_forecast_target_date(ref_dt: Optional[datetime] = None) -> str:
+    """Resolve the session this forecast should feed.
+
+    GitHub Actions schedules can be delayed past midnight. In that case,
+    blindly forecasting tomorrow skips the current session and leaves the
+    intraday cycle with no locked predictions. Before the NSE opens, a run
+    should therefore target today's trading session; after the open it should
+    target the next trading session.
+
+    FORECAST_TARGET_DATE is an explicit recovery/operator override used by
+    workflow_dispatch and is validated against the NSE trading calendar.
+    """
+    override = os.getenv("FORECAST_TARGET_DATE", "").strip()
+    if override:
+        try:
+            requested = date.fromisoformat(override)
+        except ValueError as exc:
+            raise ValueError("FORECAST_TARGET_DATE must be YYYY-MM-DD") from exc
+        if not MarketClock.is_trading_day(datetime.combine(requested, datetime.min.time())):
+            raise ValueError(f"FORECAST_TARGET_DATE is not an NSE trading day: {override}")
+        return override
+
+    current = ref_dt or datetime.now()
+    current_date = current.date()
+    if MarketClock.is_trading_day(datetime.combine(current_date, datetime.min.time())):
+        market_minutes = current.hour * 60 + current.minute
+        if market_minutes < 9 * 60 + 15:
+            return current_date.strftime("%Y-%m-%d")
+    return get_next_trading_day(current_date)
+
+
 def run_night_forecast_cycle():
     start_time = datetime.now().isoformat()
     init_db()
     today_str = datetime.now().strftime("%Y-%m-%d")
-    tomorrow_trade_date = get_next_trading_day()
+    target_trade_date = get_forecast_target_date()
     version_rec = get_current_version_record()
     
     print("""
@@ -38,24 +70,24 @@ def run_night_forecast_cycle():
 ╚═══════════════════════════════════════════════════════════════════════════════════╝
     """)
     print(f"[*] Forecast Generated On : {today_str} (Pre-Market / Evening Lock)")
-    print(f"[*] Target Trading Session : {tomorrow_trade_date} (Next Market Open)")
+    print(f"[*] Target Trading Session : {target_trade_date} (Next Market Open)")
     print(f"[*] Model Version          : {version_rec['model_version']} (Regime: {version_rec['regime_version']}, Weights: {version_rec['weights_version']})\n")
     
     print("[1/2] Processing news, macro catalysts, 8-dimension regime, and 5 benchmark baselines...")
-    predictions = generate_all_predictions(target_trade_date=tomorrow_trade_date)
+    predictions = generate_all_predictions(target_trade_date=target_trade_date)
     
     print(f"[2/2] Freezing cryptographic prediction snapshots for {len(predictions)} stocks into immutable ledger...")
     for p in predictions:
-        save_night_prediction(p, target_trade_date=tomorrow_trade_date)
+        save_night_prediction(p, target_trade_date=target_trade_date)
         
     log_job_execution(
         job_type="PRE_MARKET_NIGHT_FORECAST",
         started_at=start_time,
         completed_at=datetime.now().isoformat(),
         status="SUCCESS",
-        target_date=tomorrow_trade_date,
+        target_date=target_trade_date,
         records_stored=len(predictions),
-        log_summary=f"Successfully generated and locked {len(predictions)} v3 stock prediction snapshots for session {tomorrow_trade_date}."
+        log_summary=f"Successfully generated and locked {len(predictions)} v3 stock prediction snapshots for session {target_trade_date}."
     )
         
     print("\n" + "=" * 115)
