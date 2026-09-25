@@ -47,6 +47,7 @@ from ..storage.ledger import (
     save_agent_trade,
     save_agent_decision,
     save_agent_daily_snapshot,
+    save_agent_strategy,
 )
 
 logger = logging.getLogger(__name__)
@@ -222,8 +223,12 @@ class ArenaOrchestrator:
                 "diagnostic_type": "AI_DECISION",
                 "agent_ai_status": "AVAILABLE",
                 "ai_thesis": "GENERATED",
-                "deterministic_screen": "PASSED",
-                "reporting_status": "AGENT AI STATUS: AVAILABLE\nAI THESIS: GENERATED\nDETERMINISTIC SCREEN: PASSED",
+                "deterministic_screen": "PASSED" if evaluation.is_approved else "REJECTED",
+                "reporting_status": (
+                    "AGENT AI STATUS: AVAILABLE\nAI THESIS: GENERATED\nDETERMINISTIC SCREEN: PASSED"
+                    if evaluation.is_approved
+                    else f"AGENT AI STATUS: AVAILABLE\nAI THESIS: GENERATED\nDETERMINISTIC SCREEN: REJECTED\nREASON: {evaluation.rejection_reason}"
+                ),
             })
 
             if evaluation.is_approved and evaluation.adjusted_quantity > 0:
@@ -233,8 +238,18 @@ class ArenaOrchestrator:
 
         # 5. Execute Approved Trades / Strategies via Broker
         executed_trades_info = []
+        execution_failures = []
         for trade, eval_obj in trade_evaluations:
             if execute_trades and eval_obj.is_approved and eval_obj.adjusted_quantity > 0 and trade.action != TradeAction.NO_TRADE:
+                if trade.instrument.instrument_type == InstrumentType.OPTION and trade.strategy is None:
+                    # Never route an option using the underlying equity price.
+                    execution_failures.append({
+                        "agent_id": trade.agent_id,
+                        "symbol": trade.symbol,
+                        "reason": "OPTION_STRATEGY_MISSING",
+                    })
+                    logger.error("Blocked option execution without strategy: %s %s", trade.agent_id, trade.symbol)
+                    continue
                 if trade.strategy:
                     success, reason, strat = self.broker.execute_approved_strategy(
                         strategy=trade.strategy,
@@ -252,6 +267,12 @@ class ArenaOrchestrator:
                             "status": reason,
                             "is_multi_leg": True,
                         })
+                    elif not success:
+                        execution_failures.append({
+                            "agent_id": trade.agent_id,
+                            "symbol": trade.symbol,
+                            "reason": reason,
+                        })
                 else:
                     success, reason, pos = self.broker.execute_approved_trade(
                         proposal=trade,
@@ -267,6 +288,12 @@ class ArenaOrchestrator:
                             "price": pos.entry_price,
                             "status": reason,
                             "is_multi_leg": False,
+                        })
+                    elif not success:
+                        execution_failures.append({
+                            "agent_id": trade.agent_id,
+                            "symbol": trade.symbol,
+                            "reason": reason,
                         })
 
         # 6. Mark to Market (Equities and Multi-Leg Options)
@@ -385,6 +412,7 @@ class ArenaOrchestrator:
             "decisions": decisions_log,
             "executed_trades_count": len(executed_trades_info),
             "executed_trades": executed_trades_info,
+            "execution_failures": execution_failures,
             "triggered_exits": triggered_exits,
             "option_chain": nifty_chain.to_dict(),
             "recommended_options_strategies": recommended_options_strategies,
@@ -552,6 +580,8 @@ class ArenaOrchestrator:
             p = self.broker.get_agent_portfolio(aid)
             for pos in p.open_positions.values():
                 save_agent_position(pos.to_dict())
+            for strat in list(p.open_strategies.values()) + list(p.closed_strategies):
+                save_agent_strategy(strat.to_dict())
 
         # 3. Decisions
         for dec in cycle_result.get("decisions", []):

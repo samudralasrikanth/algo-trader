@@ -37,6 +37,7 @@ from .models import (
     TradeDirection,
 )
 from .option_chain_provider import OptionChainProvider, OptionDataMode
+from .options_engine import OptionsStrategyBuilder
 from .portfolio_exposure import PortfolioExposureEngine
 from .strike_selector import StrikeSelector
 from .thesis_validator import MarketThesis
@@ -52,6 +53,76 @@ class InstrumentSelector:
     MIN_NET_EDGE_PCT: float = 0.35     # Minimum move to cover brokerage + slippage + STT
     MIN_RISK_REWARD: float = 1.40      # Minimum reward-to-risk ratio
     DEFAULT_MAX_PRICE_AGE_SECONDS: float = 300.0  # 5 minutes freshness window
+
+    @staticmethod
+    def _build_option_strategy(
+        *,
+        strategy_type: StrategyType,
+        underlying: str,
+        spot_price: float,
+        selected_strike: float,
+        chain: Any,
+        volatility: float,
+        lot_size: int,
+        agent_id: str,
+        snapshot_id: str,
+    ) -> Optional[MultiLegStrategy]:
+        """Build the executable strategy represented by the selected contract.
+
+        The selector used to describe an option structure in ``decision_reason``
+        but returned ``strategy=None``.  That made the downstream executor
+        silently treat an option as an underlying trade.  Keep construction in
+        one place so the displayed contract and the executable legs cannot
+        diverge.
+        """
+        kwargs = dict(
+            underlying=underlying,
+            spot_price=spot_price,
+            expiry_days=7,
+            volatility=volatility,
+            lot_size=lot_size,
+            quantity=lot_size,
+            agent_id=agent_id,
+            snapshot_id=snapshot_id,
+        )
+
+        strikes = sorted({float(row.strike) for row in getattr(chain, "strikes", [])})
+        if not strikes:
+            return None
+        try:
+            selected_idx = min(range(len(strikes)), key=lambda idx: abs(strikes[idx] - selected_strike))
+            step = min(
+                (abs(strikes[idx] - strikes[selected_idx]) for idx in range(len(strikes)) if idx != selected_idx),
+                default=50.0,
+            )
+        except (TypeError, ValueError):
+            step = 50.0
+
+        if strategy_type == StrategyType.LONG_CALL:
+            return OptionsStrategyBuilder.create_long_call(strike=selected_strike, **kwargs)
+        if strategy_type == StrategyType.LONG_PUT:
+            return OptionsStrategyBuilder.create_long_put(strike=selected_strike, **kwargs)
+        if strategy_type == StrategyType.BULL_CALL_SPREAD:
+            sell_strike = selected_strike + step
+            return OptionsStrategyBuilder.create_bull_call_spread(
+                buy_strike=selected_strike, sell_strike=sell_strike, **kwargs
+            )
+        if strategy_type == StrategyType.BEAR_PUT_SPREAD:
+            sell_strike = selected_strike - step
+            return OptionsStrategyBuilder.create_bear_put_spread(
+                buy_strike=selected_strike, sell_strike=sell_strike, **kwargs
+            )
+        if strategy_type == StrategyType.LONG_STRADDLE:
+            return OptionsStrategyBuilder.create_long_straddle(strike=selected_strike, **kwargs)
+        if strategy_type == StrategyType.LONG_STRANGLE:
+            return OptionsStrategyBuilder.create_long_strangle(
+                put_strike=selected_strike - step,
+                call_strike=selected_strike + step,
+                **kwargs,
+            )
+        if strategy_type == StrategyType.PROTECTIVE_PUT:
+            return OptionsStrategyBuilder.create_protective_put(put_strike=selected_strike, **kwargs)
+        return None
 
     def __init__(
         self,
@@ -282,7 +353,25 @@ class InstrumentSelector:
                                 expected_move_pct=thesis.expected_move_pct,
                                 confidence=thesis.confidence,
                             )
-                            reason_extra = f" [{mode.value} Option Selected: Strike {opt_strike} {opt_type.value}, Premium: ₹{opt_prem:.2f}, Delta {opt_info['delta']:.2f}, Structure: {strat_rec.value}]"
+                            selected_strategy = self._build_option_strategy(
+                                strategy_type=strat_rec,
+                                underlying=symbol,
+                                spot_price=base_price,
+                                selected_strike=opt_strike,
+                                chain=chain,
+                                volatility=0.18,
+                                lot_size=selected_lot_size,
+                                agent_id=agent_id,
+                                snapshot_id=snapshot_id,
+                            )
+                            if selected_strategy is None:
+                                # An option must never reach execution without
+                                # a concrete, auditable strategy definition.
+                                inst_type = InstrumentType.EQUITY
+                                contract_name = None
+                                reason_extra = " [OPTION_STRATEGY_BUILD_FAILED: falling back to underlying.]"
+                            else:
+                                reason_extra = f" [{mode.value} Option Selected: Strike {opt_strike} {opt_type.value}, Premium: ₹{opt_prem:.2f}, Delta {opt_info['delta']:.2f}, Structure: {strat_rec.value}]"
             else:
                 # Options forbidden by mode
                 if self.option_provider.current_mode == OptionDataMode.UNAVAILABLE:

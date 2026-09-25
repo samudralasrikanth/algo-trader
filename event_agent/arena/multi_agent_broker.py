@@ -26,7 +26,7 @@ from .asset_models import (
     LegSide,
     MultiLegStrategy,
     OptionInstrument,
-    OptionType,
+    OptionType as AssetOptionType,
     StrategyLeg,
     StrategyStatus,
     StrategyType,
@@ -36,7 +36,6 @@ from .models import (
     HedgeDecision,
     Instrument,
     InstrumentType,
-    OptionType,
     ProposedTrade,
     RiskEvaluation,
     TradeAction,
@@ -370,6 +369,74 @@ class MultiAgentBroker:
         if auto_hydrate and not in_pytest and os.getenv("TESTING", "").lower() not in ("1", "true", "yes"):
             self.hydrate_from_db()
 
+    @staticmethod
+    def _strategy_from_dict(data: Dict[str, Any]) -> Optional[MultiLegStrategy]:
+        """Rebuild an open strategy from the durable SQLite/Supabase shape."""
+        try:
+            legs = []
+            for leg_data in data.get("legs", []):
+                inst_data = leg_data.get("instrument", {})
+                option_type = AssetOptionType(str(inst_data.get("option_type", "CE")))
+                instrument = OptionInstrument(
+                    underlying=inst_data.get("underlying") or data.get("underlying", ""),
+                    strike=float(inst_data.get("strike", 0.0)),
+                    option_type=option_type,
+                    expiry=str(inst_data.get("expiry", data.get("expiry", "7D"))),
+                    lot_size=int(inst_data.get("lot_size", 50)),
+                    model_price=float(inst_data.get("model_price", 0.0)),
+                    implied_volatility=float(inst_data.get("implied_volatility", 0.18)),
+                    delta=float(inst_data.get("delta", 0.0)),
+                    gamma=float(inst_data.get("gamma", 0.0)),
+                    theta=float(inst_data.get("theta", 0.0)),
+                    vega=float(inst_data.get("vega", 0.0)),
+                )
+                legs.append(StrategyLeg(
+                    leg_id=str(leg_data.get("leg_id", instrument.symbol)),
+                    instrument=instrument,
+                    side=LegSide(str(leg_data.get("side", "BUY"))),
+                    ratio=int(leg_data.get("ratio", 1)),
+                    quantity=int(leg_data.get("quantity", instrument.lot_size)),
+                    entry_price=float(leg_data.get("entry_price", instrument.model_price)),
+                    current_price=float(leg_data.get("current_price", leg_data.get("entry_price", instrument.model_price))),
+                ))
+            if not legs:
+                return None
+            return MultiLegStrategy(
+                strategy_id=str(data["strategy_id"]),
+                strategy_type=StrategyType(str(data.get("strategy_type", StrategyType.LONG_CALL.value))),
+                underlying=str(data.get("underlying", "")),
+                expiry=str(data.get("expiry", "7D")),
+                legs=legs,
+                net_debit=float(data.get("net_debit", 0.0)),
+                max_profit=float(data.get("max_profit", 0.0)),
+                max_loss=float(data.get("max_loss", 0.0)),
+                breakeven=[float(v) for v in data.get("breakeven", [])],
+                risk_reward_ratio=float(data.get("risk_reward_ratio", 0.0)),
+                net_delta=float(data.get("net_delta", 0.0)),
+                net_gamma=float(data.get("net_gamma", 0.0)),
+                net_theta=float(data.get("net_theta", 0.0)),
+                net_vega=float(data.get("net_vega", 0.0)),
+                agent_id=str(data.get("agent_id", "ALPHA")),
+                status=StrategyStatus(str(data.get("status", StrategyStatus.OPEN.value))),
+                entry_underlying_price=float(data.get("entry_underlying_price", 0.0)),
+                current_underlying_price=float(data.get("current_underlying_price", 0.0)),
+                current_strategy_value=float(data.get("current_strategy_value", data.get("net_debit", 0.0))),
+                unrealized_pnl=float(data.get("unrealized_pnl", 0.0)),
+                realized_pnl=float(data.get("realized_pnl", 0.0)),
+                stop_loss_amount=float(data.get("stop_loss_amount", 0.0)),
+                target_profit_amount=float(data.get("target_profit_amount", 0.0)),
+                snapshot_id=str(data.get("snapshot_id", "")),
+                strategy_version=str(data.get("strategy_version", "OPT-1.0")),
+                pricing_model=str(data.get("pricing_model", "BLACK_SCHOLES_VIX")),
+                pricing_version=str(data.get("pricing_version", "BS-1.0")),
+                entry_time=str(data.get("entry_time", "")),
+                closed_time=data.get("closed_time"),
+                exit_reason=str(data.get("exit_reason", "")),
+            )
+        except (KeyError, TypeError, ValueError) as exc:
+            logger.warning("Unable to hydrate strategy %s: %s", data.get("strategy_id"), exc)
+            return None
+
     def hydrate_from_db(self) -> None:
         """
         Loads active open positions from SQLite database, populates SubPortfolio.open_positions,
@@ -378,18 +445,28 @@ class MultiAgentBroker:
         try:
             from event_agent.storage.ledger import get_agent_positions
             db_positions = get_agent_positions(status="OPEN")
+            db_strategies = []
+            try:
+                from event_agent.storage.ledger import get_agent_strategies
+                db_strategies = get_agent_strategies(status="OPEN")
+            except Exception as strategy_err:
+                logger.debug("Local strategy hydration unavailable: %s", strategy_err)
             cloud_state = None
-            if not db_positions:
-                try:
-                    from event_agent.storage.supabase_ledger import get_latest_arena_state_supabase
-                    cloud_state = get_latest_arena_state_supabase()
-                    if cloud_state:
+            try:
+                from event_agent.storage.supabase_ledger import get_latest_arena_state_supabase
+                cloud_state = get_latest_arena_state_supabase()
+                if cloud_state and not db_positions:
                         db_positions = [
                             p for p in cloud_state.get("open_positions", [])
                             if str(p.get("status", "OPEN")).upper() == "OPEN"
                         ]
-                except Exception as cloud_err:
-                    logger.debug("Cloud arena hydration unavailable: %s", cloud_err)
+                if cloud_state and not db_strategies:
+                    db_strategies = [
+                        s for s in cloud_state.get("open_strategies", [])
+                        if str(s.get("status", "OPEN")).upper() == "OPEN"
+                    ]
+            except Exception as cloud_err:
+                logger.debug("Cloud arena hydration unavailable: %s", cloud_err)
             for p_dict in db_positions:
                 aid = p_dict.get("agent_id")
                 if aid not in self.sub_portfolios:
@@ -438,6 +515,12 @@ class MultiAgentBroker:
                 sub_port.open_positions[sym] = arena_pos
                 self.executed_trade_ids.add(tid)
 
+            for strategy_data in db_strategies:
+                strategy = self._strategy_from_dict(strategy_data)
+                if strategy and strategy.agent_id in self.sub_portfolios and strategy.status == StrategyStatus.OPEN:
+                    self.sub_portfolios[strategy.agent_id].open_strategies[strategy.strategy_id] = strategy
+                    self.executed_trade_ids.add(strategy.strategy_id)
+
             # Restore realized P&L and deterministic ids from the cloud snapshot
             # before calculating cash.  This is essential on fresh CI runners.
             if cloud_state:
@@ -449,6 +532,10 @@ class MultiAgentBroker:
             # Synchronize cash strictly
             for aid, sub_port in self.sub_portfolios.items():
                 total_invested = sum(pos.invested_capital for pos in sub_port.open_positions.values())
+                total_invested += sum(
+                    strat.net_debit for strat in sub_port.open_strategies.values()
+                    if strat.status == StrategyStatus.OPEN
+                )
                 if cloud_state and aid in cloud_state.get("portfolios", {}):
                     sub_port.cash = max(0.0, float(cloud_state["portfolios"][aid].get("cash", 0.0)))
                 else:
@@ -460,13 +547,20 @@ class MultiAgentBroker:
         """Return a compact serializable snapshot for the next CI worker."""
         portfolios = {}
         open_positions = []
+        all_open_strategies = []
         for aid, portfolio in self.sub_portfolios.items():
             positions = [p.to_dict() for p in portfolio.open_positions.values()]
             open_positions.extend(positions)
+            open_strategies = [
+                s.to_dict() for s in portfolio.open_strategies.values()
+                if s.status == StrategyStatus.OPEN
+            ]
+            all_open_strategies.extend(open_strategies)
             portfolios[aid] = {
                 "cash": round(portfolio.cash, 2),
                 "realized_pnl": round(portfolio.realized_pnl, 2),
                 "open_positions_count": len(positions),
+                "open_strategies_count": len(open_strategies),
             }
         return {
             "version": 1,
@@ -476,6 +570,8 @@ class MultiAgentBroker:
             "portfolios": portfolios,
             "open_positions": open_positions,
             "open_positions_count": len(open_positions),
+            "open_strategies": all_open_strategies,
+            "open_strategies_count": len(all_open_strategies),
             "executed_trade_ids": sorted(self.executed_trade_ids),
         }
 
@@ -817,15 +913,107 @@ class MultiAgentBroker:
         if strategy.net_debit > sub_port.cash:
             return False, f"INSUFFICIENT_FUNDS: Strategy requires ₹{strategy.net_debit:,.2f}, has ₹{sub_port.cash:,.2f}", None
 
-        # Deduct cash strictly from this agent's sub-portfolio
-        sub_port.cash -= strategy.net_debit
+        adapter_name = getattr(self.broker_adapter, "name", "UPSTOX SANDBOX")
+        exec_mode = ExecutionMode.PAPER if "ANGEL" in adapter_name.upper() else ExecutionMode.BROKER_SANDBOX
+        broker_prefix = "ANGEL-SBX" if "ANGEL" in adapter_name.upper() else "UPSTOX-SBX"
+        created_orders: List[Order] = []
+        total_charges = 0.0
+
+        # Submit and fill every leg before changing cash or opening the
+        # strategy.  This preserves the all-legs-or-no-trade invariant.
+        for index, leg in enumerate(strategy.legs, start=1):
+            quantity = int(leg.quantity * max(1, leg.ratio))
+            if quantity <= 0 or leg.entry_price <= 0:
+                reason = f"INVALID_STRATEGY_LEG: {leg.leg_id} has non-positive quantity or price"
+                for prior in created_orders:
+                    prior.reject(reason)
+                    self.orders[prior.order_id] = prior
+                    sub_port.orders[prior.order_id] = prior
+                return False, reason, None
+
+            order_id = f"ORD-{strategy.strategy_id}-LEG-{index}"
+            order = Order(
+                order_id=order_id,
+                portfolio_id=strategy.agent_id,
+                agent_id=strategy.agent_id,
+                symbol=leg.instrument.symbol,
+                side=OrderSide.BUY if leg.side == LegSide.BUY else OrderSide.SELL,
+                quantity=quantity,
+                order_type=OrderType.MARKET,
+                requested_price=float(leg.entry_price),
+                strategy_id=strategy.strategy_id,
+                trade_proposal_id=strategy.strategy_id,
+                status=OrderStatus.CREATED,
+                execution_mode=exec_mode,
+                broker_adapter=adapter_name,
+                broker_order_id=f"{broker_prefix}-{order_id}",
+            )
+            self.broker_adapter.submit_order(order)
+            order = self.simulator.simulate_order_execution(
+                order,
+                {"price": float(leg.entry_price), "symbol": leg.instrument.symbol},
+            )
+            if order.status != OrderStatus.FILLED:
+                reason = f"LEG_EXECUTION_FAILED: {leg.leg_id}: {order.rejection_reason or order.status.value}"
+                order.reject(reason)
+                created_orders.append(order)
+                for rejected in created_orders:
+                    rejected.status = OrderStatus.REJECTED
+                    rejected.rejection_reason = reason
+                    self.orders[rejected.order_id] = rejected
+                    sub_port.orders[rejected.order_id] = rejected
+                return False, reason, None
+
+            cost = self.cost_model.calculate_entry_cost(
+                instrument_type="equity_intraday",
+                side=leg.side.value,
+                price=order.fill_price or leg.entry_price,
+                quantity=quantity,
+            ).get("total", 0.0)
+            order.estimated_charges = cost
+            created_orders.append(order)
+            total_charges += cost
+
+        required_capital = strategy.net_debit + total_charges
+        if required_capital > sub_port.cash:
+            reason = f"INSUFFICIENT_FUNDS: Strategy requires ₹{required_capital:,.2f}, has ₹{sub_port.cash:,.2f}"
+            for order in created_orders:
+                order.status = OrderStatus.REJECTED
+                order.rejection_reason = reason
+                self.orders[order.order_id] = order
+                sub_port.orders[order.order_id] = order
+            return False, reason, None
+
+        # Deduct cash strictly from this agent's isolated sub-portfolio.
+        sub_port.cash -= required_capital
         strategy.status = StrategyStatus.OPEN
         strategy.current_strategy_value = strategy.net_debit
         strategy.unrealized_pnl = 0.0
-
         sub_port.open_strategies[strategy.strategy_id] = strategy
         self.executed_trade_ids.add(strategy.strategy_id)
-        logger.info(f"Atomically executed multi-leg strategy {strategy.strategy_id} for {strategy.agent_id}. Net debit: ₹{strategy.net_debit:,.2f}")
+
+        for order in created_orders:
+            self.orders[order.order_id] = order
+            sub_port.orders[order.order_id] = order
+
+        # Persist the strategy and its leg orders immediately.  The cycle
+        # exporter also writes them, but immediate persistence prevents a
+        # worker crash after execution from producing a phantom trade.
+        try:
+            from ..storage.ledger import save_agent_strategy, save_order
+            save_agent_strategy(strategy.to_dict())
+            for order in created_orders:
+                save_order(order.to_dict())
+        except Exception as exc:
+            logger.warning("Strategy execution persistence warning for %s: %s", strategy.strategy_id, exc)
+
+        logger.info(
+            "Atomically executed multi-leg strategy %s for %s. Net debit: ₹%0.2f; legs: %d",
+            strategy.strategy_id,
+            strategy.agent_id,
+            strategy.net_debit,
+            len(created_orders),
+        )
         return True, "EXECUTED", strategy
 
     def mark_to_market_strategies(
@@ -858,7 +1046,7 @@ class MultiAgentBroker:
                         strike=leg.instrument.strike,
                         time_to_expiry_years=T_years,
                         volatility=leg.instrument.implied_volatility,
-                        is_call=(leg.instrument.option_type == OptionType.CE),
+                        is_call=(leg.instrument.option_type == AssetOptionType.CE),
                     )
                     leg.current_price = calc["price"]
                     mult = 1 if leg.side == LegSide.BUY else -1
