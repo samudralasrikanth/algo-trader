@@ -30,8 +30,10 @@ def _refresh_locked_predictions(predictions: List[Dict[str, Any]]) -> List[Dict[
     for pred in result:
         quote = quotes.get(pred.get("symbol"))
         if not quote or quote.get("price", 0) <= 0:
+            pred["execution_price_source"] = "LOCKED_FORECAST"
             continue
         price = float(quote["price"])
+        pred["execution_price_source"] = "LIVE_QUOTE"
         expected = float(pred.get("expected_1d_pct", pred.get("predicted_1d_pct", 0.0)) or 0.0)
         direction = str(pred.get("direction", "NEUTRAL")).upper()
         move = abs(expected)

@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2026-09-25T07:05:06.355472+00:00",
+    "generated_at": "2026-09-25T07:15:48.095787+00:00",
     "system_name": "NEXUS AI \u2014 ENTERPRISE MULTI-ASSET INVESTMENT INTELLIGENCE",
     "subtitle": "Equities \u2022 Derivatives (Paper Options & Futures) \u2022 \u20b91 Crore AI Arena \u2022 Real-time Risk Gate",
     "version_record": {
@@ -510,8 +510,8 @@
       "is_market_open": true,
       "can_accept_orders": true,
       "status_reason": "MARKET_ACTIVE: Order accepted for execution simulation.",
-      "ist_timestamp": "2026-09-25 12:35:02 IST",
-      "ist_time": "12:35 IST",
+      "ist_timestamp": "2026-09-25 12:45:44 IST",
+      "ist_time": "12:45 IST",
       "market_date": "2026-09-25",
       "order_cutoff_time": "15:30 IST",
       "forecast_run_time": "20:30 IST",
@@ -2440,7 +2440,7 @@
     ],
     "implied_volatility_pct": 13.8,
     "price_source": "MODELLED_BLACK_SCHOLES",
-    "as_of": "2026-09-25T07:05:05.958227+00:00"
+    "as_of": "2026-09-25T07:15:47.812701+00:00"
   },
   "recommended_options_strategies": [
     {
@@ -2541,7 +2541,7 @@
         "strategy_version": "OPT-1.0",
         "pricing_model": "BLACK_SCHOLES_VIX",
         "pricing_version": "BS-1.0",
-        "entry_time": "2026-09-25T07:05:05.958324+00:00",
+        "entry_time": "2026-09-25T07:15:47.812785+00:00",
         "closed_time": null,
         "exit_reason": ""
       },
@@ -2735,7 +2735,7 @@
         "strategy_version": "OPT-1.0",
         "pricing_model": "BLACK_SCHOLES_VIX",
         "pricing_version": "BS-1.0",
-        "entry_time": "2026-09-25T07:05:05.958373+00:00",
+        "entry_time": "2026-09-25T07:15:47.812831+00:00",
         "closed_time": null,
         "exit_reason": ""
       },
@@ -2930,7 +2930,7 @@
         "strategy_version": "OPT-1.0",
         "pricing_model": "BLACK_SCHOLES_VIX",
         "pricing_version": "BS-1.0",
-        "entry_time": "2026-09-25T07:05:05.958420+00:00",
+        "entry_time": "2026-09-25T07:15:47.812876+00:00",
         "closed_time": null,
         "exit_reason": ""
       },
@@ -3091,7 +3091,7 @@
         "strategy_version": "OPT-1.0",
         "pricing_model": "BLACK_SCHOLES_VIX",
         "pricing_version": "BS-1.0",
-        "entry_time": "2026-09-25T07:05:05.958461+00:00",
+        "entry_time": "2026-09-25T07:15:47.812908+00:00",
         "closed_time": null,
         "exit_reason": ""
       },
@@ -3931,7 +3931,7 @@
     "audit": {
       "provenance_mode": "SHA-256 Cryptographic Snapshot Lock",
       "snapshot_id": "f2dcc9bcc761b34e656dba540f785d18eb0c664625d8cbdff54ebaa2f589e58c",
-      "market_timestamp": "2026-09-25T07:05:06.355472+00:00",
+      "market_timestamp": "2026-09-25T07:15:48.095787+00:00",
       "integrity_status": "VERIFIED"
     }
   },
@@ -3943,7 +3943,7 @@
       "EVENT_DATA": "DEGRADED",
       "OPTION_CHAIN": "UNAVAILABLE"
     },
-    "last_checked": "2026-09-25T07:05:06.355472+00:00"
+    "last_checked": "2026-09-25T07:15:48.095787+00:00"
   },
   "execution_telemetry": {
     "data_quality": "GOOD",
@@ -5513,8 +5513,8 @@
       "is_market_open": true,
       "can_accept_orders": true,
       "status_reason": "MARKET_ACTIVE: Order accepted for execution simulation.",
-      "ist_timestamp": "2026-09-25 12:35:02 IST",
-      "ist_time": "12:35 IST",
+      "ist_timestamp": "2026-09-25 12:45:44 IST",
+      "ist_time": "12:45 IST",
       "market_date": "2026-09-25",
       "order_cutoff_time": "15:30 IST",
       "forecast_run_time": "20:30 IST",
@@ -7997,7 +7997,7 @@
       ]
     }
   },
-  "generated_at": "2026-09-25T12:35:08.939352",
+  "generated_at": "2026-09-25T12:45:50.519327",
   "next_trading_day": "2026-09-28",
   "scorecard": {
     "total_evaluations": 1594,
@@ -29513,10 +29513,10 @@
       "CAPTURED_SUCCESS": 72
     },
     "refactoring_priorities": [
-      "Tighten HOLD threshold bands to avoid false trigger entries on low conviction setups.",
+      "Weights and sensitivity for this sector/event type are well-calibrated. Maintain current parameter matrix.",
       "Incorporate intra-day live news polling and broaden sector peer contagion weights.",
       "Increase macro/Nifty broader index weight relative to single-stock headline score.",
-      "Weights and sensitivity for this sector/event type are well-calibrated. Maintain current parameter matrix."
+      "Tighten HOLD threshold bands to avoid false trigger entries on low conviction setups."
     ]
   },
   "job_logs": [
@@ -30928,7 +30928,7 @@
         1240.4,
         1248.0,
         1219.2,
-        1218.7
+        1217.0
       ],
       "volume": [
         12694362,
@@ -30997,7 +30997,7 @@
         10684376,
         8352048,
         13923795,
-        7411539
+        7572158
       ]
     },
     "HDFCBANK.NS": {
@@ -31344,7 +31344,7 @@
         738.6,
         737.25,
         728.9,
-        735.1
+        734.0
       ],
       "volume": [
         46707966,
@@ -31413,7 +31413,7 @@
         35483669,
         23197231,
         29575194,
-        9714745
+        10233611
       ]
     },
     "ICICIBANK.NS": {
@@ -31760,7 +31760,7 @@
         1339.6,
         1340.0,
         1334.5,
-        1328.9
+        1327.8
       ],
       "volume": [
         17173209,
@@ -31829,7 +31829,7 @@
         6433249,
         4758314,
         8653920,
-        3689941
+        3920004
       ]
     },
     "TCS.NS": {
@@ -32176,7 +32176,7 @@
         2105.0,
         2089.6,
         2087.0,
-        2088.8
+        2079.0
       ],
       "volume": [
         4738903,
@@ -32245,7 +32245,7 @@
         3641623,
         2228402,
         1760662,
-        1613187
+        1705592
       ]
     },
     "INFY.NS": {
@@ -32592,7 +32592,7 @@
         1029.4,
         1020.5,
         1014.5,
-        1002.3
+        997.1
       ],
       "volume": [
         15866779,
@@ -32661,7 +32661,7 @@
         9341109,
         5108734,
         6891893,
-        5814164
+        6103771
       ]
     },
     "BHARTIARTL.NS": {
@@ -33008,7 +33008,7 @@
         1817.2,
         1833.2,
         1795.8,
-        1791.2
+        1791.0
       ],
       "volume": [
         8521503,
@@ -33077,7 +33077,7 @@
         4134236,
         3698253,
         4567379,
-        1857113
+        1902688
       ]
     },
     "SBIN.NS": {
@@ -33424,7 +33424,7 @@
         987.0,
         994.1,
         978.5,
-        979.3
+        979.7
       ],
       "volume": [
         16002360,
@@ -33493,7 +33493,7 @@
         6126235,
         4522248,
         13724672,
-        2159117
+        2204357
       ]
     },
     "LT.NS": {
@@ -33840,7 +33840,7 @@
         3866.4,
         3929.9,
         3858.4,
-        3858.0
+        3855.2
       ],
       "volume": [
         3104020,
@@ -33909,7 +33909,7 @@
         1355288,
         945462,
         1649308,
-        606210
+        626611
       ]
     },
     "ITC.NS": {
@@ -34256,7 +34256,7 @@
         265.8,
         270.15,
         268.0,
-        268.1
+        268.05
       ],
       "volume": [
         11230239,
@@ -34325,7 +34325,7 @@
         7177847,
         13142058,
         7398276,
-        3191906
+        3308093
       ]
     },
     "MARUTI.NS": {
@@ -34672,7 +34672,7 @@
         12190.0,
         12230.0,
         11990.0,
-        12035.0
+        12012.0
       ],
       "volume": [
         981556,
@@ -34741,7 +34741,7 @@
         246724,
         220483,
         393665,
-        79042
+        81670
       ]
     }
   },
@@ -35996,7 +35996,7 @@
     {
       "id": 38,
       "report_date": "2026-09-18",
-      "job_run_id": "RUN-20260925-070243-2079fd56",
+      "job_run_id": "RUN-20260925-071454-13341f84",
       "status": "PARTIAL_SUCCESS",
       "total_trades": 1,
       "winning_trades": 1,
@@ -36057,8 +36057,8 @@
       "email_status": "EMAIL_FAILED",
       "email_sent_at": null,
       "created_at": "2026-09-13T17:54:55.801996",
-      "updated_at": "2026-09-25T12:32:43.526859",
-      "provenance_hash": "PRV-2026-09-18-2c78a1c80a404fe2",
+      "updated_at": "2026-09-25T12:44:54.509242",
+      "provenance_hash": "PRV-2026-09-18-703d6586ae9fc3bd",
       "report_payload_json": {
         "data_mode": "TEST_FIXTURE",
         "reconciliation": {
@@ -36168,7 +36168,7 @@
           "best_trade_pnl": 3820.0,
           "data_hash": "c18014b1eb7f374bf5b68cfc9bb1c4c19d345a5c9029bec321338e0d03f3ac1c",
           "data_mode": "TEST_FIXTURE",
-          "generated_at": "2026-09-25T07:02:43.514843+00:00"
+          "generated_at": "2026-09-25T07:14:54.494396+00:00"
         },
         "thumbnail": {
           "status": "SUCCESS",
@@ -36181,7 +36181,7 @@
           "headline": "+\u20b93,820",
           "latency_ms": 0,
           "error_message": null,
-          "created_at": "2026-09-25T07:02:43.513293+00:00",
+          "created_at": "2026-09-25T07:14:54.493209+00:00",
           "completed_at": null,
           "template_id": "RESULT"
         }
@@ -36195,7 +36195,7 @@
       "content_theme": "STANDOUT_TRADE",
       "content_score": 96.0,
       "content_data_hash": "c18014b1eb7f374bf5b68cfc9bb1c4c19d345a5c9029bec321338e0d03f3ac1c",
-      "content_generated_at": "2026-09-25T07:02:43.514843+00:00",
+      "content_generated_at": "2026-09-25T07:14:54.494396+00:00",
       "youtube_upload_status": "SUCCESS",
       "youtube_thumbnail_status": "SUCCESS",
       "data_mode": "TEST_FIXTURE"
@@ -37035,7 +37035,7 @@
       "email_status": null,
       "email_sent_at": null,
       "created_at": "2026-09-10T10:55:12.332906",
-      "updated_at": "2026-09-25T12:32:44.311709",
+      "updated_at": "2026-09-25T12:44:55.327094",
       "provenance_hash": "mock_hash_815",
       "report_payload_json": null,
       "thumbnail_url": null,
@@ -37202,7 +37202,7 @@
       "Baseline 6: NIFTY Direction": 54.2,
       "Baseline 7: Simple RSI-14": 52.1
     },
-    "generated_at": "2026-09-25T07:02:44.883915+00:00"
+    "generated_at": "2026-09-25T07:14:55.734527+00:00"
   },
   "certification_v36": {
     "is_certified": true,
@@ -37279,7 +37279,7 @@
       "is_converged": false,
       "status": "ACCEPTABLE"
     },
-    "timestamp": "2026-09-25T07:03:09.044661+00:00"
+    "timestamp": "2026-09-25T07:15:22.276174+00:00"
   },
   "next_scheduled_runs": {
     "next_run_utc": "2026-09-24T12:30:00+00:00",
@@ -43634,18 +43634,18 @@
     "credential_fingerprint": "SHA256:ba2d43617115d7f5",
     "inference_mode": "OPENROUTER_LIVE",
     "model": "openai/gpt-4o-mini",
-    "request_id": "gen-1790319909-GZmkqVg3NSvBuBERXhKP",
-    "latency_ms": 2466,
+    "request_id": "gen-1790320550-MBvifyNlYJ0LK2FxFT0p",
+    "latency_ms": 1514,
     "input_tokens": 8,
     "output_tokens": 5,
     "total_tokens": 13,
     "cost_usd": 4e-06,
-    "last_success": "2026-09-25T07:05:11.683299+00:00",
+    "last_success": "2026-09-25T07:15:52.511582+00:00",
     "last_failure": null,
     "recent_inferences": [
       {
-        "id": 309,
-        "ai_request_id": "failed_1790319905947",
+        "id": 337,
+        "ai_request_id": "failed_1790320547802",
         "market_date": "2026-09-25",
         "call_type": "DECISION_THESIS",
         "agent_id": "DEFENSIVE",
@@ -43660,16 +43660,16 @@
         "output_tokens": 0,
         "total_tokens": 0,
         "cost_usd": 0.0,
-        "latency_ms": 275,
+        "latency_ms": 239,
         "http_status": 402,
         "status": "CREDIT_EXHAUSTED",
         "error_message": "HTTP Error 402: Payment Required",
         "finish_reason": "stop",
-        "created_at": "2026-09-25T07:05:05.952646+00:00"
+        "created_at": "2026-09-25T07:15:47.807616+00:00"
       },
       {
-        "id": 308,
-        "ai_request_id": "failed_1790319905662",
+        "id": 336,
+        "ai_request_id": "failed_1790320547553",
         "market_date": "2026-09-25",
         "call_type": "DECISION_THESIS",
         "agent_id": "DEFENSIVE",
@@ -43684,16 +43684,16 @@
         "output_tokens": 0,
         "total_tokens": 0,
         "cost_usd": 0.0,
-        "latency_ms": 267,
+        "latency_ms": 261,
         "http_status": 402,
         "status": "CREDIT_EXHAUSTED",
         "error_message": "HTTP Error 402: Payment Required",
         "finish_reason": "stop",
-        "created_at": "2026-09-25T07:05:05.667280+00:00"
+        "created_at": "2026-09-25T07:15:47.558755+00:00"
       },
       {
-        "id": 307,
-        "ai_request_id": "failed_1790319905386",
+        "id": 335,
+        "ai_request_id": "failed_1790320547282",
         "market_date": "2026-09-25",
         "call_type": "DECISION_THESIS",
         "agent_id": "MACRO",
@@ -43708,16 +43708,16 @@
         "output_tokens": 0,
         "total_tokens": 0,
         "cost_usd": 0.0,
-        "latency_ms": 652,
+        "latency_ms": 231,
         "http_status": 402,
         "status": "CREDIT_EXHAUSTED",
         "error_message": "HTTP Error 402: Payment Required",
         "finish_reason": "stop",
-        "created_at": "2026-09-25T07:05:05.389995+00:00"
+        "created_at": "2026-09-25T07:15:47.287084+00:00"
       },
       {
-        "id": 306,
-        "ai_request_id": "failed_1790319904729",
+        "id": 334,
+        "ai_request_id": "failed_1790320547040",
         "market_date": "2026-09-25",
         "call_type": "DECISION_THESIS",
         "agent_id": "MACRO",
@@ -43732,16 +43732,16 @@
         "output_tokens": 0,
         "total_tokens": 0,
         "cost_usd": 0.0,
-        "latency_ms": 250,
+        "latency_ms": 268,
         "http_status": 402,
         "status": "CREDIT_EXHAUSTED",
         "error_message": "HTTP Error 402: Payment Required",
         "finish_reason": "stop",
-        "created_at": "2026-09-25T07:05:04.731109+00:00"
+        "created_at": "2026-09-25T07:15:47.046009+00:00"
       },
       {
-        "id": 305,
-        "ai_request_id": "failed_1790319904470",
+        "id": 333,
+        "ai_request_id": "failed_1790320546763",
         "market_date": "2026-09-25",
         "call_type": "DECISION_THESIS",
         "agent_id": "MOMENTUM",
@@ -43756,16 +43756,16 @@
         "output_tokens": 0,
         "total_tokens": 0,
         "cost_usd": 0.0,
-        "latency_ms": 245,
+        "latency_ms": 319,
         "http_status": 402,
         "status": "CREDIT_EXHAUSTED",
         "error_message": "HTTP Error 402: Payment Required",
         "finish_reason": "stop",
-        "created_at": "2026-09-25T07:05:04.474358+00:00"
+        "created_at": "2026-09-25T07:15:46.767125+00:00"
       },
       {
-        "id": 304,
-        "ai_request_id": "failed_1790319904217",
+        "id": 332,
+        "ai_request_id": "failed_1790320546435",
         "market_date": "2026-09-25",
         "call_type": "DECISION_THESIS",
         "agent_id": "MOMENTUM",
@@ -43780,16 +43780,16 @@
         "output_tokens": 0,
         "total_tokens": 0,
         "cost_usd": 0.0,
-        "latency_ms": 288,
+        "latency_ms": 240,
         "http_status": 402,
         "status": "CREDIT_EXHAUSTED",
         "error_message": "HTTP Error 402: Payment Required",
         "finish_reason": "stop",
-        "created_at": "2026-09-25T07:05:04.220910+00:00"
+        "created_at": "2026-09-25T07:15:46.439703+00:00"
       },
       {
-        "id": 303,
-        "ai_request_id": "failed_1790319903921",
+        "id": 331,
+        "ai_request_id": "failed_1790320546185",
         "market_date": "2026-09-25",
         "call_type": "DECISION_THESIS",
         "agent_id": "MOMENTUM",
@@ -43804,16 +43804,16 @@
         "output_tokens": 0,
         "total_tokens": 0,
         "cost_usd": 0.0,
-        "latency_ms": 333,
+        "latency_ms": 296,
         "http_status": 402,
         "status": "CREDIT_EXHAUSTED",
         "error_message": "HTTP Error 402: Payment Required",
         "finish_reason": "stop",
-        "created_at": "2026-09-25T07:05:03.924849+00:00"
+        "created_at": "2026-09-25T07:15:46.190275+00:00"
       },
       {
-        "id": 302,
-        "ai_request_id": "failed_1790319903579",
+        "id": 330,
+        "ai_request_id": "failed_1790320545878",
         "market_date": "2026-09-25",
         "call_type": "DECISION_THESIS",
         "agent_id": "ALPHA",
@@ -43828,16 +43828,16 @@
         "output_tokens": 0,
         "total_tokens": 0,
         "cost_usd": 0.0,
-        "latency_ms": 244,
+        "latency_ms": 277,
         "http_status": 402,
         "status": "CREDIT_EXHAUSTED",
         "error_message": "HTTP Error 402: Payment Required",
         "finish_reason": "stop",
-        "created_at": "2026-09-25T07:05:03.583502+00:00"
+        "created_at": "2026-09-25T07:15:45.883969+00:00"
       },
       {
-        "id": 301,
-        "ai_request_id": "failed_1790319903329",
+        "id": 329,
+        "ai_request_id": "failed_1790320545590",
         "market_date": "2026-09-25",
         "call_type": "DECISION_THESIS",
         "agent_id": "ALPHA",
@@ -43852,16 +43852,16 @@
         "output_tokens": 0,
         "total_tokens": 0,
         "cost_usd": 0.0,
-        "latency_ms": 233,
+        "latency_ms": 432,
         "http_status": 402,
         "status": "CREDIT_EXHAUSTED",
         "error_message": "HTTP Error 402: Payment Required",
         "finish_reason": "stop",
-        "created_at": "2026-09-25T07:05:03.331464+00:00"
+        "created_at": "2026-09-25T07:15:45.595931+00:00"
       },
       {
-        "id": 300,
-        "ai_request_id": "failed_1790319903079",
+        "id": 328,
+        "ai_request_id": "failed_1790320545141",
         "market_date": "2026-09-25",
         "call_type": "DECISION_THESIS",
         "agent_id": "ALPHA",
@@ -43876,256 +43876,16 @@
         "output_tokens": 0,
         "total_tokens": 0,
         "cost_usd": 0.0,
-        "latency_ms": 745,
+        "latency_ms": 313,
         "http_status": 402,
         "status": "CREDIT_EXHAUSTED",
         "error_message": "HTTP Error 402: Payment Required",
         "finish_reason": "stop",
-        "created_at": "2026-09-25T07:05:03.082239+00:00"
+        "created_at": "2026-09-25T07:15:45.144298+00:00"
       },
       {
-        "id": 299,
-        "ai_request_id": "failed_1790319835590",
-        "market_date": "2026-09-25",
-        "call_type": "DECISION_THESIS",
-        "agent_id": "DEFENSIVE",
-        "symbol": "BAJAJ-AUTO.NS",
-        "prediction_id": null,
-        "decision_id": null,
-        "model": "openai/gpt-4o-mini",
-        "model_provider": "openrouter",
-        "input_hash": "137b3cfff32b3165a14c347c9619087cbe17a1410d73cec02bf041cdeef2189e",
-        "output_hash": "",
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "cost_usd": 0.0,
-        "latency_ms": 272,
-        "http_status": 402,
-        "status": "CREDIT_EXHAUSTED",
-        "error_message": "HTTP Error 402: Payment Required",
-        "finish_reason": "stop",
-        "created_at": "2026-09-25T07:03:55.595002+00:00"
-      },
-      {
-        "id": 298,
-        "ai_request_id": "failed_1790319835307",
-        "market_date": "2026-09-25",
-        "call_type": "DECISION_THESIS",
-        "agent_id": "DEFENSIVE",
-        "symbol": "NESTLEIND.NS",
-        "prediction_id": null,
-        "decision_id": null,
-        "model": "openai/gpt-4o-mini",
-        "model_provider": "openrouter",
-        "input_hash": "325d39fe5a698c82b19ee84f748034385d446b75b4ff9770bed7a267e8348abb",
-        "output_hash": "",
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "cost_usd": 0.0,
-        "latency_ms": 241,
-        "http_status": 402,
-        "status": "CREDIT_EXHAUSTED",
-        "error_message": "HTTP Error 402: Payment Required",
-        "finish_reason": "stop",
-        "created_at": "2026-09-25T07:03:55.313057+00:00"
-      },
-      {
-        "id": 297,
-        "ai_request_id": "failed_1790319835055",
-        "market_date": "2026-09-25",
-        "call_type": "DECISION_THESIS",
-        "agent_id": "MACRO",
-        "symbol": "M&M.NS",
-        "prediction_id": null,
-        "decision_id": null,
-        "model": "openai/gpt-4o-mini",
-        "model_provider": "openrouter",
-        "input_hash": "41098cc91fffb273efd0792e1b260d3bf97ea70ada7dff5bdc326fd217787354",
-        "output_hash": "",
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "cost_usd": 0.0,
-        "latency_ms": 299,
-        "http_status": 402,
-        "status": "CREDIT_EXHAUSTED",
-        "error_message": "HTTP Error 402: Payment Required",
-        "finish_reason": "stop",
-        "created_at": "2026-09-25T07:03:55.060390+00:00"
-      },
-      {
-        "id": 296,
-        "ai_request_id": "failed_1790319834746",
-        "market_date": "2026-09-25",
-        "call_type": "DECISION_THESIS",
-        "agent_id": "MACRO",
-        "symbol": "BAJAJ-AUTO.NS",
-        "prediction_id": null,
-        "decision_id": null,
-        "model": "openai/gpt-4o-mini",
-        "model_provider": "openrouter",
-        "input_hash": "fe8914f374ef73425d8f4f77b926087e1a168aa41e06e235f049a3929bd3aeb3",
-        "output_hash": "",
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "cost_usd": 0.0,
-        "latency_ms": 274,
-        "http_status": 402,
-        "status": "CREDIT_EXHAUSTED",
-        "error_message": "HTTP Error 402: Payment Required",
-        "finish_reason": "stop",
-        "created_at": "2026-09-25T07:03:54.751228+00:00"
-      },
-      {
-        "id": 295,
-        "ai_request_id": "failed_1790319834462",
-        "market_date": "2026-09-25",
-        "call_type": "DECISION_THESIS",
-        "agent_id": "MOMENTUM",
-        "symbol": "BAJAJ-AUTO.NS",
-        "prediction_id": null,
-        "decision_id": null,
-        "model": "openai/gpt-4o-mini",
-        "model_provider": "openrouter",
-        "input_hash": "99f2aa0f60a1fbee6a065b8bce07aa7b7c344046ca5f864df4c10ecda564f176",
-        "output_hash": "",
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "cost_usd": 0.0,
-        "latency_ms": 257,
-        "http_status": 402,
-        "status": "CREDIT_EXHAUSTED",
-        "error_message": "HTTP Error 402: Payment Required",
-        "finish_reason": "stop",
-        "created_at": "2026-09-25T07:03:54.467368+00:00"
-      },
-      {
-        "id": 294,
-        "ai_request_id": "failed_1790319834193",
-        "market_date": "2026-09-25",
-        "call_type": "DECISION_THESIS",
-        "agent_id": "MOMENTUM",
-        "symbol": "M&M.NS",
-        "prediction_id": null,
-        "decision_id": null,
-        "model": "openai/gpt-4o-mini",
-        "model_provider": "openrouter",
-        "input_hash": "193b916d798abd1c47a0d05bb054ce64b1ada2e9614d52ce2bc828f9a436401f",
-        "output_hash": "",
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "cost_usd": 0.0,
-        "latency_ms": 291,
-        "http_status": 402,
-        "status": "CREDIT_EXHAUSTED",
-        "error_message": "HTTP Error 402: Payment Required",
-        "finish_reason": "stop",
-        "created_at": "2026-09-25T07:03:54.199722+00:00"
-      },
-      {
-        "id": 293,
-        "ai_request_id": "failed_1790319833890",
-        "market_date": "2026-09-25",
-        "call_type": "DECISION_THESIS",
-        "agent_id": "MOMENTUM",
-        "symbol": "LT.NS",
-        "prediction_id": null,
-        "decision_id": null,
-        "model": "openai/gpt-4o-mini",
-        "model_provider": "openrouter",
-        "input_hash": "baf992daeae4f91489cd39c73275e1d1fe1ebc3d72f00e276c1994e439c40c85",
-        "output_hash": "",
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "cost_usd": 0.0,
-        "latency_ms": 266,
-        "http_status": 402,
-        "status": "CREDIT_EXHAUSTED",
-        "error_message": "HTTP Error 402: Payment Required",
-        "finish_reason": "stop",
-        "created_at": "2026-09-25T07:03:53.897168+00:00"
-      },
-      {
-        "id": 292,
-        "ai_request_id": "failed_1790319833614",
-        "market_date": "2026-09-25",
-        "call_type": "DECISION_THESIS",
-        "agent_id": "ALPHA",
-        "symbol": "M&M.NS",
-        "prediction_id": null,
-        "decision_id": null,
-        "model": "openai/gpt-4o-mini",
-        "model_provider": "openrouter",
-        "input_hash": "912df8734a442cb93ee7dde965b02119436e3903fc5f9f875031752a4eda280f",
-        "output_hash": "",
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "cost_usd": 0.0,
-        "latency_ms": 275,
-        "http_status": 402,
-        "status": "CREDIT_EXHAUSTED",
-        "error_message": "HTTP Error 402: Payment Required",
-        "finish_reason": "stop",
-        "created_at": "2026-09-25T07:03:53.619052+00:00"
-      },
-      {
-        "id": 291,
-        "ai_request_id": "failed_1790319833328",
-        "market_date": "2026-09-25",
-        "call_type": "DECISION_THESIS",
-        "agent_id": "ALPHA",
-        "symbol": "BAJAJ-AUTO.NS",
-        "prediction_id": null,
-        "decision_id": null,
-        "model": "openai/gpt-4o-mini",
-        "model_provider": "openrouter",
-        "input_hash": "9c5fdcb5caefe39afb11b1345664274ce2701832e7d8a2d24b1692a5f24f0a78",
-        "output_hash": "",
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "cost_usd": 0.0,
-        "latency_ms": 276,
-        "http_status": 402,
-        "status": "CREDIT_EXHAUSTED",
-        "error_message": "HTTP Error 402: Payment Required",
-        "finish_reason": "stop",
-        "created_at": "2026-09-25T07:03:53.334198+00:00"
-      },
-      {
-        "id": 290,
-        "ai_request_id": "failed_1790319833041",
-        "market_date": "2026-09-25",
-        "call_type": "DECISION_THESIS",
-        "agent_id": "ALPHA",
-        "symbol": "LT.NS",
-        "prediction_id": null,
-        "decision_id": null,
-        "model": "openai/gpt-4o-mini",
-        "model_provider": "openrouter",
-        "input_hash": "e93c3b8e7f32fb4ff2e9720ab749eb742796c59cdd989ac022ad994803477eda",
-        "output_hash": "",
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "cost_usd": 0.0,
-        "latency_ms": 276,
-        "http_status": 402,
-        "status": "CREDIT_EXHAUSTED",
-        "error_message": "HTTP Error 402: Payment Required",
-        "finish_reason": "stop",
-        "created_at": "2026-09-25T07:03:53.046475+00:00"
-      },
-      {
-        "id": 289,
-        "ai_request_id": "failed_1790319812281",
+        "id": 327,
+        "ai_request_id": "failed_1790320537180",
         "market_date": "2026-09-25",
         "call_type": "DECISION_THESIS",
         "agent_id": "ALPHA",
@@ -44140,16 +43900,16 @@
         "output_tokens": 0,
         "total_tokens": 0,
         "cost_usd": 0.0,
-        "latency_ms": 260,
+        "latency_ms": 286,
         "http_status": 402,
         "status": "CREDIT_EXHAUSTED",
         "error_message": "HTTP Error 402: Payment Required",
         "finish_reason": "stop",
-        "created_at": "2026-09-25T07:03:32.287137+00:00"
+        "created_at": "2026-09-25T07:15:37.186538+00:00"
       },
       {
-        "id": 288,
-        "ai_request_id": "failed_1790319795003",
+        "id": 326,
+        "ai_request_id": "failed_1790320531284",
         "market_date": "2026-09-25",
         "call_type": "DECISION_THESIS",
         "agent_id": "ALPHA",
@@ -44169,59 +43929,11 @@
         "status": "CREDIT_EXHAUSTED",
         "error_message": "HTTP Error 402: Payment Required - Credits Exhausted",
         "finish_reason": "stop",
-        "created_at": "2026-09-25T07:03:15.006007+00:00"
+        "created_at": "2026-09-25T07:15:31.287027+00:00"
       },
       {
-        "id": 287,
-        "ai_request_id": "failed_1790319566833",
-        "market_date": "2026-09-25",
-        "call_type": "DECISION_THESIS",
-        "agent_id": "ALPHA",
-        "symbol": "TCS.NS",
-        "prediction_id": null,
-        "decision_id": null,
-        "model": "openai/gpt-4o-mini",
-        "model_provider": "openrouter",
-        "input_hash": "6e897866f32640a0150e864e91e69f6a425a90a678fbdad5697881c39d4f80a9",
-        "output_hash": "",
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "cost_usd": 0.0,
-        "latency_ms": 2,
-        "http_status": 500,
-        "status": "INFERENCE_FAILED",
-        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
-        "finish_reason": "stop",
-        "created_at": "2026-09-25T06:59:26.834055+00:00"
-      },
-      {
-        "id": 286,
-        "ai_request_id": "failed_1790319566741",
-        "market_date": "2026-09-25",
-        "call_type": "DECISION_THESIS",
-        "agent_id": "ALPHA",
-        "symbol": "RELIANCE.NS",
-        "prediction_id": null,
-        "decision_id": null,
-        "model": "openai/gpt-4o-mini",
-        "model_provider": "openrouter",
-        "input_hash": "0b0efa2faaaff3f842e3d5af17e5e4ddfad538429b33b243341637f2086609b6",
-        "output_hash": "",
-        "input_tokens": 0,
-        "output_tokens": 0,
-        "total_tokens": 0,
-        "cost_usd": 0.0,
-        "latency_ms": 0,
-        "http_status": 402,
-        "status": "CREDIT_EXHAUSTED",
-        "error_message": "HTTP Error 402: Payment Required - Credits Exhausted",
-        "finish_reason": "stop",
-        "created_at": "2026-09-25T06:59:26.743008+00:00"
-      },
-      {
-        "id": 285,
-        "ai_request_id": "failed_1790319437455",
+        "id": 325,
+        "ai_request_id": "failed_1790320358190",
         "market_date": "2026-09-25",
         "call_type": "DECISION_THESIS",
         "agent_id": "DEFENSIVE",
@@ -44241,7 +43953,295 @@
         "status": "INFERENCE_FAILED",
         "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
         "finish_reason": "stop",
-        "created_at": "2026-09-25T06:57:17.456440+00:00"
+        "created_at": "2026-09-25T07:12:38.192147+00:00"
+      },
+      {
+        "id": 324,
+        "ai_request_id": "failed_1790320358185",
+        "market_date": "2026-09-25",
+        "call_type": "DECISION_THESIS",
+        "agent_id": "DEFENSIVE",
+        "symbol": "NESTLEIND.NS",
+        "prediction_id": null,
+        "decision_id": null,
+        "model": "openai/gpt-4o-mini",
+        "model_provider": "openrouter",
+        "input_hash": "325d39fe5a698c82b19ee84f748034385d446b75b4ff9770bed7a267e8348abb",
+        "output_hash": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0,
+        "latency_ms": 2,
+        "http_status": 500,
+        "status": "INFERENCE_FAILED",
+        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
+        "finish_reason": "stop",
+        "created_at": "2026-09-25T07:12:38.186828+00:00"
+      },
+      {
+        "id": 323,
+        "ai_request_id": "failed_1790320358179",
+        "market_date": "2026-09-25",
+        "call_type": "DECISION_THESIS",
+        "agent_id": "MOMENTUM",
+        "symbol": "BAJAJ-AUTO.NS",
+        "prediction_id": null,
+        "decision_id": null,
+        "model": "openai/gpt-4o-mini",
+        "model_provider": "openrouter",
+        "input_hash": "99f2aa0f60a1fbee6a065b8bce07aa7b7c344046ca5f864df4c10ecda564f176",
+        "output_hash": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0,
+        "latency_ms": 2,
+        "http_status": 500,
+        "status": "INFERENCE_FAILED",
+        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
+        "finish_reason": "stop",
+        "created_at": "2026-09-25T07:12:38.180998+00:00"
+      },
+      {
+        "id": 322,
+        "ai_request_id": "failed_1790320358173",
+        "market_date": "2026-09-25",
+        "call_type": "DECISION_THESIS",
+        "agent_id": "MOMENTUM",
+        "symbol": "M&M.NS",
+        "prediction_id": null,
+        "decision_id": null,
+        "model": "openai/gpt-4o-mini",
+        "model_provider": "openrouter",
+        "input_hash": "193b916d798abd1c47a0d05bb054ce64b1ada2e9614d52ce2bc828f9a436401f",
+        "output_hash": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0,
+        "latency_ms": 2,
+        "http_status": 500,
+        "status": "INFERENCE_FAILED",
+        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
+        "finish_reason": "stop",
+        "created_at": "2026-09-25T07:12:38.174520+00:00"
+      },
+      {
+        "id": 321,
+        "ai_request_id": "failed_1790320358167",
+        "market_date": "2026-09-25",
+        "call_type": "DECISION_THESIS",
+        "agent_id": "MOMENTUM",
+        "symbol": "LT.NS",
+        "prediction_id": null,
+        "decision_id": null,
+        "model": "openai/gpt-4o-mini",
+        "model_provider": "openrouter",
+        "input_hash": "baf992daeae4f91489cd39c73275e1d1fe1ebc3d72f00e276c1994e439c40c85",
+        "output_hash": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0,
+        "latency_ms": 2,
+        "http_status": 500,
+        "status": "INFERENCE_FAILED",
+        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
+        "finish_reason": "stop",
+        "created_at": "2026-09-25T07:12:38.169190+00:00"
+      },
+      {
+        "id": 320,
+        "ai_request_id": "failed_1790320358162",
+        "market_date": "2026-09-25",
+        "call_type": "DECISION_THESIS",
+        "agent_id": "ALPHA",
+        "symbol": "M&M.NS",
+        "prediction_id": null,
+        "decision_id": null,
+        "model": "openai/gpt-4o-mini",
+        "model_provider": "openrouter",
+        "input_hash": "912df8734a442cb93ee7dde965b02119436e3903fc5f9f875031752a4eda280f",
+        "output_hash": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0,
+        "latency_ms": 2,
+        "http_status": 500,
+        "status": "INFERENCE_FAILED",
+        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
+        "finish_reason": "stop",
+        "created_at": "2026-09-25T07:12:38.163972+00:00"
+      },
+      {
+        "id": 319,
+        "ai_request_id": "failed_1790320358156",
+        "market_date": "2026-09-25",
+        "call_type": "DECISION_THESIS",
+        "agent_id": "ALPHA",
+        "symbol": "BAJAJ-AUTO.NS",
+        "prediction_id": null,
+        "decision_id": null,
+        "model": "openai/gpt-4o-mini",
+        "model_provider": "openrouter",
+        "input_hash": "9c5fdcb5caefe39afb11b1345664274ce2701832e7d8a2d24b1692a5f24f0a78",
+        "output_hash": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0,
+        "latency_ms": 2,
+        "http_status": 500,
+        "status": "INFERENCE_FAILED",
+        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
+        "finish_reason": "stop",
+        "created_at": "2026-09-25T07:12:38.157884+00:00"
+      },
+      {
+        "id": 318,
+        "ai_request_id": "failed_1790320358151",
+        "market_date": "2026-09-25",
+        "call_type": "DECISION_THESIS",
+        "agent_id": "ALPHA",
+        "symbol": "LT.NS",
+        "prediction_id": null,
+        "decision_id": null,
+        "model": "openai/gpt-4o-mini",
+        "model_provider": "openrouter",
+        "input_hash": "e93c3b8e7f32fb4ff2e9720ab749eb742796c59cdd989ac022ad994803477eda",
+        "output_hash": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0,
+        "latency_ms": 2,
+        "http_status": 500,
+        "status": "INFERENCE_FAILED",
+        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
+        "finish_reason": "stop",
+        "created_at": "2026-09-25T07:12:38.152296+00:00"
+      },
+      {
+        "id": 317,
+        "ai_request_id": "failed_1790320358047",
+        "market_date": "2026-09-25",
+        "call_type": "DECISION_THESIS",
+        "agent_id": "DEFENSIVE",
+        "symbol": "TCS.NS",
+        "prediction_id": null,
+        "decision_id": null,
+        "model": "openai/gpt-4o-mini",
+        "model_provider": "openrouter",
+        "input_hash": "f84fd76028f7b4d868cbbbddcdb6eb2b1eafd012eba628ad25003e13b9a696c3",
+        "output_hash": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0,
+        "latency_ms": 3,
+        "http_status": 500,
+        "status": "INFERENCE_FAILED",
+        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
+        "finish_reason": "stop",
+        "created_at": "2026-09-25T07:12:38.049058+00:00"
+      },
+      {
+        "id": 316,
+        "ai_request_id": "failed_1790320358041",
+        "market_date": "2026-09-25",
+        "call_type": "DECISION_THESIS",
+        "agent_id": "MACRO",
+        "symbol": "TCS.NS",
+        "prediction_id": null,
+        "decision_id": null,
+        "model": "openai/gpt-4o-mini",
+        "model_provider": "openrouter",
+        "input_hash": "89cc7589804cf8cd7e5e1d7681468c3492e8e6470ad1037d872789f7c608f355",
+        "output_hash": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0,
+        "latency_ms": 2,
+        "http_status": 500,
+        "status": "INFERENCE_FAILED",
+        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
+        "finish_reason": "stop",
+        "created_at": "2026-09-25T07:12:38.042263+00:00"
+      },
+      {
+        "id": 315,
+        "ai_request_id": "failed_1790320358035",
+        "market_date": "2026-09-25",
+        "call_type": "DECISION_THESIS",
+        "agent_id": "MOMENTUM",
+        "symbol": "TCS.NS",
+        "prediction_id": null,
+        "decision_id": null,
+        "model": "openai/gpt-4o-mini",
+        "model_provider": "openrouter",
+        "input_hash": "4c0ace46f18d31539663abdeca61ea7f556b8d9727d85df3c5911a802308137d",
+        "output_hash": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0,
+        "latency_ms": 2,
+        "http_status": 500,
+        "status": "INFERENCE_FAILED",
+        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
+        "finish_reason": "stop",
+        "created_at": "2026-09-25T07:12:38.036583+00:00"
+      },
+      {
+        "id": 314,
+        "ai_request_id": "failed_1790320358028",
+        "market_date": "2026-09-25",
+        "call_type": "DECISION_THESIS",
+        "agent_id": "ALPHA",
+        "symbol": "TCS.NS",
+        "prediction_id": null,
+        "decision_id": null,
+        "model": "openai/gpt-4o-mini",
+        "model_provider": "openrouter",
+        "input_hash": "960d1073ffab640de9661de6a00aef2bfba52a592c104fcfc334f733a188bff8",
+        "output_hash": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0,
+        "latency_ms": 2,
+        "http_status": 500,
+        "status": "INFERENCE_FAILED",
+        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
+        "finish_reason": "stop",
+        "created_at": "2026-09-25T07:12:38.030605+00:00"
+      },
+      {
+        "id": 313,
+        "ai_request_id": "failed_1790320357953",
+        "market_date": "2026-09-25",
+        "call_type": "DECISION_THESIS",
+        "agent_id": "DEFENSIVE",
+        "symbol": "TCS.NS",
+        "prediction_id": null,
+        "decision_id": null,
+        "model": "openai/gpt-4o-mini",
+        "model_provider": "openrouter",
+        "input_hash": "f84fd76028f7b4d868cbbbddcdb6eb2b1eafd012eba628ad25003e13b9a696c3",
+        "output_hash": "",
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0,
+        "cost_usd": 0.0,
+        "latency_ms": 2,
+        "http_status": 500,
+        "status": "INFERENCE_FAILED",
+        "error_message": "<urlopen error [Errno 8] nodename nor servname provided, or not known>",
+        "finish_reason": "stop",
+        "created_at": "2026-09-25T07:12:37.955123+00:00"
       }
     ]
   },
@@ -44506,7 +44506,7 @@
         "category": "GOVERNANCE"
       }
     ],
-    "evaluated_at": "2026-09-25T07:05:08.944714+00:00"
+    "evaluated_at": "2026-09-25T07:15:50.524786+00:00"
   },
   "v4_six_month_calendar": {
     "is_clock_started": false,
@@ -44606,7 +44606,7 @@
     "p95_max_drawdown_pct": 0.8,
     "p99_max_drawdown_pct": 1.0,
     "expected_recovery_trades": 14,
-    "evaluated_at": "2026-09-25T07:05:08.982558+00:00"
+    "evaluated_at": "2026-09-25T07:15:50.562003+00:00"
   },
   "v4_stress_test_summary": {
     "total_scenarios": 30,
@@ -47622,14 +47622,14 @@
     "status": "HEALTHY",
     "scheduler_cron": "*/5 * * * *",
     "cadence": "Every 5 minutes",
-    "last_scan": "2026-09-25T07:03:11.48632+00:00",
-    "next_expected_invocation": "2026-09-25 07:10:00 UTC",
+    "last_scan": "2026-09-25T07:15:25.030916+00:00",
+    "next_expected_invocation": "2026-09-25 07:20:00 UTC",
     "last_error": null,
     "telemetry": {
-      "scheduled_invocation_id": "SCHED-TEST-1790319791",
-      "sentinel_invocation_id": "SENT-TEST-1790319791486",
-      "started_at": "2026-09-25T07:03:11.48632+00:00",
-      "completed_at": "2026-09-25T07:03:11.48632+00:00",
+      "scheduled_invocation_id": "SCHED-TEST-1790320525",
+      "sentinel_invocation_id": "SENT-TEST-1790320525030",
+      "started_at": "2026-09-25T07:15:25.030916+00:00",
+      "completed_at": "2026-09-25T07:15:25.030916+00:00",
       "sources_checked": 8,
       "events_seen": 5,
       "events_new": 5,
@@ -47639,8 +47639,8 @@
       "status": "SUCCESS",
       "error": null,
       "lineage": {
-        "scheduled_invocation_id": "SCHED-TEST-1790319791",
-        "sentinel_invocation_id": "SENT-TEST-1790319791486",
+        "scheduled_invocation_id": "SCHED-TEST-1790320525",
+        "sentinel_invocation_id": "SENT-TEST-1790320525030",
         "event_ids": [
           "EV-20260916-001"
         ],
@@ -47655,20 +47655,20 @@
       }
     },
     "active_thesis": {
-      "id": 60,
-      "thesis_id": "TH-SENTINEL-20260925_070310",
+      "id": 62,
+      "thesis_id": "TH-SENTINEL-20260925_071523",
       "revision": 1,
       "bias": "BULLISH",
       "confidence": 75.0,
       "expected_move": 1.2,
-      "valid_until": "2026-09-26T07:03:10.482830+00:00",
+      "valid_until": "2026-09-26T07:15:23.880079+00:00",
       "invalidation_conditions_json": "[\"USDINR breaks above 95.75\", \"India VIX surges > 20%\", \"Global futures reverse > 1.5%\", \"Major conflicting central bank policy decision\"]",
-      "last_material_event_id": "EV-20260916-077707",
+      "last_material_event_id": "EV-20260916-718856",
       "status": "ACTIVE",
       "volatility_regime": "NORMAL",
       "risk_multiplier": 1.0,
       "stop_multiplier": 1.0,
-      "created_at": "2026-09-25T07:03:10.482815+00:00",
+      "created_at": "2026-09-25T07:15:23.880061+00:00",
       "invalidation_conditions": [
         "USDINR breaks above 95.75",
         "India VIX surges > 20%",
@@ -47678,7 +47678,7 @@
     },
     "thesis_revisions": [],
     "event_coverage": {
-      "id": 68,
+      "id": 70,
       "date": "2026-09-16",
       "scheduled_expected": 4,
       "scheduled_detected": 4,
@@ -47689,9 +47689,27 @@
       "material_detected": 6,
       "material_processed": 6,
       "material_processing_pct": 100.0,
-      "recorded_at": "2026-09-25T07:03:11.476233+00:00"
+      "recorded_at": "2026-09-25T07:15:25.020423+00:00"
     },
     "recent_events": [
+      {
+        "id": 33,
+        "event_id": "EV-20260916-718856",
+        "category": "FOMC",
+        "source": "FEDERAL_RESERVE",
+        "title": "Federal Reserve raises interest rates by 25 bps to target 4.00%",
+        "description": "Fed rate hike 25 bps",
+        "raw_payload_hash": "0de06a1ddb0f957f53825dced1796b72ce89d78c412a128a970cc2910c994d8b",
+        "importance_score": 100.0,
+        "india_relevance": "HIGH",
+        "novelty": "HIGH",
+        "market_reaction_score": 100.0,
+        "thesis_relation": "CONFLICTS",
+        "verdict": "TRIGGER_RE_EVALUATION",
+        "associated_thesis_id": "TH-SENTINEL-20260925_070310",
+        "details_json": {},
+        "timestamp": "2026-09-16T18:05:00+00:00"
+      },
       {
         "id": 32,
         "event_id": "EV-20260916-077707",
@@ -47943,24 +47961,6 @@
         "associated_thesis_id": "TH-SENTINEL-20260924_011220",
         "details_json": {},
         "timestamp": "2026-09-16T18:05:00+00:00"
-      },
-      {
-        "id": 18,
-        "event_id": "EV-SHOCK-20260924_012838",
-        "category": "MARKET_SHOCK",
-        "source": "MARKET_TICK_ANOMALY_DETECTOR",
-        "title": "MARKET SHOCK: India VIX surge (+38.00% >= +35.0%); US futures plunge (-2.40% <= -2.0%)",
-        "description": "Automated news-independent cross-asset shock detected: ['India VIX surge (+38.00% >= +35.0%)', 'US futures plunge (-2.40% <= -2.0%)']",
-        "raw_payload_hash": "007092b84b6351967f19585f8ee93e22fa21e2ed7557940fb132bf7932852eff",
-        "importance_score": 0.0,
-        "india_relevance": "MEDIUM",
-        "novelty": "MEDIUM",
-        "market_reaction_score": 0.0,
-        "thesis_relation": "NEUTRAL",
-        "verdict": "STORE_ONLY",
-        "associated_thesis_id": null,
-        "details_json": {},
-        "timestamp": "2026-09-24T01:28:38.588806+00:00"
       }
     ],
     "economic_calendar": [
@@ -47981,8 +47981,8 @@
     ],
     "cloud_persistence": "SUPABASE_AUTHORITATIVE",
     "lineage": {
-      "scheduled_invocation_id": "SCHED-TEST-1790319791",
-      "sentinel_invocation_id": "SENT-TEST-1790319791486",
+      "scheduled_invocation_id": "SCHED-TEST-1790320525",
+      "sentinel_invocation_id": "SENT-TEST-1790320525030",
       "event_ids": [
         "EV-20260916-001"
       ],
@@ -48002,10 +48002,10 @@
     "active_source": "REFERENCE_DATASET",
     "trade_eligible": false,
     "data_mode": "REFERENCE_ONLY",
-    "data_as_of": "2026-08-26T07:05:11.690834+00:00",
+    "data_as_of": "2026-08-26T07:15:52.519673+00:00",
     "financial_period": "Q1 FY27",
-    "snapshot_id": "PIT-20260925-070511-RELIANCE",
-    "provenance_hash": "3a622082e8751629647d14c1f609920cdff808996fba9db6fd55531f48bdc308",
+    "snapshot_id": "PIT-20260925-071552-RELIANCE",
+    "provenance_hash": "040ebe720bda4c7b1cc397603fa627baf8675ee25a37f952a8d9d0618382a613",
     "fundamental_regime": "INSUFFICIENT_DATA",
     "breadth": {
       "total_equities": 8,
@@ -48022,7 +48022,7 @@
     "sample_symbol": "RELIANCE.NS",
     "sample_snapshot": {
       "symbol": "RELIANCE.NS",
-      "as_of": "2026-08-26T07:05:11.690834+00:00",
+      "as_of": "2026-08-26T07:15:52.519673+00:00",
       "source": "REFERENCE_DATASET",
       "data_mode": "REFERENCE_ONLY",
       "financial_period": "Q1 FY27",
@@ -48061,7 +48061,7 @@
       "balance_sheet_score": 81.25,
       "fundamental_regime": "MIXED",
       "freshness": "FRESH",
-      "provenance_hash": "9c3a24bf495f52f5a5ab5cc48507c01764f16318e4a18ef5031ec402463b5ac0",
+      "provenance_hash": "d69e72ea3b7cfb5036381c8b7c7d5eecdfaba0d0cd70f128843334ae19945380",
       "is_available": true,
       "is_fresh": true
     },

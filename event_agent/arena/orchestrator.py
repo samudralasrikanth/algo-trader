@@ -105,9 +105,13 @@ class ArenaOrchestrator:
         snapshot_id = market_snapshot["snapshot_id"]
 
         # Prices for mark-to-market
+        # Synthetic defaults keep the analytics matrix complete, but they are
+        # never valid execution prices.  In particular, a missing quote must
+        # not be interpreted as ₹1,000 and trigger a false stop-loss exit.
         stock_prices = {
             sym: sdata["base_price"]
             for sym, sdata in market_snapshot.get("stocks", {}).items()
+            if sdata.get("price_source") not in ("SYNTHETIC_DEFAULT", "LOCKED_FORECAST")
         }
 
         # 3. Query all 5 agents for proposals

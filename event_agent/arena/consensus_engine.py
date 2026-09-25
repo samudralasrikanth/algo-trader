@@ -90,6 +90,7 @@ class ConsensusEngine:
 
             if pred:
                 base_price = float(pred.get("base_price", DEFAULT_STOCK_PRICES.get(sym, 1000.0)))
+                price_source = pred.get("execution_price_source", "PREDICTION_INPUT")
                 pred_1d_pct = float(pred.get("expected_1d_pct", pred.get("predicted_1d_pct", 0.0)))
                 conviction = float(pred.get("conviction", 55.0))
                 catalysts = pred.get("occurred_events", []) or pred.get("active_catalysts", [])
@@ -103,6 +104,7 @@ class ConsensusEngine:
                 fund_snap = pred.get("fundamental_snapshot")
             else:
                 base_price = DEFAULT_STOCK_PRICES.get(sym, 1000.0)
+                price_source = "SYNTHETIC_DEFAULT"
                 pred_1d_pct = 0.0
                 conviction = 50.0
                 catalysts = []
@@ -131,6 +133,7 @@ class ConsensusEngine:
                 "sector": meta.get("sector", "Diversified"),
                 "beta": float(meta.get("beta", 1.0)),
                 "base_price": base_price,
+                "price_source": price_source,
                 "predicted_1d_pct": pred_1d_pct,
                 "conviction": conviction,
                 "volatility_5d": vol_5d,
@@ -159,6 +162,7 @@ class ConsensusEngine:
                     "sector": p_data.get("sector", "Index"),
                     "beta": 1.0,
                     "base_price": float(p_data.get("base_price", 25000.0)),
+                    "price_source": p_data.get("execution_price_source", "PREDICTION_INPUT"),
                     "predicted_1d_pct": float(p_data.get("predicted_1d_pct", 0.0)),
                     "conviction": float(p_data.get("conviction", 60.0)),
                     "volatility_5d": 0.14,
