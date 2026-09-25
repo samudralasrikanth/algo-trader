@@ -534,7 +534,7 @@ class OpenRouterProvider(LLMProvider):
         body = body_str.encode("utf-8")
         in_hash = hashlib.sha256(body).hexdigest()
 
-        max_attempts = 3
+        max_attempts = 4
         for attempt in range(max_attempts):
             start_t = time.perf_counter()
             try:
@@ -607,7 +607,13 @@ class OpenRouterProvider(LLMProvider):
                 status_code = getattr(exc, "code", 500) if hasattr(exc, "code") else 500
 
                 if (status_code == 429 or "429" in raw_err) and attempt < max_attempts - 1:
-                    time.sleep(1.2 * (attempt + 1))
+                    retry_wait = 3.0 * (attempt + 1)
+                    if hasattr(exc, "headers") and exc.headers:
+                        try:
+                            retry_wait = float(exc.headers.get("retry-after", retry_wait))
+                        except (ValueError, TypeError):
+                            pass
+                    time.sleep(min(max(retry_wait, 2.0), 15.0))
                     continue
 
                 if status_code == 402 or "402" in raw_err or "Payment Required" in raw_err or "prepayment credits are depleted" in raw_err.lower():
