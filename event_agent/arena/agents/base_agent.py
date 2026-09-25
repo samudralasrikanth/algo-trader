@@ -101,6 +101,7 @@ class BaseAgent(ABC):
             # DO NOT fabricate an AI decision from stock_data!
             # Emit explicit NO_TRADE thesis tagged with error and excluded from accuracy.
             prov_model = getattr(self.llm_provider, "model", "unknown")
+            prov_name = getattr(self.llm_provider, "provider_name", "openrouter")
             error_reason = ai_resp.get("fallback_reason") or ai_resp.get("error") or "Inference failed"
             thesis = MarketThesis(
                 agent_id=self.agent_id,
@@ -114,9 +115,9 @@ class BaseAgent(ABC):
                 reasoning=f"AGENT AI STATUS: UNAVAILABLE | AI THESIS: NOT GENERATED | DETERMINISTIC SCREEN: NO_TRADE ({error_reason})",
                 ai_request_id=None,
                 model=prov_model,
-                actual_provider="openrouter",
-                decision_model=ai_resp.get("decision_model") or f"OPENROUTER:{prov_model}",
-                model_provider="openrouter",
+                actual_provider=prov_name,
+                decision_model=ai_resp.get("decision_model") or f"{prov_name.upper()}:{prov_model}",
+                model_provider=prov_name,
                 model_version=prov_model,
                 decision_mode="AI_UNAVAILABLE",
                 ai_status=ai_status,

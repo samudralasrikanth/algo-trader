@@ -231,6 +231,9 @@ def sanitize_secret_error(error_str: Any) -> str:
         return ""
     s = str(error_str)
     s = re.sub(r"sk-[a-zA-Z0-9_\-]{16,}", "[REDACTED_API_KEY]", s)
+    s = re.sub(r"gsk_[a-zA-Z0-9_\-]{20,}", "[REDACTED_API_KEY]", s)
+    s = re.sub(r"AIza[a-zA-Z0-9_\-]{20,}", "[REDACTED_API_KEY]", s)
+    s = re.sub(r"AQ\.[a-zA-Z0-9_\-]{20,}", "[REDACTED_API_KEY]", s)
     s = re.sub(r"Bearer\s+[a-zA-Z0-9_\-\.]{16,}", "Bearer [REDACTED_TOKEN]", s, flags=re.IGNORECASE)
     return s
 
@@ -280,18 +283,61 @@ class OpenRouterMetricsTracker:
 
 class OpenRouterProvider(LLMProvider):
     """
-    OpenRouter-backed structured event reasoner.
-    Works with any OpenRouter model (e.g. openai/gpt-4o-mini, meta-llama/llama-3.3-70b-instruct, etc.)
+    Structured event reasoner supporting OpenRouter and Google Gemini OpenAI-compatible endpoints.
+    Works with OpenRouter models or Gemini models (e.g. gemini-flash-lite-latest).
     Falls back gracefully to HeuristicEventParser if API key is not configured, rate-limited, or network fails.
     Captures complete auditable execution telemetry: request_id, latency_ms, tokens, and inference_mode.
     """
 
-    def __init__(self, api_key: Optional[str] = None, model: str = "openai/gpt-4o-mini"):
+    def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
+        groq_key = os.environ.get("GROQ_API_KEY")
+        gemini_key = os.environ.get("GEMINI_API_KEY")
+        openrouter_key = os.environ.get("OPENROUTER_API_KEY") or os.environ.get("OPENAI_API_KEY")
+        provider_pref = os.environ.get("LLM_PROVIDER", "").strip().lower()
+
         if api_key is not None:
             self.api_key = api_key
+            if self.api_key.startswith("gsk_"):
+                self.provider_type = "groq"
+            elif self.api_key.startswith("AQ.") or self.api_key.startswith("AIza"):
+                self.provider_type = "gemini"
+            else:
+                self.provider_type = "openrouter"
+        elif provider_pref == "groq" and groq_key:
+            self.api_key = groq_key
+            self.provider_type = "groq"
+        elif provider_pref == "gemini" and gemini_key:
+            self.api_key = gemini_key
+            self.provider_type = "gemini"
+        elif provider_pref == "openrouter" and openrouter_key:
+            self.api_key = openrouter_key
+            self.provider_type = "openrouter"
+        elif groq_key:
+            self.api_key = groq_key
+            self.provider_type = "groq"
+        elif gemini_key:
+            self.api_key = gemini_key
+            self.provider_type = "gemini"
+        elif openrouter_key:
+            self.api_key = openrouter_key
+            self.provider_type = "openrouter"
         else:
-            self.api_key = os.environ.get("OPENROUTER_API_KEY") or os.environ.get("OPENAI_API_KEY")
-        self.model = os.environ.get("OPENROUTER_MODEL", model)
+            self.api_key = None
+            self.provider_type = "none"
+
+        if self.provider_type == "groq":
+            self.endpoint_url = "https://api.groq.com/openai/v1/chat/completions"
+            self.model = model or os.environ.get("GROQ_MODEL", "qwen/qwen3.8-27b")
+            self.provider_name = "groq"
+        elif self.provider_type == "gemini":
+            self.endpoint_url = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+            self.model = model or os.environ.get("GEMINI_MODEL", "gemini-flash-lite-latest")
+            self.provider_name = "gemini"
+        else:
+            self.endpoint_url = "https://openrouter.ai/api/v1/chat/completions"
+            self.model = model or os.environ.get("OPENROUTER_MODEL", "openai/gpt-4o-mini")
+            self.provider_name = "openrouter"
+
         self.fallback = HeuristicEventParser()
 
     @classmethod
@@ -319,7 +365,7 @@ class OpenRouterProvider(LLMProvider):
         fingerprint = f"SHA256:{hashlib.sha256(self.api_key.encode()).hexdigest()[:16]}" if self.api_key else None
         if not self.api_key:
             return {
-                "provider": "openrouter",
+                "provider": self.provider_name,
                 "configured": False,
                 "credential_fingerprint": None,
                 "status": "NOT_CONFIGURED",
@@ -332,15 +378,18 @@ class OpenRouterProvider(LLMProvider):
                 "total_tokens": 0,
                 "cost_usd": 0.0,
                 "last_success": None,
-                "last_failure": "OPENROUTER_API_KEY is not configured",
+                "last_failure": f"{self.provider_name.upper()}_API_KEY is not configured",
             }
 
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}",
-            "HTTP-Referer": "https://github.com/samudralasrikanth/algo-trader",
-            "X-Title": "NEXUS Nifty 50 Event Agent",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) NEXUS/1.0",
         }
+        if self.provider_type == "openrouter":
+            headers["HTTP-Referer"] = "https://github.com/samudralasrikanth/algo-trader"
+            headers["X-Title"] = "NEXUS Nifty 50 Event Agent"
+
         body = json.dumps({
             "model": self.model,
             "messages": [{"role": "user", "content": "PING"}],
@@ -349,7 +398,7 @@ class OpenRouterProvider(LLMProvider):
 
         start_t = time.perf_counter()
         try:
-            req = urllib.request.Request("https://openrouter.ai/api/v1/chat/completions", data=body, headers=headers)
+            req = urllib.request.Request(self.endpoint_url, data=body, headers=headers)
             with urllib.request.urlopen(req, timeout=5) as resp:
                 latency_ms = int((time.perf_counter() - start_t) * 1000)
                 data = json.loads(resp.read().decode("utf-8"))
@@ -357,14 +406,14 @@ class OpenRouterProvider(LLMProvider):
                 in_tok = usage.get("prompt_tokens", 0)
                 out_tok = usage.get("completion_tokens", 0)
                 tot_tok = usage.get("total_tokens", 0)
-                cost = (in_tok * 0.15 + out_tok * 0.60) / 1_000_000.0
+                cost = 0.0 if self.provider_type in ("gemini", "groq") else (in_tok * 0.15 + out_tok * 0.60) / 1_000_000.0
                 return {
                     "status": "SUCCESS",
                     "substatus": "AUTHENTICATED",
-                    "provider": "openrouter",
+                    "provider": self.provider_name,
                     "configured": True,
                     "credential_fingerprint": fingerprint,
-                    "inference_mode": "OPENROUTER_LIVE",
+                    "inference_mode": f"{self.provider_name.upper()}_LIVE",
                     "model": data.get("model", self.model),
                     "request_id": data.get("id"),
                     "latency_ms": latency_ms,
@@ -378,11 +427,19 @@ class OpenRouterProvider(LLMProvider):
         except Exception as exc:
             latency_ms = int((time.perf_counter() - start_t) * 1000)
             status_code = getattr(exc, "code", 500) if hasattr(exc, "code") else 500
-            err_substatus = "INVALID_KEY" if status_code in (401, 403) else ("RATE_LIMITED" if status_code == 429 else "UNREACHABLE")
+            raw_err = str(exc)
+            if status_code in (401, 403):
+                err_substatus = "INVALID_KEY"
+            elif status_code == 402 or "402" in raw_err or "Payment Required" in raw_err:
+                err_substatus = "CREDIT_EXHAUSTED"
+            elif status_code == 429:
+                err_substatus = "RATE_LIMITED"
+            else:
+                err_substatus = "UNREACHABLE"
             return {
                 "status": "FAILED",
                 "substatus": err_substatus,
-                "provider": "openrouter",
+                "provider": self.provider_name,
                 "configured": True,
                 "credential_fingerprint": fingerprint,
                 "inference_mode": "UNAVAILABLE",
@@ -393,7 +450,7 @@ class OpenRouterProvider(LLMProvider):
                 "output_tokens": 0,
                 "total_tokens": 0,
                 "cost_usd": 0.0,
-                "error_reason": str(exc),
+                "error_reason": sanitize_secret_error(raw_err),
                 "last_success": None,
                 "last_failure": datetime.now(timezone.utc).isoformat(),
             }
@@ -406,7 +463,7 @@ class OpenRouterProvider(LLMProvider):
         market_context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
-        Executes real decision-time OpenRouter inference for an agent.
+        Executes real decision-time inference for an agent.
         Logs verified execution telemetry directly to SQLite ledger.
         """
         now_utc = datetime.now(timezone.utc).isoformat()
@@ -415,22 +472,22 @@ class OpenRouterProvider(LLMProvider):
             return {
                 "status": OpenRouterStatus.UNAVAILABLE.value,
                 "ai_status": OpenRouterStatus.UNAVAILABLE.value,
-                "error": "OPENROUTER_API_KEY environment variable not configured",
+                "error": f"{self.provider_name.upper()}_API_KEY environment variable not configured",
                 "direction": "NO_TRADE",
                 "expected_move_pct": 0.0,
                 "horizon": "1D",
                 "confidence": 0.0,
                 "catalysts": [],
-                "invalidating_conditions": ["OPENROUTER_API_KEY unconfigured"],
-                "reasoning": "AI intelligence unavailable: OPENROUTER_API_KEY not configured.",
+                "invalidating_conditions": [f"{self.provider_name.upper()}_API_KEY unconfigured"],
+                "reasoning": f"AI intelligence unavailable: {self.provider_name.upper()}_API_KEY not configured.",
                 "ai_request_id": None,
                 "model": self.model,
                 "actual_provider": "none",
                 "decision_mode": "AI_UNAVAILABLE",
-                "decision_model": f"OPENROUTER:{self.model}",
-                "model_provider": "openrouter",
+                "decision_model": f"{self.provider_name.upper()}:{self.model}",
+                "model_provider": self.provider_name,
                 "model_version": self.model,
-                "fallback_reason": "OPENROUTER_API_KEY unconfigured",
+                "fallback_reason": f"{self.provider_name.upper()}_API_KEY unconfigured",
                 "evaluation_status": "EXCLUDED_FROM_ACCURACY",
             }
 
@@ -457,140 +514,158 @@ class OpenRouterProvider(LLMProvider):
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}",
-            "HTTP-Referer": "https://github.com/samudralasrikanth/algo-trader",
-            "X-Title": "NEXUS Decision Engine",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) NEXUS/1.0",
         }
-        max_tokens = int(os.environ.get("OPENROUTER_MAX_TOKENS", "200"))
-        body_str = json.dumps({
+        if self.provider_type == "openrouter":
+            headers["HTTP-Referer"] = "https://github.com/samudralasrikanth/algo-trader"
+            headers["X-Title"] = "NEXUS Decision Engine"
+
+        max_tokens = int(os.environ.get("GROQ_MAX_TOKENS") or os.environ.get("OPENROUTER_MAX_TOKENS") or "350")
+        req_payload: Dict[str, Any] = {
             "model": self.model,
             "messages": [{"role": "user", "content": prompt}],
-            "response_format": {"type": "json_object"},
             "temperature": 0.1,
             "max_tokens": max_tokens,
-        })
+        }
+        if self.provider_type != "gemini":
+            req_payload["response_format"] = {"type": "json_object"}
+
+        body_str = json.dumps(req_payload)
         body = body_str.encode("utf-8")
         in_hash = hashlib.sha256(body).hexdigest()
 
-        start_t = time.perf_counter()
-        try:
-            req = urllib.request.Request("https://openrouter.ai/api/v1/chat/completions", data=body, headers=headers)
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                latency_ms = int((time.perf_counter() - start_t) * 1000)
-                raw_bytes = resp.read()
-                out_hash = hashlib.sha256(raw_bytes).hexdigest()
-                data = json.loads(raw_bytes.decode("utf-8"))
-                content_str = data["choices"][0]["message"]["content"]
-                parsed = json.loads(content_str)
-                usage = data.get("usage", {})
-                in_tok = usage.get("prompt_tokens", 0)
-                out_tok = usage.get("completion_tokens", 0)
-                tot_tok = usage.get("total_tokens", 0)
-                cost = (in_tok * 0.15 + out_tok * 0.60) / 1_000_000.0
-                req_id = data.get("id")
-                act_model = data.get("model", self.model)
+        max_attempts = 3
+        for attempt in range(max_attempts):
+            start_t = time.perf_counter()
+            try:
+                req = urllib.request.Request(self.endpoint_url, data=body, headers=headers)
+                with urllib.request.urlopen(req, timeout=10) as resp:
+                    latency_ms = int((time.perf_counter() - start_t) * 1000)
+                    raw_bytes = resp.read()
+                    out_hash = hashlib.sha256(raw_bytes).hexdigest()
+                    data = json.loads(raw_bytes.decode("utf-8"))
+                    content_str = data["choices"][0]["message"]["content"]
 
-                # Persist telemetry to SQLite
+                    clean_content = content_str.strip()
+                    if clean_content.startswith("```"):
+                        clean_content = re.sub(r"^```[a-zA-Z]*\n?", "", clean_content)
+                        clean_content = re.sub(r"\n?```$", "", clean_content).strip()
+                    parsed = json.loads(clean_content)
+
+                    usage = data.get("usage", {})
+                    in_tok = usage.get("prompt_tokens", 0)
+                    out_tok = usage.get("completion_tokens", 0)
+                    tot_tok = usage.get("total_tokens", 0)
+                    cost = 0.0 if self.provider_type in ("gemini", "groq") else (in_tok * 0.15 + out_tok * 0.60) / 1_000_000.0
+                    req_id = data.get("id") or f"{self.provider_name}_{int(time.time()*1000)}"
+                    act_model = data.get("model", self.model)
+
+                    # Persist telemetry to SQLite
+                    try:
+                        from event_agent.storage.ledger import record_ai_telemetry
+                        record_ai_telemetry({
+                            "ai_request_id": req_id,
+                            "market_date": datetime.now().strftime("%Y-%m-%d"),
+                            "call_type": "DECISION_THESIS",
+                            "agent_id": agent_id,
+                            "symbol": symbol,
+                            "model": act_model,
+                            "model_provider": self.provider_name,
+                            "input_hash": in_hash,
+                            "output_hash": out_hash,
+                            "input_tokens": in_tok,
+                            "output_tokens": out_tok,
+                            "total_tokens": tot_tok,
+                            "cost_usd": cost,
+                            "latency_ms": latency_ms,
+                            "http_status": 200,
+                            "status": "SUCCESS",
+                        })
+                    except Exception as db_err:
+                        logger.debug(f"Telemetry logging error: {db_err}")
+
+                    OpenRouterMetricsTracker.record_decision(OpenRouterStatus.INFERENCE_SUCCESS.value)
+                    parsed["status"] = OpenRouterStatus.INFERENCE_SUCCESS.value
+                    parsed["ai_status"] = OpenRouterStatus.INFERENCE_SUCCESS.value
+                    parsed["ai_request_id"] = req_id
+                    parsed["model"] = act_model
+                    parsed["actual_provider"] = self.provider_name
+                    parsed["latency_ms"] = latency_ms
+                    parsed["tokens"] = tot_tok
+                    parsed["decision_mode"] = "AI_INFERENCE"
+                    parsed["decision_model"] = f"{self.provider_name.upper()}:{act_model}"
+                    parsed["model_provider"] = self.provider_name
+                    parsed["model_version"] = act_model
+                    parsed["fallback_reason"] = None
+                    parsed["evaluation_status"] = "EVALUABLE"
+                    return parsed
+
+            except Exception as exc:
+                latency_ms = int((time.perf_counter() - start_t) * 1000)
+                raw_err = str(exc)
+                sanitized_err = sanitize_secret_error(raw_err)
+                status_code = getattr(exc, "code", 500) if hasattr(exc, "code") else 500
+
+                if (status_code == 429 or "429" in raw_err) and attempt < max_attempts - 1:
+                    time.sleep(1.2 * (attempt + 1))
+                    continue
+
+                if status_code == 402 or "402" in raw_err or "Payment Required" in raw_err or "prepayment credits are depleted" in raw_err.lower():
+                    ai_status = OpenRouterStatus.CREDIT_EXHAUSTED.value
+                elif status_code == 429 or "429" in raw_err or "resource_exhausted" in raw_err.lower():
+                    ai_status = OpenRouterStatus.RATE_LIMITED.value
+                elif status_code == 503 or "timed out" in raw_err.lower() or "connection refused" in raw_err.lower():
+                    ai_status = OpenRouterStatus.UNAVAILABLE.value
+                else:
+                    ai_status = OpenRouterStatus.INFERENCE_FAILED.value
+
+                OpenRouterMetricsTracker.record_decision(ai_status)
+                logger.warning(f"{self.provider_name.capitalize()} thesis inference failed ({ai_status}: {sanitized_err}) for {agent_id} on {symbol}")
                 try:
                     from event_agent.storage.ledger import record_ai_telemetry
                     record_ai_telemetry({
-                        "ai_request_id": req_id,
+                        "ai_request_id": f"failed_{int(time.time()*1000)}",
                         "market_date": datetime.now().strftime("%Y-%m-%d"),
                         "call_type": "DECISION_THESIS",
                         "agent_id": agent_id,
                         "symbol": symbol,
-                        "model": act_model,
-                        "model_provider": "openrouter",
+                        "model": self.model,
+                        "model_provider": self.provider_name,
                         "input_hash": in_hash,
-                        "output_hash": out_hash,
-                        "input_tokens": in_tok,
-                        "output_tokens": out_tok,
-                        "total_tokens": tot_tok,
-                        "cost_usd": cost,
+                        "output_hash": "",
+                        "input_tokens": 0,
+                        "output_tokens": 0,
+                        "total_tokens": 0,
+                        "cost_usd": 0.0,
                         "latency_ms": latency_ms,
-                        "http_status": 200,
-                        "status": "SUCCESS",
+                        "http_status": status_code,
+                        "status": ai_status,
+                        "error_message": sanitized_err,
                     })
-                except Exception as db_err:
-                    logger.debug(f"Telemetry logging error: {db_err}")
+                except Exception:
+                    pass
 
-                OpenRouterMetricsTracker.record_decision(OpenRouterStatus.INFERENCE_SUCCESS.value)
-                parsed["status"] = OpenRouterStatus.INFERENCE_SUCCESS.value
-                parsed["ai_status"] = OpenRouterStatus.INFERENCE_SUCCESS.value
-                parsed["ai_request_id"] = req_id
-                parsed["model"] = act_model
-                parsed["actual_provider"] = "openrouter"
-                parsed["latency_ms"] = latency_ms
-                parsed["tokens"] = tot_tok
-                parsed["decision_mode"] = "AI_INFERENCE"
-                parsed["decision_model"] = f"OPENROUTER:{act_model}"
-                parsed["model_provider"] = "openrouter"
-                parsed["model_version"] = act_model
-                parsed["fallback_reason"] = None
-                parsed["evaluation_status"] = "EVALUABLE"
-                return parsed
-
-        except Exception as exc:
-            latency_ms = int((time.perf_counter() - start_t) * 1000)
-            raw_err = str(exc)
-            sanitized_err = sanitize_secret_error(raw_err)
-            status_code = getattr(exc, "code", 500) if hasattr(exc, "code") else 500
-
-            if status_code == 402 or "402" in raw_err or "Payment Required" in raw_err:
-                ai_status = OpenRouterStatus.CREDIT_EXHAUSTED.value
-            elif status_code == 429 or "429" in raw_err:
-                ai_status = OpenRouterStatus.RATE_LIMITED.value
-            elif status_code == 503 or "timed out" in raw_err.lower() or "connection refused" in raw_err.lower():
-                ai_status = OpenRouterStatus.UNAVAILABLE.value
-            else:
-                ai_status = OpenRouterStatus.INFERENCE_FAILED.value
-
-            OpenRouterMetricsTracker.record_decision(ai_status)
-            logger.warning(f"OpenRouter thesis inference failed ({ai_status}: {sanitized_err}) for {agent_id} on {symbol}")
-            try:
-                from event_agent.storage.ledger import record_ai_telemetry
-                record_ai_telemetry({
-                    "ai_request_id": f"failed_{int(time.time()*1000)}",
-                    "market_date": datetime.now().strftime("%Y-%m-%d"),
-                    "call_type": "DECISION_THESIS",
-                    "agent_id": agent_id,
-                    "symbol": symbol,
-                    "model": self.model,
-                    "model_provider": "openrouter",
-                    "input_hash": in_hash,
-                    "output_hash": "",
-                    "input_tokens": 0,
-                    "output_tokens": 0,
-                    "total_tokens": 0,
-                    "cost_usd": 0.0,
-                    "latency_ms": latency_ms,
-                    "http_status": status_code,
+                return {
                     "status": ai_status,
-                    "error_message": sanitized_err,
-                })
-            except Exception:
-                pass
-
-            return {
-                "status": ai_status,
-                "ai_status": ai_status,
-                "error": sanitized_err,
-                "direction": "NO_TRADE",
-                "expected_move_pct": 0.0,
-                "horizon": "1D",
-                "confidence": 0.0,
-                "catalysts": [],
-                "invalidating_conditions": ["AI intelligence failure / credit exhausted"],
-                "reasoning": f"AI intelligence unavailable ({ai_status}): {sanitized_err}",
-                "ai_request_id": None,
-                "model": self.model,
-                "actual_provider": "openrouter",
-                "decision_mode": "AI_UNAVAILABLE",
-                "decision_model": f"OPENROUTER:{self.model}",
-                "model_provider": "openrouter",
-                "model_version": self.model,
-                "fallback_reason": sanitized_err,
-                "evaluation_status": "EXCLUDED_FROM_ACCURACY",
-            }
+                    "ai_status": ai_status,
+                    "error": sanitized_err,
+                    "direction": "NO_TRADE",
+                    "expected_move_pct": 0.0,
+                    "horizon": "1D",
+                    "confidence": 0.0,
+                    "catalysts": [],
+                    "invalidating_conditions": ["AI intelligence failure / credit exhausted"],
+                    "reasoning": f"AI intelligence unavailable ({ai_status}): {sanitized_err}",
+                    "ai_request_id": None,
+                    "model": self.model,
+                    "actual_provider": self.provider_name,
+                    "decision_mode": "AI_UNAVAILABLE",
+                    "decision_model": f"{self.provider_name.upper()}:{self.model}",
+                    "model_provider": self.provider_name,
+                    "model_version": self.model,
+                    "fallback_reason": sanitized_err,
+                    "evaluation_status": "EXCLUDED_FROM_ACCURACY",
+                }
 
     def format_post_trade_diagnosis(self, audit_evidence: Dict[str, Any]) -> str:
         """
@@ -611,9 +686,12 @@ class OpenRouterProvider(LLMProvider):
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}",
-            "HTTP-Referer": "https://github.com/samudralasrikanth/algo-trader",
-            "X-Title": "NEXUS Forensic Engine",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) NEXUS/1.0",
         }
+        if self.provider_type == "openrouter":
+            headers["HTTP-Referer"] = "https://github.com/samudralasrikanth/algo-trader"
+            headers["X-Title"] = "NEXUS Forensic Engine"
+
         body = json.dumps({
             "model": self.model,
             "messages": [{"role": "user", "content": prompt}],
@@ -623,13 +701,13 @@ class OpenRouterProvider(LLMProvider):
 
         start_t = time.perf_counter()
         try:
-            req = urllib.request.Request("https://openrouter.ai/api/v1/chat/completions", data=body, headers=headers)
+            req = urllib.request.Request(self.endpoint_url, data=body, headers=headers)
             with urllib.request.urlopen(req, timeout=8) as resp:
                 latency_ms = int((time.perf_counter() - start_t) * 1000)
                 data = json.loads(resp.read().decode("utf-8"))
                 text = data["choices"][0]["message"]["content"]
                 usage = data.get("usage", {})
-                req_id = data.get("id")
+                req_id = data.get("id") or f"{self.provider_name}_{int(time.time()*1000)}"
 
                 try:
                     from event_agent.storage.ledger import record_ai_telemetry
@@ -639,13 +717,13 @@ class OpenRouterProvider(LLMProvider):
                         "call_type": "POST_TRADE_AUDIT",
                         "symbol": audit_evidence.get("symbol"),
                         "model": data.get("model", self.model),
-                        "model_provider": "openrouter",
+                        "model_provider": self.provider_name,
                         "input_hash": hashlib.sha256(body).hexdigest(),
                         "output_hash": hashlib.sha256(text.encode()).hexdigest(),
                         "input_tokens": usage.get("prompt_tokens", 0),
                         "output_tokens": usage.get("completion_tokens", 0),
                         "total_tokens": usage.get("total_tokens", 0),
-                        "cost_usd": (usage.get("total_tokens", 0) * 0.30) / 1_000_000.0,
+                        "cost_usd": 0.0 if self.provider_type in ("gemini", "groq") else (usage.get("total_tokens", 0) * 0.30) / 1_000_000.0,
                         "latency_ms": latency_ms,
                         "http_status": 200,
                         "status": "SUCCESS",
@@ -657,7 +735,6 @@ class OpenRouterProvider(LLMProvider):
         except Exception as exc:
             logger.warning(f"Post-trade AI formatting fallback: {exc}")
             return audit_evidence.get("deterministic_summary", "Audit completed via deterministic engine.")
-
 
     def interpret_event(
         self,
@@ -671,7 +748,7 @@ class OpenRouterProvider(LLMProvider):
             res["provider"] = "heuristic_baseline"
             res["inference_mode"] = "HEURISTIC_FALLBACK"
             res["ai"] = {
-                "provider": "openrouter",
+                "provider": self.provider_name,
                 "model": self.model,
                 "request_id": None,
                 "latency_ms": None,
@@ -680,7 +757,7 @@ class OpenRouterProvider(LLMProvider):
                 "total_tokens": 0,
                 "status": "NOT_CONFIGURED",
                 "inference_mode": "HEURISTIC_FALLBACK",
-                "error_reason": "OPENROUTER_API_KEY environment variable not configured",
+                "error_reason": f"{self.provider_name.upper()}_API_KEY environment variable not configured",
                 "timestamp": now_utc,
             }
             return res
@@ -702,32 +779,42 @@ class OpenRouterProvider(LLMProvider):
         headers = {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self.api_key}",
-            "HTTP-Referer": "https://github.com/samudralasrikanth/algo-trader",
-            "X-Title": "NEXUS Nifty 50 Event Agent",
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) NEXUS/1.0",
         }
-        body = json.dumps({
+        if self.provider_type == "openrouter":
+            headers["HTTP-Referer"] = "https://github.com/samudralasrikanth/algo-trader"
+            headers["X-Title"] = "NEXUS Nifty 50 Event Agent"
+
+        req_payload: Dict[str, Any] = {
             "model": self.model,
             "messages": [{"role": "user", "content": prompt}],
-            "response_format": {"type": "json_object"},
             "temperature": 0.1,
-        }).encode("utf-8")
+        }
+        if self.provider_type != "gemini":
+            req_payload["response_format"] = {"type": "json_object"}
+
+        body = json.dumps(req_payload).encode("utf-8")
 
         start_t = time.perf_counter()
         try:
-            req = urllib.request.Request("https://openrouter.ai/api/v1/chat/completions", data=body, headers=headers)
+            req = urllib.request.Request(self.endpoint_url, data=body, headers=headers)
             with urllib.request.urlopen(req, timeout=8) as resp:
                 latency_ms = int((time.perf_counter() - start_t) * 1000)
                 data = json.loads(resp.read().decode("utf-8"))
                 content_str = data["choices"][0]["message"]["content"]
-                parsed = json.loads(content_str)
+                clean_content = content_str.strip()
+                if clean_content.startswith("```"):
+                    clean_content = re.sub(r"^```[a-zA-Z]*\n?", "", clean_content)
+                    clean_content = re.sub(r"\n?```$", "", clean_content).strip()
+                parsed = json.loads(clean_content)
                 usage = data.get("usage", {})
-                req_id = data.get("id")
-                parsed["provider"] = f"openrouter_{self.model}"
+                req_id = data.get("id") or f"{self.provider_name}_{int(time.time()*1000)}"
+                parsed["provider"] = f"{self.provider_name}_{self.model}"
                 parsed["source"] = source
                 parsed["timestamp"] = now_utc
-                parsed["inference_mode"] = "OPENROUTER_LIVE"
+                parsed["inference_mode"] = f"{self.provider_name.upper()}_LIVE"
                 parsed["ai"] = {
-                    "provider": "openrouter",
+                    "provider": self.provider_name,
                     "model": self.model,
                     "request_id": req_id,
                     "latency_ms": latency_ms,
@@ -735,18 +822,18 @@ class OpenRouterProvider(LLMProvider):
                     "output_tokens": usage.get("completion_tokens", 0),
                     "total_tokens": usage.get("total_tokens", 0),
                     "status": "SUCCESS",
-                    "inference_mode": "OPENROUTER_LIVE",
+                    "inference_mode": f"{self.provider_name.upper()}_LIVE",
                     "timestamp": now_utc,
                 }
                 return parsed
         except Exception as exc:
             latency_ms = int((time.perf_counter() - start_t) * 1000)
-            logger.warning(f"OpenRouter event interpretation failed ({exc}). Falling back to heuristic baseline.")
+            logger.warning(f"{self.provider_name.capitalize()} event interpretation failed ({exc}). Falling back to heuristic baseline.")
             res = self.fallback.interpret_event(headline, description, source)
             res["provider"] = "heuristic_fallback"
             res["inference_mode"] = "HEURISTIC_FALLBACK"
             res["ai"] = {
-                "provider": "openrouter",
+                "provider": self.provider_name,
                 "model": self.model,
                 "request_id": None,
                 "latency_ms": latency_ms,
@@ -755,7 +842,7 @@ class OpenRouterProvider(LLMProvider):
                 "total_tokens": 0,
                 "status": "FAILED",
                 "inference_mode": "HEURISTIC_FALLBACK",
-                "error_reason": str(exc),
+                "error_reason": sanitize_secret_error(str(exc)),
                 "timestamp": now_utc,
             }
             return res
@@ -764,14 +851,22 @@ class OpenRouterProvider(LLMProvider):
 def get_default_llm_provider() -> LLMProvider:
     """
     Returns the best available LLM provider based on environment configuration:
-    1. OpenRouter if OPENROUTER_API_KEY is configured (or key starts with sk-or-)
-    2. OpenAI if OPENAI_API_KEY is configured
-    3. HeuristicEventParser (deterministic offline baseline) as default
+    1. Groq if GROQ_API_KEY is configured (or key starts with gsk_)
+    2. Gemini if GEMINI_API_KEY is configured
+    3. OpenRouter if OPENROUTER_API_KEY is configured (or key starts with sk-or-)
+    4. OpenAI if OPENAI_API_KEY is configured
+    5. HeuristicEventParser (deterministic offline baseline) as default
     """
+    groq_key = os.environ.get("GROQ_API_KEY")
+    gemini_key = os.environ.get("GEMINI_API_KEY")
     openrouter_key = os.environ.get("OPENROUTER_API_KEY")
     openai_key = os.environ.get("OPENAI_API_KEY")
 
-    if openrouter_key:
+    if groq_key:
+        return OpenRouterProvider(api_key=groq_key)
+    elif gemini_key:
+        return OpenRouterProvider(api_key=gemini_key)
+    elif openrouter_key:
         return OpenRouterProvider(api_key=openrouter_key)
     elif openai_key:
         if openai_key.startswith("sk-or-"):
