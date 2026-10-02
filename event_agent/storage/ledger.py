@@ -1755,6 +1755,11 @@ def save_agent_position(pos: Dict[str, Any]) -> None:
             greeks_str, cohort_eligible, reclass_note
         ))
         conn.commit()
+        try:
+            from event_agent.storage.supabase_ledger import save_agent_position_supabase
+            save_agent_position_supabase(pos)
+        except Exception:
+            pass
 
 
 def close_agent_position(
@@ -1919,6 +1924,11 @@ def save_agent_trade(trade: Dict[str, Any]) -> bool:
                 trade.get("hedge_decision", "NO"), trade.get("executed_at", datetime.now().isoformat())
             ))
             conn.commit()
+            try:
+                from event_agent.storage.supabase_ledger import save_agent_trade_supabase
+                save_agent_trade_supabase(trade)
+            except Exception:
+                pass
             return True
         except sqlite3.IntegrityError:
             return False
@@ -1955,6 +1965,11 @@ def save_agent_decision(decision: Dict[str, Any]) -> bool:
                 decision.get("reporting_status", "")
             ))
             conn.commit()
+            try:
+                from event_agent.storage.supabase_ledger import save_agent_decision_supabase
+                save_agent_decision_supabase(decision)
+            except Exception:
+                pass
             return True
         except Exception:
             return False
@@ -2009,7 +2024,18 @@ def get_agent_positions(agent_id: Optional[str] = None, status: Optional[str] = 
             params.append(status)
         where_clause = f" WHERE {' AND '.join(conditions)}" if conditions else ""
         cursor.execute(f"SELECT * FROM agent_positions{where_clause} ORDER BY id DESC", tuple(params))
-        return [dict(r) for r in cursor.fetchall()]
+        rows = [dict(r) for r in cursor.fetchall()]
+        if not rows:
+            try:
+                from event_agent.storage.supabase_ledger import get_agent_positions_supabase
+                cloud_positions = get_agent_positions_supabase(status)
+                if cloud_positions:
+                    if agent_id:
+                        cloud_positions = [p for p in cloud_positions if p.get("agent_id") == agent_id]
+                    return cloud_positions
+            except Exception:
+                pass
+        return rows
 
 
 def get_all_orders(agent_id: Optional[str] = None, limit: int = 200) -> List[Dict[str, Any]]:
@@ -2167,6 +2193,11 @@ def save_order(order_dict: Dict[str, Any]) -> None:
             order_dict.get("broker_order_id", f"ANGEL-SBX-{order_dict['order_id']}"),
         ))
         conn.commit()
+        try:
+            from event_agent.storage.supabase_ledger import save_order_supabase
+            save_order_supabase(order_dict)
+        except Exception:
+            pass
 
 
 def save_data_source_health(health_status: Dict[str, str]) -> None:

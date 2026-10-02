@@ -152,7 +152,7 @@ class OptionChainProvider:
         from .asset_models import OptionInstrument
 
         strikes_data: List[OptionStrikeData] = []
-        for offset in range(-6, 7):
+        for offset in range(-14, 15):
             k = atm_strike + (offset * step)
             if k <= 0:
                 continue

@@ -540,6 +540,284 @@ class OptionsStrategyBuilder:
         )
 
     @staticmethod
+    def select_credit_spread_strikes(
+        chain: Optional[OptionChain],
+        is_call: bool,
+        spot_price: float,
+        vix: float = 15.0,
+        target_delta: float = 0.275,
+    ) -> Tuple[float, float, float]:
+        """
+        Selects Sell Leg strike (delta ~ 0.25 to 0.30) and Buy Leg strike
+        (100 to 200 pts OTM, widened to 200 pts if India VIX > 20).
+        Returns: (sell_strike, buy_strike, spread_width)
+        """
+        spread_width = 200.0 if vix > 20.0 else 100.0
+        if not chain or not chain.strikes:
+            step = 50.0
+            if is_call:
+                sell_k = round((spot_price + 200.0) / step) * step
+                buy_k = sell_k + spread_width
+            else:
+                sell_k = round((spot_price - 200.0) / step) * step
+                buy_k = sell_k - spread_width
+            return sell_k, buy_k, spread_width
+
+        # Filter strictly for Out-Of-The-Money (OTM) options
+        best_strike = None
+        best_diff = 999.0
+
+        for s in chain.strikes:
+            if is_call:
+                if s.strike <= spot_price:
+                    continue
+                d = abs(s.call.delta)
+            else:
+                if s.strike >= spot_price:
+                    continue
+                d = abs(s.put.delta)
+
+            # Target delta 0.25 to 0.30 (centered around target_delta)
+            diff = abs(d - target_delta)
+            if diff < best_diff and (0.15 <= d <= 0.40):
+                best_diff = diff
+                best_strike = s.strike
+
+        # Fallback if no strike met delta band
+        if best_strike is None:
+            step = 50.0
+            if is_call:
+                best_strike = round((spot_price + 200.0) / step) * step
+            else:
+                best_strike = round((spot_price - 200.0) / step) * step
+
+        sell_strike = float(best_strike)
+        buy_strike = float(sell_strike + spread_width if is_call else sell_strike - spread_width)
+        return sell_strike, buy_strike, spread_width
+
+    @staticmethod
+    def create_bear_call_spread(
+        underlying: str,
+        spot_price: float,
+        sell_strike: float,
+        buy_strike: float,
+        expiry_days: int = 7,
+        volatility: float = 0.14,
+        lot_size: int = DEFAULT_LOT_SIZE,
+        quantity: int = DEFAULT_LOT_SIZE * 2,
+        agent_id: str = "CREDIT_SPREAD",
+        snapshot_id: str = "",
+    ) -> MultiLegStrategy:
+        """
+        Bear Call Spread (Credit Spread):
+        - SELL Leg (Income): Lower Strike OTM Call (Delta ~ 0.25 to 0.30)
+        - BUY Leg (Hedge): Higher Strike OTM Call (100-200 pts above Sell strike)
+        - Capped Profit (Net Credit collected), strictly capped loss, margin ~₹40k/lot.
+        """
+        assert buy_strike > sell_strike, "Buy strike must be higher than sell strike for Bear Call Spread"
+
+        T_years = max(0.001, expiry_days / 365.0)
+        c_sell = OptionsPricingEngine.calculate_price_and_greeks(
+            spot=spot_price, strike=sell_strike, time_to_expiry_years=T_years, volatility=volatility, is_call=True
+        )
+        c_buy = OptionsPricingEngine.calculate_price_and_greeks(
+            spot=spot_price, strike=buy_strike, time_to_expiry_years=T_years, volatility=volatility, is_call=True
+        )
+
+        # Net Credit Validation: Premium Collected must be strictly greater than Premium Paid
+        net_credit_per_share = c_sell["price"] - c_buy["price"]
+        if net_credit_per_share <= 0:
+            raise ValueError(
+                f"Net credit validation failed for Bear Call Spread: Sell {sell_strike} ({c_sell['price']:.2f}) "
+                f"<= Buy {buy_strike} ({c_buy['price']:.2f})"
+            )
+
+        sell_inst = OptionInstrument(
+            underlying=underlying, strike=sell_strike, option_type=OptionType.CE,
+            expiry=f"{expiry_days}D", lot_size=lot_size, model_price=c_sell["price"],
+            implied_volatility=volatility, delta=c_sell["delta"], gamma=c_sell["gamma"],
+            theta=c_sell["theta"], vega=c_sell["vega"]
+        )
+        buy_inst = OptionInstrument(
+            underlying=underlying, strike=buy_strike, option_type=OptionType.CE,
+            expiry=f"{expiry_days}D", lot_size=lot_size, model_price=c_buy["price"],
+            implied_volatility=volatility, delta=c_buy["delta"], gamma=c_buy["gamma"],
+            theta=c_buy["theta"], vega=c_buy["vega"]
+        )
+
+        leg1 = StrategyLeg(
+            leg_id=f"LEG-SELL-{sell_inst.symbol}", instrument=sell_inst, side=LegSide.SELL,
+            ratio=1, quantity=quantity, entry_price=c_sell["price"], current_price=c_sell["price"]
+        )
+        leg2 = StrategyLeg(
+            leg_id=f"LEG-BUY-{buy_inst.symbol}", instrument=buy_inst, side=LegSide.BUY,
+            ratio=1, quantity=quantity, entry_price=c_buy["price"], current_price=c_buy["price"]
+        )
+
+        spread_width = buy_strike - sell_strike
+        net_credit = round(net_credit_per_share * quantity, 2)
+        max_profit = net_credit
+        defined_spread_loss = round((spread_width - net_credit_per_share) * quantity, 2)
+        # Max loss is hard cut off at ₹2,400 per risk limit
+        max_loss = min(defined_spread_loss, 2400.0)
+        breakeven = [round(sell_strike + net_credit_per_share, 2)]
+        rr = round(max_profit / max_loss, 2) if max_loss > 0 else 1.0
+
+        # Margin: ~₹40,000 per hedged lot
+        num_lots = max(1, quantity // lot_size)
+        margin_required = 40_000.0 * num_lots
+
+        # Net Greeks
+        net_delta = (-c_sell["delta"] + c_buy["delta"]) * quantity
+        net_gamma = (-c_sell["gamma"] + c_buy["gamma"]) * quantity
+        net_theta = (-c_sell["theta"] + c_buy["theta"]) * quantity
+        net_vega = (-c_sell["vega"] + c_buy["vega"]) * quantity
+
+        # Stop loss: 50% expansion of net credit collected or ₹2,400 hard cutoff
+        stop_loss_amount = min(round(net_credit * 0.50, 2), 2400.0)
+        # Take profit: 80% of max potential profit
+        target_profit_amount = round(max_profit * 0.80, 2)
+
+        strat_id = f"STRAT-BCALL-{underlying.replace('.NS', '')}-{int(sell_strike)}-{int(buy_strike)}-{snapshot_id[:6] or 'GEN'}"
+        return MultiLegStrategy(
+            strategy_id=strat_id,
+            strategy_type=StrategyType.BEAR_CALL_SPREAD,
+            underlying=underlying,
+            expiry=f"{expiry_days}D",
+            legs=[leg1, leg2],
+            net_debit=margin_required,  # Margin allocated for the hedged trade
+            max_profit=max_profit,
+            max_loss=max_loss,
+            breakeven=breakeven,
+            risk_reward_ratio=rr,
+            net_delta=round(net_delta, 4),
+            net_gamma=round(net_gamma, 6),
+            net_theta=round(net_theta, 4),
+            net_vega=round(net_vega, 4),
+            agent_id=agent_id,
+            entry_underlying_price=spot_price,
+            current_underlying_price=spot_price,
+            current_strategy_value=margin_required,
+            stop_loss_amount=stop_loss_amount,
+            target_profit_amount=target_profit_amount,
+            snapshot_id=snapshot_id,
+            net_credit=net_credit,
+            margin_required=margin_required,
+            spread_width=spread_width,
+        )
+
+    @staticmethod
+    def create_bull_put_spread(
+        underlying: str,
+        spot_price: float,
+        sell_strike: float,
+        buy_strike: float,
+        expiry_days: int = 7,
+        volatility: float = 0.14,
+        lot_size: int = DEFAULT_LOT_SIZE,
+        quantity: int = DEFAULT_LOT_SIZE * 2,
+        agent_id: str = "CREDIT_SPREAD",
+        snapshot_id: str = "",
+    ) -> MultiLegStrategy:
+        """
+        Bull Put Spread (Credit Spread):
+        - SELL Leg (Income): Higher Strike OTM Put (Delta ~ -0.25 to -0.30)
+        - BUY Leg (Hedge): Lower Strike OTM Put (100-200 pts below Sell strike)
+        - Capped Profit (Net Credit collected), strictly capped loss, margin ~₹40k/lot.
+        """
+        assert sell_strike > buy_strike, "Sell strike must be higher than buy strike for Bull Put Spread"
+
+        T_years = max(0.001, expiry_days / 365.0)
+        p_sell = OptionsPricingEngine.calculate_price_and_greeks(
+            spot=spot_price, strike=sell_strike, time_to_expiry_years=T_years, volatility=volatility, is_call=False
+        )
+        p_buy = OptionsPricingEngine.calculate_price_and_greeks(
+            spot=spot_price, strike=buy_strike, time_to_expiry_years=T_years, volatility=volatility, is_call=False
+        )
+
+        # Net Credit Validation: Premium Collected must be strictly greater than Premium Paid
+        net_credit_per_share = p_sell["price"] - p_buy["price"]
+        if net_credit_per_share <= 0:
+            raise ValueError(
+                f"Net credit validation failed for Bull Put Spread: Sell {sell_strike} ({p_sell['price']:.2f}) "
+                f"<= Buy {buy_strike} ({p_buy['price']:.2f})"
+            )
+
+        sell_inst = OptionInstrument(
+            underlying=underlying, strike=sell_strike, option_type=OptionType.PE,
+            expiry=f"{expiry_days}D", lot_size=lot_size, model_price=p_sell["price"],
+            implied_volatility=volatility, delta=p_sell["delta"], gamma=p_sell["gamma"],
+            theta=p_sell["theta"], vega=p_sell["vega"]
+        )
+        buy_inst = OptionInstrument(
+            underlying=underlying, strike=buy_strike, option_type=OptionType.PE,
+            expiry=f"{expiry_days}D", lot_size=lot_size, model_price=p_buy["price"],
+            implied_volatility=volatility, delta=p_buy["delta"], gamma=p_buy["gamma"],
+            theta=p_buy["theta"], vega=p_buy["vega"]
+        )
+
+        leg1 = StrategyLeg(
+            leg_id=f"LEG-SELL-{sell_inst.symbol}", instrument=sell_inst, side=LegSide.SELL,
+            ratio=1, quantity=quantity, entry_price=p_sell["price"], current_price=p_sell["price"]
+        )
+        leg2 = StrategyLeg(
+            leg_id=f"LEG-BUY-{buy_inst.symbol}", instrument=buy_inst, side=LegSide.BUY,
+            ratio=1, quantity=quantity, entry_price=p_buy["price"], current_price=p_buy["price"]
+        )
+
+        spread_width = sell_strike - buy_strike
+        net_credit = round(net_credit_per_share * quantity, 2)
+        max_profit = net_credit
+        defined_spread_loss = round((spread_width - net_credit_per_share) * quantity, 2)
+        # Max loss is hard cut off at ₹2,400 per risk limit
+        max_loss = min(defined_spread_loss, 2400.0)
+        breakeven = [round(sell_strike - net_credit_per_share, 2)]
+        rr = round(max_profit / max_loss, 2) if max_loss > 0 else 1.0
+
+        # Margin: ~₹40,000 per hedged lot
+        num_lots = max(1, quantity // lot_size)
+        margin_required = 40_000.0 * num_lots
+
+        # Net Greeks
+        net_delta = (-p_sell["delta"] + p_buy["delta"]) * quantity
+        net_gamma = (-p_sell["gamma"] + p_buy["gamma"]) * quantity
+        net_theta = (-p_sell["theta"] + p_buy["theta"]) * quantity
+        net_vega = (-p_sell["vega"] + p_buy["vega"]) * quantity
+
+        # Stop loss: 50% expansion of net credit collected or ₹2,400 hard cutoff
+        stop_loss_amount = min(round(net_credit * 0.50, 2), 2400.0)
+        # Take profit: 80% of max potential profit
+        target_profit_amount = round(max_profit * 0.80, 2)
+
+        strat_id = f"STRAT-BPUT-{underlying.replace('.NS', '')}-{int(sell_strike)}-{int(buy_strike)}-{snapshot_id[:6] or 'GEN'}"
+        return MultiLegStrategy(
+            strategy_id=strat_id,
+            strategy_type=StrategyType.BULL_PUT_SPREAD,
+            underlying=underlying,
+            expiry=f"{expiry_days}D",
+            legs=[leg1, leg2],
+            net_debit=margin_required,  # Margin allocated for the hedged trade
+            max_profit=max_profit,
+            max_loss=max_loss,
+            breakeven=breakeven,
+            risk_reward_ratio=rr,
+            net_delta=round(net_delta, 4),
+            net_gamma=round(net_gamma, 6),
+            net_theta=round(net_theta, 4),
+            net_vega=round(net_vega, 4),
+            agent_id=agent_id,
+            entry_underlying_price=spot_price,
+            current_underlying_price=spot_price,
+            current_strategy_value=margin_required,
+            stop_loss_amount=stop_loss_amount,
+            target_profit_amount=target_profit_amount,
+            snapshot_id=snapshot_id,
+            net_credit=net_credit,
+            margin_required=margin_required,
+            spread_width=spread_width,
+        )
+
+    @staticmethod
     def create_long_straddle(
         underlying: str,
         spot_price: float,

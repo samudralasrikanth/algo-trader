@@ -112,6 +112,16 @@ class InstrumentSelector:
             return OptionsStrategyBuilder.create_bear_put_spread(
                 buy_strike=selected_strike, sell_strike=sell_strike, **kwargs
             )
+        if strategy_type == StrategyType.BEAR_CALL_SPREAD:
+            buy_strike = selected_strike + step
+            return OptionsStrategyBuilder.create_bear_call_spread(
+                sell_strike=selected_strike, buy_strike=buy_strike, **kwargs
+            )
+        if strategy_type == StrategyType.BULL_PUT_SPREAD:
+            buy_strike = selected_strike - step
+            return OptionsStrategyBuilder.create_bull_put_spread(
+                sell_strike=selected_strike, buy_strike=buy_strike, **kwargs
+            )
         if strategy_type == StrategyType.LONG_STRADDLE:
             return OptionsStrategyBuilder.create_long_straddle(strike=selected_strike, **kwargs)
         if strategy_type == StrategyType.LONG_STRANGLE:

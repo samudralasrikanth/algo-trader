@@ -508,3 +508,262 @@ def get_latest_sentinel_telemetry_supabase() -> Optional[Dict[str, Any]]:
         print(f"[!] Supabase get_latest_sentinel_telemetry error: {e}")
 
     return None
+
+
+# -----------------------------------------------------------------------------
+# Cloud Trade Persistence (Paper Arena Dual-Write)
+# -----------------------------------------------------------------------------
+
+def save_agent_decision_supabase(decision: Dict[str, Any]) -> bool:
+    """Persist an agent BUY/SELL/HOLD decision to Supabase."""
+    if not is_supabase_configured():
+        return False
+    payload = {
+        "decision_id": decision.get("decision_id") or f"DEC-{decision['market_date']}-{decision['agent_id']}-{decision['symbol']}-{decision.get('action', 'NO_TRADE')}",
+        "market_date": decision["market_date"],
+        "snapshot_id": decision.get("snapshot_id", ""),
+        "agent_id": decision["agent_id"],
+        "strategy_version": decision.get("strategy_version", "1.0"),
+        "symbol": decision["symbol"],
+        "action": decision["action"],
+        "instrument_type": decision.get("instrument_type", "EQUITY"),
+        "confidence": float(decision.get("confidence", 50.0)),
+        "proposed_quantity": int(decision.get("proposed_quantity", 0)),
+        "proposed_price": float(decision.get("proposed_price", 0.0)),
+        "stop_loss": float(decision.get("stop_loss", 0.0)) if decision.get("stop_loss") else None,
+        "target": float(decision.get("target", 0.0)) if decision.get("target") else None,
+        "planned_risk": float(decision.get("planned_risk", 0.0)),
+        "risk_approved": int(decision.get("risk_approved", 1)),
+        "rejection_reasons_json": json.dumps(decision.get("rejections", [])) if isinstance(decision.get("rejections"), list) else str(decision.get("rejection_reasons_json", "")),
+        "decision_reason": decision.get("reason") or decision.get("decision_reason", ""),
+        "diagnostic_type": decision.get("diagnostic_type", "AI_DECISION"),
+        "agent_ai_status": decision.get("agent_ai_status", "AVAILABLE"),
+        "ai_thesis": decision.get("ai_thesis", "GENERATED"),
+        "deterministic_screen": decision.get("deterministic_screen", "PASSED"),
+        "reporting_status": decision.get("reporting_status", ""),
+    }
+    # 1. Dedicated table
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/agent_decisions"
+        res = requests.post(url, headers=get_headers(True), json=payload, timeout=10)
+        if res.status_code in (200, 201):
+            return True
+    except Exception:
+        pass
+    # 2. Resilient fallback to job_execution_logs
+    try:
+        url_jobs = f"{SUPABASE_URL}/rest/v1/job_execution_logs"
+        job_record = {
+            "job_type": "AGENT_DECISION",
+            "started_at": datetime.utcnow().isoformat() + "Z",
+            "completed_at": datetime.utcnow().isoformat() + "Z",
+            "status": "RECORDED",
+            "target_date": decision.get("market_date", datetime.utcnow().strftime("%Y-%m-%d")),
+            "records_stored": 1,
+            "log_summary": json.dumps(payload),
+        }
+        res_jobs = requests.post(url_jobs, headers=get_headers(True), json=job_record, timeout=10)
+        return res_jobs.status_code in (200, 201)
+    except Exception as e:
+        logger.debug(f"save_agent_decision_supabase error: {e}")
+        return False
+
+
+def save_order_supabase(order_dict: Dict[str, Any]) -> bool:
+    """Persist order record to Supabase."""
+    if not is_supabase_configured():
+        return False
+    payload = {
+        "order_id": order_dict["order_id"],
+        "portfolio_id": order_dict.get("portfolio_id", "DEFAULT"),
+        "agent_id": order_dict["agent_id"],
+        "symbol": order_dict["symbol"],
+        "side": str(order_dict["side"]),
+        "quantity": int(order_dict["quantity"]),
+        "order_type": str(order_dict.get("order_type", "MARKET")),
+        "requested_price": float(order_dict.get("requested_price", 0.0)),
+        "limit_price": float(order_dict["limit_price"]) if order_dict.get("limit_price") else None,
+        "stop_price": float(order_dict["stop_price"]) if order_dict.get("stop_price") else None,
+        "submitted_at": order_dict.get("submitted_at") or datetime.utcnow().isoformat() + "Z",
+        "fill_price": float(order_dict["fill_price"]) if order_dict.get("fill_price") else None,
+        "fill_quantity": int(order_dict.get("fill_quantity", 0)),
+        "slippage": float(order_dict.get("slippage", 0.0)),
+        "estimated_charges": float(order_dict.get("estimated_charges", 0.0)),
+        "status": str(order_dict.get("status", "PENDING")),
+        "rejection_reason": order_dict.get("rejection_reason"),
+        "strategy_id": order_dict.get("strategy_id"),
+        "trade_proposal_id": order_dict.get("trade_proposal_id"),
+        "execution_mode": str(order_dict.get("execution_mode", "BROKER_SANDBOX")),
+        "broker_adapter": order_dict.get("broker_adapter", "UPSTOX SANDBOX"),
+        "broker_order_id": order_dict.get("broker_order_id"),
+    }
+    # 1. Dedicated table
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/paper_orders"
+        res = requests.post(url, headers=get_headers(True), json=payload, timeout=10)
+        if res.status_code in (200, 201):
+            return True
+    except Exception:
+        pass
+    # 2. Fallback to job_execution_logs
+    try:
+        url_jobs = f"{SUPABASE_URL}/rest/v1/job_execution_logs"
+        job_record = {
+            "job_type": "PAPER_ORDER",
+            "started_at": datetime.utcnow().isoformat() + "Z",
+            "completed_at": datetime.utcnow().isoformat() + "Z",
+            "status": "RECORDED",
+            "target_date": datetime.utcnow().strftime("%Y-%m-%d"),
+            "records_stored": 1,
+            "log_summary": json.dumps(payload),
+        }
+        res_jobs = requests.post(url_jobs, headers=get_headers(True), json=job_record, timeout=10)
+        return res_jobs.status_code in (200, 201)
+    except Exception as e:
+        logger.debug(f"save_order_supabase error: {e}")
+        return False
+
+
+def save_agent_trade_supabase(trade: Dict[str, Any]) -> bool:
+    """Persist confirmed trade execution to Supabase."""
+    if not is_supabase_configured():
+        return False
+    payload = {
+        "trade_id": trade["trade_id"],
+        "market_date": trade["market_date"],
+        "cycle_id": trade.get("cycle_id", "CYCLE-1"),
+        "snapshot_id": trade.get("snapshot_id", ""),
+        "agent_id": trade["agent_id"],
+        "strategy_version": trade.get("strategy_version", "1.0"),
+        "symbol": trade["symbol"],
+        "instrument_type": trade.get("instrument_type", "EQUITY"),
+        "action": trade["action"],
+        "direction": trade.get("direction", "BUY"),
+        "quantity": int(trade["quantity"]),
+        "price": float(trade["price"]),
+        "stop_loss": float(trade.get("stop_loss", 0.0)),
+        "target": float(trade.get("target", 0.0)),
+        "transaction_costs": float(trade.get("transaction_costs", 0.0)),
+        "net_amount": float(trade.get("net_amount", 0.0)),
+        "risk_amount": float(trade.get("risk_amount", 0.0)),
+        "confidence": float(trade.get("confidence", 50.0)),
+        "decision_reason": trade.get("decision_reason", ""),
+        "hedge_decision": trade.get("hedge_decision", "NO"),
+        "executed_at": trade.get("executed_at") or datetime.utcnow().isoformat() + "Z",
+    }
+    # 1. Dedicated table
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/agent_trades"
+        res = requests.post(url, headers=get_headers(True), json=payload, timeout=10)
+        if res.status_code in (200, 201):
+            return True
+    except Exception:
+        pass
+    # 2. Fallback to job_execution_logs
+    try:
+        url_jobs = f"{SUPABASE_URL}/rest/v1/job_execution_logs"
+        job_record = {
+            "job_type": "AGENT_TRADE",
+            "started_at": datetime.utcnow().isoformat() + "Z",
+            "completed_at": datetime.utcnow().isoformat() + "Z",
+            "status": "RECORDED",
+            "target_date": trade.get("market_date", datetime.utcnow().strftime("%Y-%m-%d")),
+            "records_stored": 1,
+            "log_summary": json.dumps(payload),
+        }
+        res_jobs = requests.post(url_jobs, headers=get_headers(True), json=job_record, timeout=10)
+        return res_jobs.status_code in (200, 201)
+    except Exception as e:
+        logger.debug(f"save_agent_trade_supabase error: {e}")
+        return False
+
+
+def save_agent_position_supabase(pos: Dict[str, Any]) -> bool:
+    """Persist open or updated position to Supabase."""
+    if not is_supabase_configured():
+        return False
+    payload = {
+        "position_id": pos.get("position_id") or f"POS-{pos['agent_id']}-{pos['symbol']}",
+        "agent_id": pos["agent_id"],
+        "strategy_version": pos.get("strategy_version", "1.0"),
+        "symbol": pos["symbol"],
+        "short_name": pos.get("short_name"),
+        "sector": pos.get("sector", "Diversified"),
+        "instrument_type": pos.get("instrument_type", "EQUITY"),
+        "direction": pos.get("direction", "LONG"),
+        "quantity": int(pos["quantity"]),
+        "entry_price": float(pos.get("entry_price", 0.0)),
+        "current_price": float(pos.get("current_price", pos.get("entry_price", 0.0))),
+        "cost_basis": float(pos.get("cost_basis", 0.0)),
+        "market_value": float(pos.get("market_value", 0.0)),
+        "stop_loss": float(pos["stop_loss"]) if pos.get("stop_loss") else None,
+        "target": float(pos["target"]) if pos.get("target") else None,
+        "unrealized_pnl": float(pos.get("unrealized_pnl", 0.0)),
+        "unrealized_pnl_pct": float(pos.get("unrealized_pnl_pct", 0.0)),
+        "is_hedged": int(pos.get("is_hedged", 0)),
+        "hedge_details_json": json.dumps(pos.get("hedge_details", {})) if isinstance(pos.get("hedge_details"), dict) else str(pos.get("hedge_details_json", "")),
+        "contract_expiry": pos.get("contract_expiry"),
+        "option_strike": float(pos["option_strike"]) if pos.get("option_strike") else None,
+        "option_type": pos.get("option_type"),
+        "status": pos.get("status", "OPEN"),
+        "opened_at": pos.get("opened_at") or datetime.utcnow().isoformat() + "Z",
+        "closed_at": pos.get("closed_at"),
+        "exit_price": float(pos["exit_price"]) if pos.get("exit_price") else None,
+        "realized_pnl": float(pos["realized_pnl"]) if pos.get("realized_pnl") else None,
+        "exit_reason": pos.get("exit_reason"),
+        "brokerage_costs": float(pos["brokerage_costs"]) if pos.get("brokerage_costs") else None,
+        "position_side": pos.get("position_side", "LONG"),
+        "order_intent": pos.get("order_intent", "OPEN"),
+        "underlying_symbol": pos.get("underlying_symbol", pos["symbol"]),
+        "option_symbol": pos.get("option_symbol"),
+        "multiplier": int(pos.get("multiplier", 1)),
+    }
+    # 1. Dedicated table
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/agent_positions"
+        res = requests.post(url, headers=get_headers(True), json=payload, timeout=10)
+        if res.status_code in (200, 201):
+            return True
+    except Exception:
+        pass
+    # 2. Fallback to job_execution_logs
+    try:
+        url_jobs = f"{SUPABASE_URL}/rest/v1/job_execution_logs"
+        job_record = {
+            "job_type": "AGENT_POSITION",
+            "started_at": datetime.utcnow().isoformat() + "Z",
+            "completed_at": datetime.utcnow().isoformat() + "Z",
+            "status": pos.get("status", "OPEN"),
+            "target_date": datetime.utcnow().strftime("%Y-%m-%d"),
+            "records_stored": 1,
+            "log_summary": json.dumps(payload),
+        }
+        res_jobs = requests.post(url_jobs, headers=get_headers(True), json=job_record, timeout=10)
+        return res_jobs.status_code in (200, 201)
+    except Exception as e:
+        logger.debug(f"save_agent_position_supabase error: {e}")
+        return False
+
+
+def get_agent_positions_supabase(status: Optional[str] = "OPEN") -> List[Dict[str, Any]]:
+    """Fetch positions from Supabase."""
+    if not is_supabase_configured():
+        return []
+    try:
+        url = f"{SUPABASE_URL}/rest/v1/agent_positions?select=*"
+        if status:
+            url += f"&status=eq.{status}"
+        res = requests.get(url, headers=get_headers(True), timeout=10)
+        if res.status_code == 200:
+            return res.json()
+    except Exception:
+        pass
+    # Fallback to latest arena snapshot in job_execution_logs
+    try:
+        latest = get_latest_arena_state_supabase()
+        if latest and "open_positions" in latest:
+            return [p for p in latest["open_positions"] if not status or p.get("status") == status]
+    except Exception:
+        pass
+    return []
+

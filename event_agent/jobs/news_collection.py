@@ -264,8 +264,8 @@ class NewsIntelligenceCollector:
         if any(w in h_lower for w in ["tcs", "infosys", "infy", "wipro", "hcl tech", "tech"]):
             assets.extend(["TCS", "INFY"])
             sectors.append("Information Technology")
-        if any(w in h_lower for w in ["hdfc", "sbi", "icici", "axis bank", "bank", "nbfc"]):
-            assets.extend(["HDFCBANK", "ICICIBANK", "SBIN"])
+        if any(w in h_lower for w in ["hdfc", "sbi", "icici", "axis bank", "indusind", "bank", "nbfc"]):
+            assets.extend(["HDFCBANK", "ICICIBANK", "SBIN", "INDUSINDBK"])
             sectors.append("Financial Services")
         if any(w in h_lower for w in ["l&t", "larson", "infrastructure", "construction"]):
             assets.append("LT")

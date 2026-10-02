@@ -195,6 +195,7 @@ class ArenaOrchestrator:
                     current_open_strategies=open_strats,
                     daily_starting_equity=sub_portfolio.starting_capital,
                     check_market_clock=not force_execute,
+                    current_time=simulated_time,
                 )
             else:
                 evaluation = self.risk_engine.evaluate_proposal(
@@ -204,6 +205,7 @@ class ArenaOrchestrator:
                     current_open_positions=pos_dicts,
                     daily_starting_equity=sub_portfolio.starting_capital,
                     check_market_clock=not force_execute,
+                    current_time=simulated_time,
                 )
             trade_evaluations.append((proposal, evaluation))
 
@@ -419,7 +421,7 @@ class ArenaOrchestrator:
             "orders": [o.to_dict() for o in getattr(self.broker, "orders", {}).values()],
             "portfolios": {
                 aid: self.broker.get_agent_portfolio(aid).get_summary()
-                for aid in ["ALPHA", "MOMENTUM", "MACRO", "DEFENSIVE", "CONTRARIAN"]
+                for aid in self.broker.sub_portfolios
             },
         }
         self.persist_cycle_results(result_dict)
@@ -435,7 +437,7 @@ class ArenaOrchestrator:
         profiles = {a.agent_id: a.profile for a in self.agents}
         rows = []
 
-        for aid in ["ALPHA", "MOMENTUM", "MACRO", "DEFENSIVE", "CONTRARIAN"]:
+        for aid in self.broker.sub_portfolios:
             p = self.broker.get_agent_portfolio(aid)
             prof = profiles.get(aid)
 
@@ -576,7 +578,7 @@ class ArenaOrchestrator:
             })
 
         # 2. Positions
-        for aid in ["ALPHA", "MOMENTUM", "MACRO", "DEFENSIVE", "CONTRARIAN"]:
+        for aid in self.broker.sub_portfolios:
             p = self.broker.get_agent_portfolio(aid)
             for pos in p.open_positions.values():
                 save_agent_position(pos.to_dict())

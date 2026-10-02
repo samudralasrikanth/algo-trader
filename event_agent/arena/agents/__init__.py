@@ -9,6 +9,7 @@ from .agent_momentum import AgentMomentum
 from .agent_macro import AgentMacro
 from .agent_defensive import AgentDefensive
 from .agent_contrarian import AgentContrarian
+from .agent_credit_spread import AgentCreditSpread
 
 ALL_AGENT_CLASSES = [
     AgentAlpha,
@@ -16,15 +17,17 @@ ALL_AGENT_CLASSES = [
     AgentMacro,
     AgentDefensive,
     AgentContrarian,
+    AgentCreditSpread,
 ]
 
 
 def create_all_agents() -> Dict[str, BaseAgent]:
-    """Instantiate and return all 5 arena agents keyed by agent_id."""
+    """Instantiate and return all arena agents keyed by agent_id."""
     return {
         "ALPHA": AgentAlpha(),
         "MOMENTUM": AgentMomentum(),
         "MACRO": AgentMacro(),
         "DEFENSIVE": AgentDefensive(),
         "CONTRARIAN": AgentContrarian(),
+        "CREDIT_SPREAD": AgentCreditSpread(),
     }

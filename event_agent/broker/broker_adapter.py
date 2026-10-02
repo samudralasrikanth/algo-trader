@@ -402,7 +402,7 @@ def get_paper_broker_adapter() -> BrokerAdapter:
     broker_type = os.getenv("PAPER_BROKER", os.getenv("BROKER", "upstox")).lower()
     if "angel" in broker_type:
         return AngelOnePaperAdapter()
-    elif "internal" in broker_type or "inbuilt" in broker_type:
+    elif "internal" in broker_type or "inbuilt" in broker_type or "sim" in broker_type:
         return InternalPaperBroker()
     return UpstoxSandboxAdapter()
 

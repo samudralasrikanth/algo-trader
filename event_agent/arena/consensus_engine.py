@@ -38,7 +38,7 @@ DEFAULT_STOCK_PRICES: Dict[str, float] = {
     "BAJFINANCE.NS": 7320.0,
     "TITAN.NS": 3480.0,
     "SUNPHARMA.NS": 1820.0,
-    "TATAMOTORS.NS": 980.0,
+    "INDUSINDBK.NS": 886.0,
     "NTPC.NS": 410.0,
     "POWERGRID.NS": 330.0,
 }

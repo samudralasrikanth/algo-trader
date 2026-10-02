@@ -16,6 +16,7 @@ Central Risk Engine enforcing V3.2 Research Risk Parameters:
 """
 
 import logging
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 from ..config import (
@@ -31,7 +32,7 @@ from ..config import (
     NIFTY50_UNIVERSE,
 )
 from .market_clock import MarketClock, MarketPhase
-from .asset_models import MultiLegStrategy, LegSide, StrategyStatus
+from .asset_models import MultiLegStrategy, LegSide, StrategyStatus, StrategyType
 from .models import (
     HedgeDecision,
     InstrumentType,
@@ -76,6 +77,7 @@ class RiskEngine:
         current_open_positions: List[Dict[str, Any]],
         daily_starting_equity: float,
         check_market_clock: bool = True,
+        current_time: Optional[datetime] = None,
     ) -> RiskEvaluation:
         """
         Evaluate a single agent proposed trade against all risk invariants.
@@ -95,7 +97,7 @@ class RiskEngine:
 
         # 2. Market Clock Gating (Strict 15:30 Cutoff)
         if check_market_clock:
-            can_trade, clock_reason = MarketClock.can_accept_new_orders()
+            can_trade, clock_reason = MarketClock.can_accept_new_orders(current_time)
             if not can_trade:
                 return RiskEvaluation(
                     is_approved=False,
@@ -286,6 +288,7 @@ class RiskEngine:
         current_open_strategies: List[MultiLegStrategy],
         daily_starting_equity: float,
         check_market_clock: bool = True,
+        current_time: Optional[datetime] = None,
     ) -> RiskEvaluation:
         """
         Evaluate a multi-leg options strategy against risk limits:
@@ -302,7 +305,7 @@ class RiskEngine:
 
         # 1. Market Clock verification
         if check_market_clock:
-            can_trade, clock_reason = MarketClock.can_accept_new_orders()
+            can_trade, clock_reason = MarketClock.can_accept_new_orders(current_time)
             if not can_trade:
                 return RiskEvaluation(
                     is_approved=False,
@@ -353,15 +356,83 @@ class RiskEngine:
             )
         checks_passed.append("OPTIONS_COUNT_WITHIN_LIMIT")
 
-        # 5. Maximum Strategy Loss Limit (0.5% risk capital = ₹10,000 on ₹20L)
-        max_allowed_risk = agent_equity * (self.risk_per_trade_pct / 100.0)
-        if strategy.max_loss > max_allowed_risk * 1.5:  # Allow 1.5x tolerance for predefined spreads (e.g. ₹15,000)
-            return RiskEvaluation(
-                is_approved=False,
-                rejection_reason=f"STRATEGY_MAX_LOSS_EXCEEDED: Defined max loss ₹{strategy.max_loss:,.2f} exceeds risk cap ₹{max_allowed_risk * 1.5:,.2f}",
-                checks_passed=checks_passed,
-            )
-        checks_passed.append("STRATEGY_MAX_LOSS_APPROVED")
+        # 4b. Institutional Credit Spread & DTE Gating
+        if strategy.agent_id == "CREDIT_SPREAD" or strategy.strategy_type in (StrategyType.BULL_PUT_SPREAD, StrategyType.BEAR_CALL_SPREAD):
+            # DTE Gate: 3 to 7 DTE weekly expiries, strictly prohibit 0 DTE
+            try:
+                dte = int("".join(c for c in strategy.expiry if c.isdigit()) or "7")
+            except Exception:
+                dte = 7
+            if dte == 0:
+                return RiskEvaluation(
+                    is_approved=False,
+                    rejection_reason="DTE_GATE_REJECT: 0 DTE / Expiry Day trades prohibited to prevent gamma spikes",
+                    checks_passed=checks_passed,
+                )
+            if dte < 3 or dte > 7:
+                return RiskEvaluation(
+                    is_approved=False,
+                    rejection_reason=f"DTE_GATE_REJECT: DTE ({dte}D) outside approved 3-7 DTE weekly window",
+                    checks_passed=checks_passed,
+                )
+            checks_passed.append("DTE_WINDOW_APPROVED")
+
+            # Naked Option Writing Prevention: Short leg MUST be paired with protective long leg
+            sell_legs = [leg for leg in strategy.legs if leg.side == LegSide.SELL]
+            buy_legs = [leg for leg in strategy.legs if leg.side == LegSide.BUY]
+            if not sell_legs or not buy_legs:
+                return RiskEvaluation(
+                    is_approved=False,
+                    rejection_reason="NAKED_OPTION_PROHIBITED: Every short leg must be paired with a protective long leg",
+                    checks_passed=checks_passed,
+                )
+            if sell_legs[0].instrument.option_type != buy_legs[0].instrument.option_type:
+                return RiskEvaluation(
+                    is_approved=False,
+                    rejection_reason="INVALID_SPREAD_STRUCTURE: Credit spread legs must share the same option type",
+                    checks_passed=checks_passed,
+                )
+            checks_passed.append("HEDGED_PROTECTION_VERIFIED")
+
+            # Net Credit Verification
+            if getattr(strategy, "net_credit", 0.0) <= 0:
+                return RiskEvaluation(
+                    is_approved=False,
+                    rejection_reason="NEGATIVE_NET_CREDIT: Credit spread must produce positive net credit",
+                    checks_passed=checks_passed,
+                )
+            checks_passed.append("NET_CREDIT_VERIFIED")
+
+            # Lot size gate: Max 2 lots
+            total_sell_qty = sum(leg.quantity for leg in sell_legs)
+            lot_size = strategy.legs[0].instrument.lot_size if strategy.legs else 50
+            if total_sell_qty > 2 * lot_size:
+                return RiskEvaluation(
+                    is_approved=False,
+                    rejection_reason=f"MAX_LOT_SIZE_EXCEEDED: Quantity {total_sell_qty} exceeds 2-lot ceiling ({2 * lot_size})",
+                    checks_passed=checks_passed,
+                )
+            checks_passed.append("LOT_SIZE_WITHIN_LIMIT")
+
+        # 5. Maximum Strategy Loss Limit (₹2,400 cap for CREDIT_SPREAD; 0.5% risk capital on others)
+        if strategy.agent_id == "CREDIT_SPREAD":
+            max_allowed_risk = 2400.0  # 2% of ₹1,20,000 capital
+            if strategy.max_loss > max_allowed_risk or strategy.stop_loss_amount > max_allowed_risk:
+                return RiskEvaluation(
+                    is_approved=False,
+                    rejection_reason=f"STRATEGY_MAX_LOSS_EXCEEDED: Defined max loss ₹{strategy.max_loss:,.2f} exceeds ₹{max_allowed_risk:,.2f} (2% capital cap)",
+                    checks_passed=checks_passed,
+                )
+            checks_passed.append("STRATEGY_MAX_LOSS_APPROVED")
+        else:
+            max_allowed_risk = agent_equity * (self.risk_per_trade_pct / 100.0)
+            if strategy.max_loss > max_allowed_risk * 1.5:  # Allow 1.5x tolerance for predefined spreads (e.g. ₹15,000)
+                return RiskEvaluation(
+                    is_approved=False,
+                    rejection_reason=f"STRATEGY_MAX_LOSS_EXCEEDED: Defined max loss ₹{strategy.max_loss:,.2f} exceeds risk cap ₹{max_allowed_risk * 1.5:,.2f}",
+                    checks_passed=checks_passed,
+                )
+            checks_passed.append("STRATEGY_MAX_LOSS_APPROVED")
 
         # 6. Cash Sufficiency for Net Debit
         if strategy.net_debit > agent_cash:
@@ -391,13 +462,16 @@ class RiskEngine:
                 )
         checks_passed.append("OPTIONS_LIQUIDITY_VERIFIED")
 
-        # 8. Net Delta Exposure Limit (Max 25% of equity)
+        # 8. Net Delta Exposure Limit (25% for equity-sized options, 1.5x for defined-risk index spreads)
         delta_exposure = abs(strategy.net_delta) * strategy.entry_underlying_price
-        max_delta_cap = agent_equity * 0.25
+        if strategy.agent_id == "CREDIT_SPREAD" or strategy.strategy_type in (StrategyType.BULL_PUT_SPREAD, StrategyType.BEAR_CALL_SPREAD):
+            max_delta_cap = agent_equity * 1.5
+        else:
+            max_delta_cap = agent_equity * 0.25
         if delta_exposure > max_delta_cap:
             return RiskEvaluation(
                 is_approved=False,
-                rejection_reason=f"NET_DELTA_EXPOSURE_EXCEEDED: Delta exposure ₹{delta_exposure:,.2f} exceeds 25% cap ₹{max_delta_cap:,.2f}",
+                rejection_reason=f"NET_DELTA_EXPOSURE_EXCEEDED: Delta exposure ₹{delta_exposure:,.2f} exceeds cap ₹{max_delta_cap:,.2f}",
                 checks_passed=checks_passed,
             )
         checks_passed.append("NET_DELTA_WITHIN_LIMIT")

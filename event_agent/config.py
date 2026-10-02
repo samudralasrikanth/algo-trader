@@ -361,23 +361,23 @@ NIFTY50_UNIVERSE = {
             "Sun Pharma results"
         ]
     },
-    "TATAMOTORS.NS": {
-        "name": "Tata Motors Ltd",
-        "short_name": "Tata Motors",
-        "sector": "Automobile",
-        "beta": 1.3,
+    "INDUSINDBK.NS": {
+        "name": "IndusInd Bank Ltd",
+        "short_name": "IndusInd Bank",
+        "sector": "Financial Services",
+        "beta": 1.25,
         "key_drivers": [
-            "JLR order book & margins",
-            "India EV market share",
-            "Commercial vehicle cycle"
+            "Net interest margins & loan growth",
+            "Asset quality & slippages",
+            "Deposit franchise expansion"
         ],
         "effective_from": "2020-01-01",
         "effective_to": None,
         "search_terms": [
-            "Tata Motors Ltd",
-            "Tata Motors",
-            "TATAMOTORS NSE",
-            "Tata Motors results"
+            "IndusInd Bank Ltd",
+            "IndusInd Bank",
+            "INDUSINDBK NSE",
+            "IndusInd Bank results"
         ]
     },
     "TATASTEEL.NS": {

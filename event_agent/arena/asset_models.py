@@ -32,6 +32,8 @@ class StrategyType(str, Enum):
     LONG_PUT = "LONG_PUT"
     BULL_CALL_SPREAD = "BULL_CALL_SPREAD"
     BEAR_PUT_SPREAD = "BEAR_PUT_SPREAD"
+    BULL_PUT_SPREAD = "BULL_PUT_SPREAD"
+    BEAR_CALL_SPREAD = "BEAR_CALL_SPREAD"
     LONG_STRADDLE = "LONG_STRADDLE"
     LONG_STRANGLE = "LONG_STRANGLE"
     PROTECTIVE_PUT = "PROTECTIVE_PUT"
@@ -385,6 +387,9 @@ class MultiLegStrategy:
     entry_time: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     closed_time: Optional[str] = None
     exit_reason: str = ""
+    net_credit: float = 0.0
+    margin_required: float = 0.0
+    spread_width: float = 0.0
 
     def calculate_payoff_at(self, spot_price: float) -> float:
         """
@@ -440,6 +445,9 @@ class MultiLegStrategy:
             "entry_time": self.entry_time,
             "closed_time": self.closed_time,
             "exit_reason": self.exit_reason,
+            "net_credit": round(self.net_credit, 2),
+            "margin_required": round(self.margin_required, 2),
+            "spread_width": round(self.spread_width, 2),
         }
 
 

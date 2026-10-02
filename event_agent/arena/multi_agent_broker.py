@@ -128,6 +128,9 @@ class ArenaClosedTrade:
     exit_time: str
     decision_reason: str
     hedge_decision: str
+    trade_status: str = "CLOSED"
+    remaining_quantity: int = 0
+    realized_pnl: float = 0.0
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -362,6 +365,7 @@ class MultiAgentBroker:
             "MACRO": SubPortfolio("MACRO", "MACRO-1.0"),
             "DEFENSIVE": SubPortfolio("DEFENSIVE", "DEFENSIVE-1.0"),
             "CONTRARIAN": SubPortfolio("CONTRARIAN", "CONTRARIAN-1.0"),
+            "CREDIT_SPREAD": SubPortfolio("CREDIT_SPREAD", "CREDIT_SPREAD-1.0", starting_capital=120_000.0),
         }
         self.executed_trade_ids: set = set()
         self.orders: Dict[str, Any] = {}
@@ -432,6 +436,9 @@ class MultiAgentBroker:
                 entry_time=str(data.get("entry_time", "")),
                 closed_time=data.get("closed_time"),
                 exit_reason=str(data.get("exit_reason", "")),
+                net_credit=float(data.get("net_credit", 0.0)),
+                margin_required=float(data.get("margin_required", 0.0)),
+                spread_width=float(data.get("spread_width", 0.0)),
             )
         except (KeyError, TypeError, ValueError) as exc:
             logger.warning("Unable to hydrate strategy %s: %s", data.get("strategy_id"), exc)
@@ -922,7 +929,7 @@ class MultiAgentBroker:
         # Submit and fill every leg before changing cash or opening the
         # strategy.  This preserves the all-legs-or-no-trade invariant.
         for index, leg in enumerate(strategy.legs, start=1):
-            quantity = int(leg.quantity * max(1, leg.ratio))
+            quantity = leg.quantity * max(1, leg.ratio)
             if quantity <= 0 or leg.entry_price <= 0:
                 reason = f"INVALID_STRATEGY_LEG: {leg.leg_id} has non-positive quantity or price"
                 for prior in created_orders:
@@ -1052,8 +1059,12 @@ class MultiAgentBroker:
                     mult = 1 if leg.side == LegSide.BUY else -1
                     total_val += mult * leg.current_price * leg.quantity
 
-                strat.current_strategy_value = total_val
-                strat.unrealized_pnl = total_val - strat.net_debit
+                if strat.strategy_type in (StrategyType.BULL_PUT_SPREAD, StrategyType.BEAR_CALL_SPREAD) or getattr(strat, "net_credit", 0.0) > 0:
+                    strat.unrealized_pnl = round(strat.net_credit + total_val, 2)
+                    strat.current_strategy_value = round(strat.net_debit + strat.unrealized_pnl, 2)
+                else:
+                    strat.current_strategy_value = round(total_val, 2)
+                    strat.unrealized_pnl = round(total_val - strat.net_debit, 2)
 
                 # Check Stop Loss (e.g. loss exceeds stop amount)
                 if strat.unrealized_pnl <= -strat.stop_loss_amount:
